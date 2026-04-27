@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Chip Text Variable";
+  src: url("/fonts/Chip_Text_Variable-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Chip Display Variable";
+  src: url("/fonts/Chip_Display_Variable-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Chip Mono";
+  src: url("/fonts/Chip_Mono-Regular.ttf") format("truetype");
+}
+
+:root {
+  font-family: "Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #efeff1;
+}
