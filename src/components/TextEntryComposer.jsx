@@ -262,7 +262,7 @@ ${value}`,
   }, [value, hasCommandPill])
 
   return (
-    <section className="flex min-h-[92px] w-full flex-col rounded-[2px] bg-[#e4e4e8] px-[13px] pb-[15px] pt-[9px]">
+    <section className="flex min-h-[92px] w-full flex-col rounded-[2px] bg-[#f4f4f6] px-[13px] pb-[15px] pt-[9px]">
       <div className="relative w-full flex-1">
         {!hasCommandPill && (
           <div className="relative">
