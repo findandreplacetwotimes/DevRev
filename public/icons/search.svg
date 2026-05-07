@@ -1,0 +1,10 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icons/Magnifying.glass" clip-path="url(#clip0_0_44)">
+<path id="Vector" d="M2.37125 2.37447C5.82769 -1.10586 11.8654 1.3964 11.8459 6.30025C11.8508 7.71453 11.3534 8.92758 10.5539 9.85689L15.2257 14.3647L15.2629 14.3999L14.3957 15.267L14.3605 15.2309L9.84195 10.5473C7.77838 12.2297 4.55943 12.4241 2.37125 10.2212C0.221341 8.16137 0.220988 4.43398 2.37125 2.37447ZM10.6144 5.94088C10.3982 2.28856 5.81988 0.429634 3.19254 3.19576H3.19156C1.60693 4.8044 1.55752 7.56129 3.04312 9.24166L3.19156 9.40084L3.19254 9.40181C5.90463 12.2568 10.6951 10.1833 10.6212 6.30221V6.30025L10.6144 5.94088Z" fill="var(--fill-0, #211E20)" stroke="var(--stroke-0, black)" stroke-width="0.1"/>
+</g>
+<defs>
+<clipPath id="clip0_0_44">
+<rect width="16" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg>

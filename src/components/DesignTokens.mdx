@@ -1,0 +1,35 @@
+import { Meta } from "@storybook/addon-docs/blocks"
+
+<Meta title="Foundations/Design tokens" />
+
+# Design tokens
+
+Semantic colors from **App — Arcade v0.3** (Control set: rest vs hover) are exposed as **CSS variables** on `:root` in `src/index.css`. Components use these variables so hover (`Control/bg/hover`) stays aligned with Figma.
+
+## CSS variables
+
+| Figma name | CSS variable | Hex / value | Used in |
+|------------|--------------|-------------|---------|
+| Background / primary / subtle | `--background-primary-subtle` | `#f5f5f5` | Control-family rest surfaces (legacy alias to rest) |
+| Control / bg / rest | `--control-bg-rest` | `#f5f5f5` | `Control`, `Page`, menu item rest states |
+| Control / bg / rest white | `--control-bg-rest-white` | `#ffffff` | Menus and neutral white control surfaces |
+| Control / bg / hover | `--control-bg-hover` | `#eceaeb` | `Control`, `Page`, `Breadcrumbs` (`:hover`) |
+| Control / content / primary | `--control-content-primary` | `#211e20` | Control and input primary text |
+| Control / content / secondary | `--control-content-secondary` | `#a5a0a3` | Placeholders and empty-value labels |
+| Foreground / primary | `--foreground-primary` | `#211e20` | `Control`, `Page`, `Breadcrumbs` |
+| Foreground / secondary | `--foreground-secondary` | `#737072` | Secondary glyphs / avatar initials |
+| Border / subtle | `--border-subtle` | `#e8e8e8` | `Page` (selected inset ring) |
+| (neutral text) | `--fg-neutral-prominent` | `rgba(48, 46, 47, 0.94)` | Body copy-style text (`#302e2ff0`) |
+| Breadcrumb bar | `--breadcrumb-bg` | `#f5f5f5` | `Breadcrumbs` (rest) |
+| Dragonfruit / 200 | `--dragonfruit-200` | `#ff93ac` | Team chip background in `Icon` |
+
+## Interaction
+
+- **Control** and **Page** (non-selected): rest background uses `--control-bg-rest` (with `--background-primary-subtle` kept as alias); on pointer hover, background becomes `--control-bg-hover` (`transition-colors` ~150ms).
+- **Inputs/Text areas**: empty/placeholder text uses `--control-content-secondary`; filled text uses `--control-content-primary`.
+- **Stories** that set `state="hover"` / `state: "hover"` force the hover fill for screenshots without moving the mouse.
+- **Breadcrumbs**: rest `--breadcrumb-bg`; hover uses `--control-bg-hover` for parity with control pills.
+
+## Page chrome
+
+`body` uses canvas `#efeff1` (not yet a named token in `:root`).
