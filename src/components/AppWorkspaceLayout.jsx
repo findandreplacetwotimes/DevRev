@@ -181,6 +181,12 @@ export function AppWorkspaceChrome() {
     typeof location.state?.sourceProjectId === "string" &&
     location.state.sourceProjectId.trim().length > 0
 
+  // Extract projectId from route for project chat context
+  const currentProjectId = useMemo(() => {
+    const match = /^\/projects\/([^/]+)/.exec(pathname)
+    return match ? decodeURIComponent(match[1]) : null
+  }, [pathname])
+
   const selectedNavItemId = issueFromThreeLevelPath
     ? "projects"
     : pathname.startsWith("/issues")
@@ -362,7 +368,12 @@ export function AppWorkspaceChrome() {
         />
 
         {chatPanelOpen ? (
-          <ChatWindow width={chatWidth} variant={chatVariant} flexFill={chatFillsRemainder} />
+          <ChatWindow
+            width={chatWidth}
+            variant={chatVariant}
+            flexFill={chatFillsRemainder}
+            projectId={chatVariant === "chat-project" ? currentProjectId : null}
+          />
         ) : null}
 
         {showSplitHandle ? (

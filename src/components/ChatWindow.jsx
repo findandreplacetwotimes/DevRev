@@ -5,6 +5,8 @@ import { MessageBubble } from "./MessageBubble"
 import { MessageInput } from "./MessageInput"
 import { getAiResponse } from "../lib/aiClient"
 import { hasAgentMention, stripAgentMention } from "../lib/mentionDetection"
+import { createDiscussionEvent } from "../lib/timelineHelpers"
+import { useIssues } from "../context/IssuesContext"
 
 const PERSON_REPLY_PROMPT_PREFIX =
   "You are a real teammate in a direct chat. Reply naturally, concise, and conversational in 1-3 sentences."
@@ -49,7 +51,8 @@ ${weeklyData.openBlockers > 0 ? 'I can help prioritize blockers if needed.' : 'E
 }
 
 /** Chat column: fixed `width`, or `flexFill` to grow when the record panel is hidden. */
-export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
+export function ChatWindow({ width = 377, variant = "ai", flexFill = false, projectId = null }) {
+  const { patchProject, projects } = useIssues()
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
     ai: [],
     "build-team": [
@@ -138,6 +141,28 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
         },
       ],
     }))
+  }
+
+  // Post a message to project timeline
+  const handlePostToTimeline = (messageText) => {
+    if (!projectId) {
+      console.warn("Cannot post to timeline: no projectId")
+      return
+    }
+
+    // Get current project to append to existing history
+    const currentProject = projects?.find(p => p.id === projectId)
+    const currentHistory = currentProject?.history || []
+
+    const event = createDiscussionEvent(messageText)
+
+    // Prepend new event (most recent first)
+    patchProject(projectId, {
+      history: [event, ...currentHistory]
+    })
+
+    // TODO: Show success toast notification
+    console.log("Posted to timeline:", event)
   }
 
   const handleSendMessage = async (text) => {
@@ -254,6 +279,7 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
                     state={message.loading ? "writing" : "default"}
                     senderInitial={message.senderInitial}
                     isAgent={message.isAgent ?? false}
+                    onPostToTimeline={projectId ? () => handlePostToTimeline(message.text) : null}
                   />
                 ) : (
                   <AiMessageBubble text={message.text} loading={Boolean(message.loading)} />

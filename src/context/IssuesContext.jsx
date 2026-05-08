@@ -79,8 +79,9 @@ function normalizeProjectDisplayFields(row) {
     `Project brief for ${row.id} outlining milestones, execution approach, stakeholder alignment, timeline assumptions, risk mitigation, and expected delivery outcomes.`,
     600
   )
+  const history = Array.isArray(row.history) ? row.history : []
 
-  return { title, description, ownerId, dueDateId }
+  return { title, description, ownerId, dueDateId, history }
 }
 
 function readIssuesFromLocalStorage() {
@@ -158,6 +159,7 @@ function readProjectsFromLocalStorage() {
         stage: sanitizeStage(row.stage),
         healthId: sanitizeProjectHealthId(row.healthId),
         milestones: sanitizeProjectMilestonesArray(row.milestones),
+        history: Array.isArray(row.history) ? row.history : [],
       })
     }
     return out.length > 0 ? out : null

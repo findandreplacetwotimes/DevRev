@@ -201,7 +201,7 @@ export function ProjectPage() {
           {activeTab === "History" && (
             <div className="w-full shrink-0 px-[44px] pb-[40px] pt-[24px]">
               <div className="mx-auto w-full max-w-[740px]">
-                <DocumentHistoryPlaceholder recordKind="project" recordId={project.id} />
+                <DocumentHistoryPlaceholder recordKind="project" recordId={project.id} history={project.history} />
               </div>
             </div>
           )}

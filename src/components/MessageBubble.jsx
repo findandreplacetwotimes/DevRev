@@ -58,13 +58,17 @@ export function MessageBubble({
   senderInitial = "M",
   /** Set to true for agent messages in group chat */
   isAgent = false,
+  /** Callback when user clicks "Post to Timeline" button */
+  onPostToTimeline = null,
 }) {
   const textRef = useRef(null)
   const [isManyLines, setIsManyLines] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const isGroupPerson = type === "groupPerson"
   const isPerson = type === "person"
   const isInbound = isPerson || isGroupPerson
   const isWriting = state === "writing" && isInbound
+  const canPostToTimeline = isGroupPerson && onPostToTimeline && !isWriting
 
   useEffect(() => {
     if (isWriting) {
@@ -95,6 +99,8 @@ export function MessageBubble({
       } ${
         isWriting ? "px-[10px] py-[6px]" : `min-w-[60px] px-[14px] ${isManyLines ? "py-[8px]" : "py-[10px]"}`
       }`}
+      onMouseEnter={() => canPostToTimeline && setIsHovered(true)}
+      onMouseLeave={() => canPostToTimeline && setIsHovered(false)}
     >
       {isWriting ? (
         <Icon name="more" />
@@ -118,6 +124,19 @@ export function MessageBubble({
           draggable={false}
         />
       </span>
+      {canPostToTimeline && isHovered && (
+        <button
+          type="button"
+          onClick={onPostToTimeline}
+          className="absolute right-[-8px] top-[-8px] z-10 flex size-[24px] items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-50 active:bg-gray-100"
+          aria-label="Post to timeline"
+          title="Post to timeline"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-gray-600">
+            <path d="M7 2v10M3 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 
