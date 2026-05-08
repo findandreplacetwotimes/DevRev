@@ -184,14 +184,14 @@ export function MessageBubble({
         />
       </span>
       {canPostToTimeline && isHovered && (
-        <div className="absolute bottom-[-28px] left-0 z-10 flex gap-[8px] p-[4px]">
+        <div className="absolute bottom-[-32px] left-0 z-10 flex gap-[4px] rounded-[12px] bg-white p-[4px] shadow-[0_2px_8px_rgba(0,0,0,0.1),0_0_0_0.5px_rgba(0,0,0,0.06)]">
           <Tooltip text="Copy message">
             <button
               type="button"
               onClick={() => {
                 navigator.clipboard.writeText(text)
               }}
-              className="flex size-[24px] items-center justify-center text-[#6B7280] hover:text-[#374151] hover:scale-110 active:scale-100 transition-all duration-150"
+              className="flex size-[28px] items-center justify-center rounded-[8px] text-[#6B7280] hover:bg-[#f5f5f5] hover:text-[#374151] active:scale-95 transition-all duration-150"
               aria-label="Copy message"
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -210,10 +210,10 @@ export function MessageBubble({
                   setTimeout(() => setIsPosted(false), 1500)
                 }
               }}
-              className={`flex size-[24px] items-center justify-center hover:scale-110 active:scale-100 transition-all duration-150 ${
+              className={`flex size-[28px] items-center justify-center rounded-[8px] active:scale-95 transition-all duration-150 ${
                 isPosted
                   ? "text-[hsl(259,94%,44%)] animate-post-success"
-                  : "text-[#6B7280] hover:text-[#374151]"
+                  : "text-[#6B7280] hover:bg-[#f5f5f5] hover:text-[#374151]"
               }`}
               aria-label="Post to timeline"
             >
