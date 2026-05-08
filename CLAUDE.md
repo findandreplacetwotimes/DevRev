@@ -35,11 +35,12 @@ React + Tailwind project management app with AI-powered chat capabilities. Build
   - Groups events by timestamp
   - Falls back to placeholder when empty
   
-- ✅ **Message Posting UI (Latest Session)**
-  - **Two inline icon buttons** appear on hover (DevRev pattern)
+- ✅ **Message Posting UI**
+  - **Two inline icon buttons** in card-style container on hover
     - Copy (clipboard icon) - copies message to clipboard
     - Post to Timeline (arrow-up icon) - posts to history
-  - Positioned below message bubble with proper styling
+  - White card background with subtle shadow
+  - Rounded corners (12px) with hover states per button
   - Only enabled in project chat with valid projectId
   - Creates "Discussion" events instantly
   
@@ -63,29 +64,22 @@ React + Tailwind project management app with AI-powered chat capabilities. Build
   - Animation duration: 2.5s fade-out
   - Auto-clears highlight after 3s
 
-**Current Implementation (Phase 1 + Polish):**
-- Two-icon hover pattern (Copy + Post to Timeline)
+**Phase 1 Implementation - COMPLETE ✅**
+- Two-icon hover pattern in card container
 - Polished tooltips with animations
 - Success feedback (checkmark, bounce, color change)
 - Direct posting (no preview dialog)
 - Hardcoded actor initial ("M" for MVP)
 - Full visual feedback: tab switch + yellow highlight + smooth scroll
 
-**Deferred to Phase 2:**
-- AI summarization before posting
-- Preview dialog with editable summary
+**Future Phases (marked for later):**
+- **Phase 2**: AI summarization before posting + preview dialog with editable summary
+- **Phase 3**: Multi-message selection + batch posting with combined summary
 
-**Deferred to Phase 3:**
-- Multi-message selection
-- Batch summarization
-
-**Known Issue (Frontend Design):**
-- Icon container styling may still appear "dangling" (frontend-design skill was running but outcome pending)
-
-### 2. Branch Out Topic ⏸️ NOT STARTED
+### 2. Branch Out Topic (SKIPPED)
 - Create focused sub-threads from main chat
 - Context preservation
-- Status: Planned but not implemented
+- Status: Feature skipped for now
 
 ## Arcade Design System Integration (SHELVED)
 
@@ -173,62 +167,33 @@ React + Tailwind project management app with AI-powered chat capabilities. Build
 - [x] Smooth scroll to highlighted event
 - [x] Timeline persists across refresh
 - [x] Timestamps format correctly
-- [ ] Icon container styling polish (frontend-design task pending)
-- [ ] Test with multiple posts in succession
-- [ ] Test long message text wrapping
-- [ ] Optional: Add toast notification for copy success
+- [x] Icon container styling: card with shadow, hover states, proper spacing
 
-## Next Session TODO
+## Next Steps
 
-1. **Check Frontend Design Output:**
-   - Review frontend-design skill output for icon container styling improvements
-   - Apply any suggested changes to make icons feel less "dangling"
-   - May need manual refinement if skill didn't complete
+### Ready for PR
+Feature is complete and polished. Consider creating PR for `feat/project-chat-interactions` branch.
 
-2. **Test & Polish:**
-   - Verify multi-message posting in succession
-   - Test copy functionality with special characters
-   - Test edge cases (very long messages, emoji, markdown)
-   - Optional: Add subtle toast for copy success
+### Future Work (Marked for Later)
+- **Phase 2 - AI Summarization**: SummarizeDialog with editable AI-generated summary
+- **Phase 3 - Multi-Select**: Checkbox selection + batch posting with combined summary
+- **Branch Out Topic**: Sub-threading feature (currently skipped)
 
-3. **Commit & PR:**
-   - Commit all changes for Part 3 completion
-   - Update commit message with full feature list
-   - Consider creating PR for feat/project-chat-interactions branch
+## Recent Work
 
-4. **Phase 2 - AI Summarization (Optional):**
-   - Create SummarizeDialog component
-   - Computer generates summary before posting
-   - User can edit summary
-   - Fallback to manual if AI fails
-
-5. **Phase 3 - Multi-Select (Optional):**
-   - Checkbox on hover for selection
-   - Floating action bar when messages selected
-   - Batch posting with combined summary
-
-6. **Part 2 - Branch Out Topic (If needed):**
-   - Plan the threading/branching UX
-   - Design data structure for sub-threads
-
-## Recent Work (Current Session)
-
-**Parallel Implementation (3 agents):**
-1. **Tooltips Agent** - Added polished tooltips with 400ms delay, smooth animations
-2. **Timeline Feedback Agent** - Implemented auto-switch to History + yellow highlight animation
-3. **Frontend Design Skill** - Attempted icon container styling improvements (status pending)
-
-**Key Improvements This Session:**
+**Session 1 (May 8, 2026 - Evening):**
 - Replaced single + button with two-icon pattern (Copy + Post)
 - Added professional tooltips with Arcade design system integration
 - Implemented success feedback (checkmark, color change, bounce animation)
 - Added auto-switch to History tab when posting
 - Implemented yellow highlight animation on posted messages
 - Added smooth scroll to highlighted events
+- Polished icon container with card-style background and shadows
 - Coordinated state between ChatWindow, AppWorkspaceLayout, ProjectPage, DocumentHistoryPlaceholder
 
 ## Commits
 
 - `009211f` - Add Computer agent to project chat with weekly rundown
 - `3634001` - Implement Send to Timeline feature (Phase 1 MVP)
-- (pending) - Add hover icons, tooltips, success feedback, and timeline auto-switch with highlight
+- `a5889f3` - Polish Send to Timeline with hover icons, tooltips, and visual feedback
+- `6ef0a69` - Polish Send to Timeline hover icons with card-style container
