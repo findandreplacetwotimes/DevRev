@@ -2,6 +2,7 @@ import { createPortal } from "react-dom"
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useAnchoredPopoverPosition } from "../hooks/useAnchoredPopoverPosition"
 import { ChatAvatar } from "./ChatAvatar"
+import { ChatToggleIcon } from "./ChatToggleIcon"
 import { Control } from "./Control"
 import { MenuItem } from "./MenuItem"
 import { NavItem } from "./NavItem"
@@ -171,16 +172,31 @@ export function NavPanel({
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
       <div className="flex w-[194px] flex-col gap-[4px]">
-        {PRIMARY_ITEMS.map((item) => (
-          <NavItem
-            key={item.id}
-            label={item.label}
-            iconName={item.iconName}
-            selected={currentSelectedItemId === item.id}
-            className="w-full"
-            onClick={() => handleSelectItem(item.id)}
-          />
-        ))}
+        {PRIMARY_ITEMS.map((item) => {
+          // Special case: Build chat uses animated toggle icon
+          if (item.id === "build-team") {
+            return (
+              <NavItem
+                key={item.id}
+                label={item.label}
+                leading={<ChatToggleIcon isOpen={chatPanelOpen} />}
+                selected={false}
+                className="w-full"
+                onClick={() => handleSelectItem(item.id)}
+              />
+            )
+          }
+          return (
+            <NavItem
+              key={item.id}
+              label={item.label}
+              iconName={item.iconName}
+              selected={currentSelectedItemId === item.id}
+              className="w-full"
+              onClick={() => handleSelectItem(item.id)}
+            />
+          )
+        })}
       </div>
 
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
