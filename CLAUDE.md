@@ -4,7 +4,26 @@
 
 React + Tailwind project management app with AI-powered chat capabilities. Building out collaborative project chat features with agent integration.
 
-## Current Branch: feat/project-chat-interactions
+## Current Work
+
+### Active Branch: feat/nav-hierarchy ✅ READY FOR MERGE
+**PR**: https://github.com/findandreplacetwotimes/DevRev/pull/2
+**Status**: Complete with screenshots, ready for review
+
+Implemented Projects as Spaces architecture with hierarchical navigation:
+- **YOUR PROJECTS** section (non-collapsible, above teams) - projects with `isMember: true` show as expandable spaces
+- **YOUR TEAMS** section (renamed from Teams) - Build team shows Lobby (chat toggle), Issues, Roadmap, Sprints, About
+- **Chat toggle behavior** - each chat variant shows correct state independently
+- **Routing** - `/projects/:id` navigates to project space, project chat uses `project-{projectId}` variant
+- Removed Discuss button from project headers (chat access via nav)
+
+**Files modified**: NavPanel.jsx, AppWorkspaceLayout.jsx, ProjectPage.jsx, ChatWindow.jsx, IssuesContext.jsx, issuesSeed.js
+
+**Next**: Merge PR after review
+
+---
+
+## Previous Branch: feat/project-chat-interactions
 
 ### Completed Features
 
