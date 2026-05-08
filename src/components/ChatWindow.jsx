@@ -51,7 +51,7 @@ ${weeklyData.openBlockers > 0 ? 'I can help prioritize blockers if needed.' : 'E
 }
 
 /** Chat column: fixed `width`, or `flexFill` to grow when the record panel is hidden. */
-export function ChatWindow({ width = 377, variant = "ai", flexFill = false, projectId = null }) {
+export function ChatWindow({ width = 377, variant = "ai", flexFill = false, projectId = null, onTimelinePosted = null }) {
   const { patchProject, projects } = useIssues()
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
     ai: [],
@@ -144,7 +144,7 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false, proj
   }
 
   // Post a message to project timeline
-  const handlePostToTimeline = (messageText) => {
+  const handlePostToTimeline = (messageText, onPosted) => {
     if (!projectId) {
       console.warn("Cannot post to timeline: no projectId")
       return
@@ -161,7 +161,11 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false, proj
       history: [event, ...currentHistory]
     })
 
-    // TODO: Show success toast notification
+    // Notify parent to show the posted event
+    if (onPosted) {
+      onPosted(event.id)
+    }
+
     console.log("Posted to timeline:", event)
   }
 
@@ -279,7 +283,7 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false, proj
                     state={message.loading ? "writing" : "default"}
                     senderInitial={message.senderInitial}
                     isAgent={message.isAgent ?? false}
-                    onPostToTimeline={projectId ? () => handlePostToTimeline(message.text) : null}
+                    onPostToTimeline={projectId ? () => handlePostToTimeline(message.text, onTimelinePosted) : null}
                   />
                 ) : (
                   <AiMessageBubble text={message.text} loading={Boolean(message.loading)} />

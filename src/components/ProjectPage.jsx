@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Navigate, useOutletContext, useParams } from "react-router-dom"
 import { useIssues } from "../context/IssuesContext"
 import { EMPTY_PROJECT_TITLE_PLACEHOLDER, projectBreadcrumbProjectSuffix } from "../lib/projectsApi"
@@ -39,9 +39,10 @@ function DiscussGlyph() {
 
 export function ProjectPage() {
   const { projectId: projectIdParam } = useParams()
-  const { openProjectChat } = useOutletContext() ?? {}
+  const { openProjectChat, onTimelinePosted } = useOutletContext() ?? {}
   const { projects, issues, patchProject, patchIssue } = useIssues()
   const [activeTab, setActiveTab] = useState("Overview")
+  const [highlightEventId, setHighlightEventId] = useState(null)
 
   const canonicalId = useMemo(() => {
     const raw = projectIdParam != null ? decodeURIComponent(projectIdParam).trim() : ""
@@ -56,7 +57,25 @@ export function ProjectPage() {
 
   useEffect(() => {
     setActiveTab("Overview")
+    setHighlightEventId(null)
   }, [canonicalId])
+
+  // Handle timeline post - switch to History tab and highlight the event
+  const handleTimelinePosted = useCallback((eventId) => {
+    setActiveTab("History")
+    setHighlightEventId(eventId)
+    // Clear highlight after animation completes
+    setTimeout(() => {
+      setHighlightEventId(null)
+    }, 3000)
+  }, [])
+
+  // Pass handler up to workspace layout for chat window
+  useEffect(() => {
+    if (onTimelinePosted) {
+      onTimelinePosted(handleTimelinePosted)
+    }
+  }, [onTimelinePosted, handleTimelinePosted])
 
   if (projects === null) {
     return (
@@ -201,7 +220,12 @@ export function ProjectPage() {
           {activeTab === "History" && (
             <div className="w-full shrink-0 px-[44px] pb-[40px] pt-[24px]">
               <div className="mx-auto w-full max-w-[740px]">
-                <DocumentHistoryPlaceholder recordKind="project" recordId={project.id} history={project.history} />
+                <DocumentHistoryPlaceholder
+                  recordKind="project"
+                  recordId={project.id}
+                  history={project.history}
+                  highlightEventId={highlightEventId}
+                />
               </div>
             </div>
           )}

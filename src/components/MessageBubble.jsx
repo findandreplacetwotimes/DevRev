@@ -9,6 +9,64 @@ const TEXT_STYLE = {
   fontFeatureSettings: "'lnum' 1, 'tnum' 1",
 }
 
+const TOOLTIP_STYLE = {
+  fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+  fontSize: "11px",
+  lineHeight: "14px",
+  fontVariationSettings: '"wght" 460',
+}
+
+/** Polished tooltip with micro-interaction and arcade design system styling */
+function Tooltip({ text, children }) {
+  const [show, setShow] = useState(false)
+  const timeoutRef = useRef(null)
+
+  const handleMouseEnter = () => {
+    timeoutRef.current = setTimeout(() => setShow(true), 400)
+  }
+
+  const handleMouseLeave = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    setShow(false)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
+
+  return (
+    <div className="relative inline-flex" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      {children}
+      {show && (
+        <div
+          className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-[8px] bg-[var(--foreground-primary)] px-[10px] py-[5px] text-white shadow-[0_2px_8px_rgba(0,0,0,0.15)] animate-tooltip-in"
+          style={{
+            ...TOOLTIP_STYLE,
+            boxShadow: '0 2px 8px rgba(33, 30, 32, 0.18), 0 0 0 0.5px rgba(255, 255, 255, 0.1) inset',
+          }}
+        >
+          {text}
+          <div
+            className="absolute left-1/2 top-full -translate-x-1/2"
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: '5px solid transparent',
+              borderRight: '5px solid transparent',
+              borderTop: '5px solid var(--foreground-primary)',
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** Figma `6003:6841` — 18×18 chip for group-chat inbound rows (`6003:6852`). */
 function GroupMessageAvatar({ initial = "M", isAgent = false }) {
   if (isAgent) {
@@ -64,6 +122,7 @@ export function MessageBubble({
   const textRef = useRef(null)
   const [isManyLines, setIsManyLines] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const [isPosted, setIsPosted] = useState(false)
   const isGroupPerson = type === "groupPerson"
   const isPerson = type === "person"
   const isInbound = isPerson || isGroupPerson
@@ -125,17 +184,52 @@ export function MessageBubble({
         />
       </span>
       {canPostToTimeline && isHovered && (
-        <button
-          type="button"
-          onClick={onPostToTimeline}
-          className="absolute right-[-8px] top-[-8px] z-10 flex size-[24px] items-center justify-center rounded-full bg-white shadow-md hover:bg-gray-50 active:bg-gray-100"
-          aria-label="Post to timeline"
-          title="Post to timeline"
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="text-gray-600">
-            <path d="M7 2v10M3 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
+        <div className="absolute bottom-[-28px] left-0 z-10 flex gap-[8px] p-[4px]">
+          <Tooltip text="Copy message">
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(text)
+              }}
+              className="flex size-[24px] items-center justify-center text-[#6B7280] hover:text-[#374151] hover:scale-110 active:scale-100 transition-all duration-150"
+              aria-label="Copy message"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <rect x="5" y="5" width="9" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M3 10V2a1 1 0 011-1h6" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+            </button>
+          </Tooltip>
+          <Tooltip text={isPosted ? "Posted!" : "Post to timeline"}>
+            <button
+              type="button"
+              onClick={() => {
+                if (onPostToTimeline) {
+                  onPostToTimeline()
+                  setIsPosted(true)
+                  setTimeout(() => setIsPosted(false), 1500)
+                }
+              }}
+              className={`flex size-[24px] items-center justify-center hover:scale-110 active:scale-100 transition-all duration-150 ${
+                isPosted
+                  ? "text-[hsl(259,94%,44%)] animate-post-success"
+                  : "text-[#6B7280] hover:text-[#374151]"
+              }`}
+              aria-label="Post to timeline"
+            >
+              {isPosted ? (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M3 8l3 3 7-7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 10V3m0 0L5 6m3-3l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 10v3a1 1 0 001 1h8a1 1 0 001-1v-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
+          </Tooltip>
+        </div>
       )}
     </div>
   )

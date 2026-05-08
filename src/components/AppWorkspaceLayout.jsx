@@ -78,6 +78,7 @@ export function AppWorkspaceChrome() {
   const [chatVariant, setChatVariant] = useState("build-team")
   const layoutRef = useRef(null)
   const dragStateRef = useRef(null)
+  const timelinePostedHandlerRef = useRef(null)
 
   const chatPanelOpenRef = useRef(chatPanelOpen)
   const recordPanelOpenRef = useRef(recordPanelOpen)
@@ -295,9 +296,21 @@ export function AppWorkspaceChrome() {
     ensureChatPanelOpenPersist()
   }, [])
 
+  // Register timeline posted handler from ProjectPage
+  const registerTimelinePostedHandler = useCallback((handler) => {
+    timelinePostedHandlerRef.current = handler
+  }, [])
+
+  // Handle timeline posted from ChatWindow
+  const handleTimelinePosted = useCallback((eventId) => {
+    if (timelinePostedHandlerRef.current) {
+      timelinePostedHandlerRef.current(eventId)
+    }
+  }, [])
+
   const workspaceOutletContext = useMemo(
-    () => ({ openProjectChat, openBuildTeamChat }),
-    [openProjectChat, openBuildTeamChat]
+    () => ({ openProjectChat, openBuildTeamChat, onTimelinePosted: registerTimelinePostedHandler }),
+    [openProjectChat, openBuildTeamChat, registerTimelinePostedHandler]
   )
 
   /** Build team → chat lane only (person). Does not navigate or change record panel — same as Computer for “chat-only”. */
@@ -373,6 +386,7 @@ export function AppWorkspaceChrome() {
             variant={chatVariant}
             flexFill={chatFillsRemainder}
             projectId={chatVariant === "chat-project" ? currentProjectId : null}
+            onTimelinePosted={handleTimelinePosted}
           />
         ) : null}
 

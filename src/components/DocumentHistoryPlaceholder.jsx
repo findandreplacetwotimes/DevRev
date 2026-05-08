@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { HistoryDetailItem, HistoryItem, HistoryTimelineGroup } from "./HistoryItem"
 import { Timestamp } from "./Timestamp"
 
@@ -196,7 +196,7 @@ const PRESETS = [
   },
 ]
 
-export function DocumentHistoryPlaceholder({ history = null, recordKind = "issue", recordId }) {
+export function DocumentHistoryPlaceholder({ history = null, recordKind = "issue", recordId, highlightEventId = null }) {
   const preset = useMemo(() => {
     const key = `${recordKind}:${recordId ?? ""}`
     const h = stableHash(key) ^ stableHash(String(recordId ?? "").split("").reverse().join(""))
@@ -231,6 +231,14 @@ export function DocumentHistoryPlaceholder({ history = null, recordKind = "issue
     return groups
   }, [history, hasRealHistory])
 
+  // Scroll to highlighted event when it changes
+  const highlightedRef = useRef(null)
+  useEffect(() => {
+    if (highlightEventId && highlightedRef.current) {
+      highlightedRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [highlightEventId])
+
   return (
     <section className="w-full" aria-label={hasRealHistory ? "History timeline" : "Placeholder history timeline (preview only)"} role={hasRealHistory ? "region" : "presentation"}>
       {hasRealHistory ? (
@@ -238,24 +246,35 @@ export function DocumentHistoryPlaceholder({ history = null, recordKind = "issue
         groupedHistory.map((group, gi) => (
           <div key={gi} className={gi > 0 ? "mt-[24px]" : ""}>
             <HistoryTimelineGroup timestamp={<Timestamp datePart={group.timestamp.datePart} timePart={group.timestamp.timePart} />}>
-              {group.items.map((item) =>
-                item.type === "transition" ? (
-                  <HistoryItem
+              {group.items.map((item) => {
+                const isHighlighted = item.id === highlightEventId
+                return item.type === "transition" ? (
+                  <div
                     key={item.id}
-                    actorInitial={item.actorInitial}
-                    attribute={item.attribute}
-                    fromValue={item.fromValue}
-                    toValue={item.toValue}
-                  />
+                    ref={isHighlighted ? highlightedRef : null}
+                    className={isHighlighted ? "animate-highlight" : ""}
+                  >
+                    <HistoryItem
+                      actorInitial={item.actorInitial}
+                      attribute={item.attribute}
+                      fromValue={item.fromValue}
+                      toValue={item.toValue}
+                    />
+                  </div>
                 ) : (
-                  <HistoryDetailItem
+                  <div
                     key={item.id}
-                    actorInitial={item.actorInitial}
-                    attribute={item.attribute}
-                    detail={item.detail}
-                  />
+                    ref={isHighlighted ? highlightedRef : null}
+                    className={isHighlighted ? "animate-highlight" : ""}
+                  >
+                    <HistoryDetailItem
+                      actorInitial={item.actorInitial}
+                      attribute={item.attribute}
+                      detail={item.detail}
+                    />
+                  </div>
                 )
-              )}
+              })}
             </HistoryTimelineGroup>
           </div>
         ))

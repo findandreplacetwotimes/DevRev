@@ -55,3 +55,56 @@ select {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Timeline highlight animation - fades from yellow to transparent */
+@keyframes highlight-fade {
+  0% {
+    background-color: hsl(48 100% 85%);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-highlight {
+  animation: highlight-fade 2.5s ease-out forwards;
+  border-radius: 4px;
+  padding: 2px 0;
+  margin: -2px 0;
+}
+
+/* Tooltip fade-in animation with subtle scale */
+@keyframes tooltip-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 4px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.animate-tooltip-in {
+  animation: tooltip-in 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Post to timeline success feedback */
+@keyframes post-success {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-post-success {
+  animation: post-success 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
