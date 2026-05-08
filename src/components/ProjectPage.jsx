@@ -17,29 +17,13 @@ import { Page } from "./Page"
 import { TabPageTitle } from "./TabPageTitle"
 import { TextEdit } from "./TextEdit"
 import { TextEditTitle } from "./TextEditTitle"
+import { ChatToggleIcon } from "./ChatToggleIcon"
 import { DocumentHistoryPlaceholder } from "./DocumentHistoryPlaceholder"
 import { ProjectMilestonesOverview } from "./ProjectMilestonesOverview"
 
-function DiscussGlyph() {
-  return (
-    <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
-      <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[999px] border border-[#eceaeb] bg-white" />
-      <span
-        className="relative z-[1] inline-flex h-[11px] w-[18px] items-center justify-center text-center text-[9.9px] text-[#737072]"
-        style={{
-          fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-          fontVariationSettings: '"wght" 520',
-        }}
-      >
-        17
-      </span>
-    </span>
-  )
-}
-
 export function ProjectPage() {
   const { projectId: projectIdParam } = useParams()
-  const { openProjectChat } = useOutletContext() ?? {}
+  const { toggleProjectChat, chatPanelOpen } = useOutletContext() ?? {}
   const { projects, issues, patchProject, patchIssue } = useIssues()
   const [activeTab, setActiveTab] = useState("Overview")
 
@@ -124,9 +108,9 @@ export function ProjectPage() {
         <Control
           type="leading"
           label="Discuss"
-          leadingSlot={<DiscussGlyph />}
-          aria-label="Open project chat"
-          onClick={() => openProjectChat?.()}
+          leadingSlot={<ChatToggleIcon isOpen={chatPanelOpen} />}
+          aria-label="Toggle project chat"
+          onClick={() => toggleProjectChat?.()}
         />
       }
       metaSlot={

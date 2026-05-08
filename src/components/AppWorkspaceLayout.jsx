@@ -184,15 +184,15 @@ export function AppWorkspaceChrome() {
   const selectedNavItemId = issueFromThreeLevelPath
     ? "projects"
     : pathname.startsWith("/issues")
-      ? "issues"
+      ? "build-issues"
     : pathname.startsWith("/projects")
       ? "projects"
     : pathname.startsWith("/sprints")
-      ? "sprints"
+      ? "build-sprints"
     : pathname.startsWith("/about")
-      ? "about"
+      ? "build-about"
     : pathname.startsWith("/team-members")
-      ? "about"
+      ? "build-about"
       : null
 
   const toggleChatPanel = () => {
@@ -267,18 +267,16 @@ export function AppWorkspaceChrome() {
     })
   }
 
-  const openProjectChat = useCallback(() => {
+  const toggleProjectChat = useCallback(() => {
     setChatVariant("chat-project")
     setChatPanelOpen((prev) => {
-      if (!prev) {
-        try {
-          window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        return true
+      const next = !prev
+      try {
+        window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+      } catch {
+        /* ignore */
       }
-      return prev
+      return next
     })
   }, [])
 
@@ -288,15 +286,20 @@ export function AppWorkspaceChrome() {
   }, [])
 
   const workspaceOutletContext = useMemo(
-    () => ({ openProjectChat, openBuildTeamChat }),
-    [openProjectChat, openBuildTeamChat]
+    () => ({
+      toggleProjectChat,
+      openBuildTeamChat,
+      chatPanelOpen
+    }),
+    [toggleProjectChat, openBuildTeamChat, chatPanelOpen]
   )
 
-  /** Build team → chat lane only (person). Does not navigate or change record panel — same as Computer for “chat-only”. */
+  /** Handle nav item selection with new hierarchy */
+  /** Handle nav item selection with new hierarchy */
   const handleNavSelectItem = (itemId) => {
-    if (itemId === "build-team") {
+    // Build chat (under Build team) → toggle chat panel
+    if (itemId === "build-chat") {
       setChatVariant("build-team")
-      // Toggle chat panel open/closed
       setChatPanelOpen((prev) => {
         const next = !prev
         try {
@@ -308,14 +311,16 @@ export function AppWorkspaceChrome() {
       })
       return
     }
-    if (itemId.startsWith("chat-")) {
-      setChatVariant(itemId)
-      ensureChatPanelOpenPersist()
+
+    // Workspace items
+    if (itemId === "chats") {
+      // Placeholder - could open a chats overview
+      ensureRecordPanelOpen()
       return
     }
-    if (itemId === "issues") {
+    if (itemId === "initiatives") {
+      // Placeholder route
       ensureRecordPanelOpen()
-      navigate("/issues")
       return
     }
     if (itemId === "projects") {
@@ -323,16 +328,41 @@ export function AppWorkspaceChrome() {
       navigate("/projects")
       return
     }
-    if (itemId === "sprints") {
+    if (itemId === "views") {
+      // Placeholder route
+      ensureRecordPanelOpen()
+      return
+    }
+
+    // Build team items
+    if (itemId === "build-issues") {
+      ensureRecordPanelOpen()
+      navigate("/issues")
+      return
+    }
+    if (itemId === "build-roadmap") {
+      // Placeholder route
+      ensureRecordPanelOpen()
+      return
+    }
+    if (itemId === "build-sprints") {
       ensureRecordPanelOpen()
       navigate("/sprints")
       return
     }
-    if (itemId === "about") {
+    if (itemId === "build-about") {
       ensureRecordPanelOpen()
       navigate("/about")
       return
     }
+
+    // Legacy chat items (if any remain)
+    if (itemId.startsWith("chat-")) {
+      setChatVariant(itemId)
+      ensureChatPanelOpenPersist()
+      return
+    }
+
     /* Secondary nav (no route yet): show record canvas; leave chat lane as-is */
     ensureRecordPanelOpen()
   }
