@@ -181,8 +181,14 @@ export function AppWorkspaceChrome() {
     typeof location.state?.sourceProjectId === "string" &&
     location.state.sourceProjectId.trim().length > 0
 
+  // Extract project ID from URL for project space navigation
+  const projectIdMatch = pathname.match(/^\/projects\/([^/]+)/)
+  const urlProjectId = projectIdMatch ? projectIdMatch[1] : null
+
   const selectedNavItemId = issueFromThreeLevelPath
     ? "projects"
+    : urlProjectId
+      ? `project-${urlProjectId}`
     : pathname.startsWith("/issues")
       ? "build-issues"
     : pathname.startsWith("/projects")
@@ -356,6 +362,35 @@ export function AppWorkspaceChrome() {
       return
     }
 
+    // Project space navigation
+    if (itemId.startsWith("project-")) {
+      const projectChatMatch = itemId.match(/^project-(.+)-chat$/)
+      if (projectChatMatch) {
+        const projectId = projectChatMatch[1]
+        setChatVariant(`project-${projectId}`)
+        setChatPanelOpen((prev) => {
+          const next = !prev
+          try {
+            window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+          } catch {
+            /* ignore */
+          }
+          return next
+        })
+        ensureRecordPanelOpen()
+        navigate(`/projects/${projectId}`)
+        return
+      }
+
+      const projectMainMatch = itemId.match(/^project-(.+)$/)
+      if (projectMainMatch) {
+        const projectId = projectMainMatch[1]
+        ensureRecordPanelOpen()
+        navigate(`/projects/${projectId}`)
+        return
+      }
+    }
+
     // Legacy chat items (if any remain)
     if (itemId.startsWith("chat-")) {
       setChatVariant(itemId)
@@ -393,6 +428,7 @@ export function AppWorkspaceChrome() {
           onSelectItem={handleNavSelectItem}
           onComputerClick={handleComputerClick}
           chatPanelOpen={chatPanelOpen}
+          chatVariant={chatVariant}
           recordPanelOpen={recordPanelOpen}
           onToggleChatPanel={toggleChatPanel}
           onToggleRecordPanel={toggleRecordPanel}

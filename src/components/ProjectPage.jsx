@@ -104,15 +104,6 @@ export function ProjectPage() {
           ))}
         </div>
       }
-      headerAfterPagePills={
-        <Control
-          type="leading"
-          label="Discuss"
-          leadingSlot={<ChatToggleIcon isOpen={chatPanelOpen} />}
-          aria-label="Toggle project chat"
-          onClick={() => toggleProjectChat?.()}
-        />
-      }
       metaSlot={
         <div className="flex w-full min-w-0 flex-nowrap items-center gap-1">
           <OwnerSelector

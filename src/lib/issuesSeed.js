@@ -249,7 +249,9 @@ export function createInitialProjects() {
     {
       ...base[0],
       id: "Project-0001",
+      title: "Agentic Kanban",
       healthId: healthRotation[0],
+      isMember: true,
       milestones: [
         { id: "Project-0001:m1", title: "Milestone 1", dueDateId: "endOfWeek", healthId: "on-track" },
         { id: "Project-0001:m2", title: "Milestone 2", dueDateId: "endOfNextWeek", healthId: "at-risk" },
@@ -259,6 +261,7 @@ export function createInitialProjects() {
       ...base[1],
       id: "Project-0002",
       healthId: healthRotation[1],
+      isMember: false,
       milestones: [
         { id: "Project-0002:m1", title: "Milestone 1", dueDateId: null, healthId: "on-track" },
         { id: "Project-0002:m2", title: "Milestone 2", dueDateId: "tomorrow", healthId: "off-track" },
@@ -268,6 +271,7 @@ export function createInitialProjects() {
       ...base[2],
       id: "Project-0003",
       healthId: healthRotation[2],
+      isMember: false,
       milestones: [{ id: "Project-0003:m1", title: "Milestone 1", dueDateId: "today", healthId: "at-risk" }],
     },
   ]

@@ -18,6 +18,16 @@ const CHAT_META = {
   ai: { title: "Computer", iconName: "computer", avatarInitial: null },
 }
 
+function getChatMeta(variant) {
+  // Handle dynamic project chats
+  const projectMatch = variant.match(/^project-(.+)$/)
+  if (projectMatch) {
+    const projectId = projectMatch[1]
+    return { title: "Project chat", avatarInitial: projectId.slice(-2).toUpperCase() }
+  }
+  return CHAT_META[variant] || { title: "Chat", avatarInitial: null }
+}
+
 /** Chat column: fixed `width`, or `flexFill` to grow when the record panel is hidden. */
 export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
@@ -79,8 +89,8 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
   const isPersonChat = variant !== "ai"
   const activeVariant = variant
   const chatMessages = chatMessagesByVariant[activeVariant] ?? []
-  const meta = CHAT_META[activeVariant] ?? CHAT_META.ai
-  const isGroupChat = activeVariant === "build-team" || activeVariant === "chat-project"
+  const meta = getChatMeta(activeVariant)
+  const isGroupChat = activeVariant === "build-team" || activeVariant === "chat-project" || activeVariant.startsWith("project-")
 
   const handleSendMessage = async (text) => {
     const userId = `user-${Date.now()}`
