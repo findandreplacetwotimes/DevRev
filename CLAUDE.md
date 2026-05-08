@@ -87,6 +87,27 @@ React + Tailwind project management app with AI-powered chat capabilities. Build
 - Context preservation
 - Status: Planned but not implemented
 
+## Arcade Design System Integration (SHELVED)
+
+**Branch**: `worktree-design-system-polish` (2 commits, not merged to main)
+
+**What was done:**
+- Replaced 88+ hardcoded colors with Arcade tokens (`hsl(var(--husk-*))`, `hsl(var(--bg-layer-*))`)
+- Replaced 161+ arbitrary spacing with phi-ratio scale (`var(--spacing-global-*)`)
+- Copied Arcade CSS files (61KB) into `src/styles/arcade/`
+- 63 files modified across entire codebase
+
+**Why shelved:**
+- **Zero visible difference** in light mode - original hardcoded colors already matched Arcade
+- Adds complexity (61KB CSS, token maintenance) with no visual payoff
+- Main value would be dark mode support (not currently needed)
+
+**Key learning:**
+- CSS @import with absolute file paths doesn't work in Vite - must copy files into project or use npm package
+- Design system tokens are valuable for maintainability but not worth it if visual output is identical
+
+**Decision**: Keep branch for future dark mode work, don't merge to main
+
 ## Tech Stack
 
 - React 19 + Vite
