@@ -39,16 +39,16 @@ function loadChatWidth() {
 
 /** Never start with both panels hidden (blank canvas). */
 function loadInitialPanelOpen() {
-  const chat = loadBool(LS_CHAT_OPEN, true)
+  const chat = loadBool(LS_CHAT_OPEN, false)
   const record = loadBool(LS_RECORD_OPEN, true)
   if (!chat && !record) {
     try {
-      window.localStorage.setItem(LS_CHAT_OPEN, "true")
+      window.localStorage.setItem(LS_CHAT_OPEN, "false")
       window.localStorage.setItem(LS_RECORD_OPEN, "true")
     } catch {
       /* ignore */
     }
-    return { chat: true, record: true }
+    return { chat: false, record: true }
   }
   return { chat, record }
 }
@@ -193,8 +193,6 @@ export function AppWorkspaceChrome() {
       ? "about"
     : pathname.startsWith("/team-members")
       ? "about"
-      : chatVariant.startsWith("chat-") || chatVariant === "build-team"
-        ? chatVariant
       : null
 
   const toggleChatPanel = () => {
@@ -298,7 +296,16 @@ export function AppWorkspaceChrome() {
   const handleNavSelectItem = (itemId) => {
     if (itemId === "build-team") {
       setChatVariant("build-team")
-      ensureChatPanelOpenPersist()
+      // Toggle chat panel open/closed
+      setChatPanelOpen((prev) => {
+        const next = !prev
+        try {
+          window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+        } catch {
+          /* ignore */
+        }
+        return next
+      })
       return
     }
     if (itemId.startsWith("chat-")) {

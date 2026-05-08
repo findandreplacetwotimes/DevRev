@@ -32,7 +32,7 @@ function MeAvatar({ selected = false }) {
 }
 
 const PRIMARY_ITEMS = [
-  { id: "build-team", label: "Build team", iconName: "chat" },
+  { id: "build-team", label: "Build chat", iconName: "chat" },
   { id: "issues", label: "Issues", iconName: "page" },
   { id: "projects", label: "Projects", iconName: "page" },
   { id: "sprints", label: "Sprints", iconName: "page" },
@@ -171,8 +171,6 @@ export function NavPanel({
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
       <div className="flex w-[194px] flex-col gap-[4px]">
-        <MenuItem type="label" label="Build Team" fullWidth />
-
         {PRIMARY_ITEMS.map((item) => (
           <NavItem
             key={item.id}
