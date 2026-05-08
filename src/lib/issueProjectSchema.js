@@ -1,6 +1,6 @@
 /**
  * Shared Sprint / Stage values stored on Issue and Project.
- * Issue sprint: "Sprint 1".."Sprint 5".
+ * Sprint: `"Backlog"` or `"Sprint 1"`..`"Sprint 5"`.
  */
 
 export const ISSUE_DEFAULT_SPRINT = "Sprint 1"
@@ -8,7 +8,7 @@ export const ISSUE_DEFAULT_STAGE = "No stage"
 export const ISSUE_DEFAULT_PRIORITY = "None"
 
 export const STAGE_ALLOWED = ["No stage", "Triage", "In Progress", "In review"]
-export const SPRINT_ALLOWED = ["Sprint 1", "Sprint 2", "Sprint 3", "Sprint 4", "Sprint 5"]
+export const SPRINT_ALLOWED = ["Backlog", "Sprint 1", "Sprint 2", "Sprint 3", "Sprint 4", "Sprint 5"]
 export const PRIORITY_ALLOWED = ["None", "P0", "P1", "P2"]
 
 /**
@@ -18,6 +18,7 @@ export const PRIORITY_ALLOWED = ["None", "P0", "P1", "P2"]
 export function sanitizeSprint(raw) {
   if (typeof raw !== "string") return ISSUE_DEFAULT_SPRINT
   const t = raw.trim()
+  if (/^backlog$/i.test(t)) return "Backlog"
   const sprintNum = /^sprint\s+([1-5])$/i.exec(t)
   if (sprintNum) return `Sprint ${sprintNum[1]}`
   if (SPRINT_ALLOWED.includes(t)) return t

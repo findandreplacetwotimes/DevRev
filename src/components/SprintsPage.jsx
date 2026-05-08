@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useIssues } from "../context/IssuesContext"
 import { AppDocumentPageShell } from "./AppDocumentPageShell"
 import { Breadcrumbs } from "./Breadcrumbs"
@@ -47,9 +47,13 @@ function loadInitialFilters() {
 
 export function SprintsPage() {
   const { issues, sprints, patchSprint } = useIssues()
-  const initial = loadInitialFilters()
-  const [activeFilterId, setActiveFilterId] = useState(initial.activeFilterId)
-  const [filtersById, setFiltersById] = useState(initial.filtersById)
+  const persistedRef = useRef(null)
+  if (persistedRef.current === null) {
+    persistedRef.current = loadInitialFilters()
+  }
+  const persisted = persistedRef.current
+  const [activeFilterId, setActiveFilterId] = useState(persisted.activeFilterId)
+  const [filtersById, setFiltersById] = useState(persisted.filtersById)
   const activeFilter = filtersById[activeFilterId] ?? filtersById.filterA
   const sprintMap = useMemo(() => new Map((sprints ?? []).map((row) => [row.id, row])), [sprints])
   const sprintOptions = useMemo(() => (sprints ?? []).map((row) => row.id), [sprints])
@@ -108,7 +112,7 @@ export function SprintsPage() {
           </div>
         </div>
         <div className="mt-[24px] w-full min-w-0">
-          <Table rows={filtered} />
+          <Table rows={filtered} issueNavState={{ sourceSprints: true }} />
         </div>
       </div>
     </AppDocumentPageShell>

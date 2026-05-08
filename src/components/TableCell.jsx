@@ -37,6 +37,17 @@ const BODY_SMALL_STYLE = {
   fontVariationSettings: '"wght" 460',
 }
 
+/** Fixed width for `Issue-####` id strip in table text cells (Figma table). */
+const TICKET_ID_WIDTH_ISSUE_PX = 76
+/** Fixed width for `Project-####` id strip in table text cells. */
+const TICKET_ID_WIDTH_PROJECT_PX = 88
+
+function ticketIdStripWidthPx(ticketPrefix) {
+  if (ticketPrefix === "Issue") return TICKET_ID_WIDTH_ISSUE_PX
+  if (ticketPrefix === "Project") return TICKET_ID_WIDTH_PROJECT_PX
+  return TICKET_ID_WIDTH_ISSUE_PX
+}
+
 export function TableCell({
   className = "",
   type = "text",
@@ -130,6 +141,8 @@ export function TableCell({
   const selectionVariant =
     rowSelected === true ? "selected" : showSelectionControl === true ? "notSelected" : "hidden"
 
+  const ticketIdWidthPx = ticketIdStripWidthPx(ticketPrefix)
+
   return (
     <div
       className={`flex h-[48px] w-full min-w-0 items-center gap-1 overflow-visible border-b border-[#f2f2f3] ${showSelector ? "pl-0 pr-[20px]" : "px-0"} ${className}`}
@@ -142,7 +155,11 @@ export function TableCell({
         />
       ) : null}
       <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-visible">
-        <span className="inline-flex shrink-0 items-center whitespace-nowrap text-[var(--control-content-secondary)]">
+        <span
+          className="inline-flex shrink-0 items-center overflow-hidden text-ellipsis whitespace-nowrap text-[var(--control-content-secondary)]"
+          style={{ width: ticketIdWidthPx, minWidth: ticketIdWidthPx, maxWidth: ticketIdWidthPx }}
+          title={`${ticketPrefix}-${ticketNumber}`}
+        >
           <span style={TICKET_PREFIX_STYLE}>{ticketPrefix}</span>
           <span style={TICKET_NUM_STYLE}>-{ticketNumber}</span>
         </span>

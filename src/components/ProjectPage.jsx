@@ -8,8 +8,9 @@ import { isDueDateSlashCommand, resolveDueDateIdFromCommand } from "../lib/slash
 import { OWNERS } from "../lib/owners"
 import { BUILD_PAGE_TAB_IDS } from "../lib/topbarTabs"
 import { AppDocumentPageShell } from "./AppDocumentPageShell"
-import { Control } from "./Control"
 import { Breadcrumbs } from "./Breadcrumbs"
+import { Control } from "./Control"
+import { Icon } from "./Icon"
 import { DueDateSelector } from "./DueDateSelector"
 import { ProjectHealthSelector } from "./ProjectHealthSelector"
 import { OwnerSelector } from "./OwnerSelector"
@@ -19,23 +20,6 @@ import { TextEdit } from "./TextEdit"
 import { TextEditTitle } from "./TextEditTitle"
 import { DocumentHistoryPlaceholder } from "./DocumentHistoryPlaceholder"
 import { ProjectMilestonesOverview } from "./ProjectMilestonesOverview"
-
-function DiscussGlyph() {
-  return (
-    <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
-      <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[999px] border border-[#eceaeb] bg-white" />
-      <span
-        className="relative z-[1] inline-flex h-[11px] w-[18px] items-center justify-center text-center text-[9.9px] text-[#737072]"
-        style={{
-          fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-          fontVariationSettings: '"wght" 520',
-        }}
-      >
-        17
-      </span>
-    </span>
-  )
-}
 
 export function ProjectPage() {
   const { projectId: projectIdParam } = useParams()
@@ -124,7 +108,7 @@ export function ProjectPage() {
         <Control
           type="leading"
           label="Discuss"
-          leadingSlot={<DiscussGlyph />}
+          leadingSlot={<Icon name="project" />}
           aria-label="Open project chat"
           onClick={() => openProjectChat?.()}
         />

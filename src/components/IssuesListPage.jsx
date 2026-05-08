@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useIssues } from "../context/IssuesContext"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Control } from "./Control"
@@ -6,10 +6,31 @@ import { Page } from "./Page"
 import { TabPageTitle } from "./TabPageTitle"
 import { Table } from "./Table"
 
+const LS_ISSUES_ACTIVE_SECTION = "devrev.issues.activeSection.v1"
+
+function loadInitialIssuesSection() {
+  if (typeof window === "undefined") return "issues"
+  try {
+    const raw = window.localStorage.getItem(LS_ISSUES_ACTIVE_SECTION)
+    if (raw === "issues" || raw === "backlog") return raw
+  } catch {
+    /* ignore */
+  }
+  return "issues"
+}
+
 /** Issues backlog table (Figma issues hub). */
 export function IssuesListPage() {
   const { issues } = useIssues()
-  const [activePageId, setActivePageId] = useState("issues")
+  const [activePageId, setActivePageId] = useState(loadInitialIssuesSection)
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LS_ISSUES_ACTIVE_SECTION, activePageId)
+    } catch {
+      /* quota / private mode */
+    }
+  }, [activePageId])
   const filteredRows = useMemo(() => {
     const rows = Array.isArray(issues) ? issues : []
     if (activePageId === "backlog") {

@@ -65,16 +65,22 @@ export function IssuePage() {
     typeof location.state?.sourceProjectId === "string" && location.state.sourceProjectId.trim().length > 0
       ? location.state.sourceProjectId.trim()
       : null
+  const sourceSprints = location.state?.sourceSprints === true
   const breadcrumbSegments = sourceProjectId
     ? [
         { label: "Projects", href: "/projects", iconName: "team", showIcon: true, showLabel: false },
         { label: sourceProjectId, href: `/projects/${encodeURIComponent(sourceProjectId)}`, showIcon: false },
         { label: issue.id, showIcon: false },
       ]
-    : [
-        { label: "Issues", href: "/issues", iconName: "team", showIcon: true },
-        { label: issue.id, showIcon: false },
-      ]
+    : sourceSprints
+      ? [
+          { label: "Sprints", href: "/sprints", iconName: "team", showIcon: true },
+          { label: issue.id, showIcon: false },
+        ]
+      : [
+          { label: "Issues", href: "/issues", iconName: "team", showIcon: true },
+          { label: issue.id, showIcon: false },
+        ]
 
   const runIssueSlashCommand = async ({ command, valueWithoutCommand }) => {
     if (!ENABLE_LOCAL_SLASH_DATE_COMMAND) return { handled: false }
@@ -100,7 +106,6 @@ export function IssuePage() {
       role="tabpanel"
       id={`issue-${issue.id.replace(/[^\w.-]+/g, "-")}-panel-${activeTab}`}
       aria-labelledby={activeTab === "Overview" ? titleId : `tab-${activeTab}`}
-      bodyClassName="pb-0"
       breadcrumbs={
         <Breadcrumbs
           segments={breadcrumbSegments}
@@ -148,72 +153,81 @@ export function IssuePage() {
         onPatchIssue={patchIssue}
         onClose={() => setIsAttributesModalOpen(false)}
       />
-      <div className="w-full">
-        <div className="mx-auto w-full max-w-[828px] px-[44px] pt-[60px]">
-          {activeTab === "Overview" ? (
-            <TextEditTitle
-              id={titleId}
-              placeholder={titlePlaceholderUi}
-              value={titleValue}
-              onChange={(next) => patchIssue(issue.id, { title: typeof next === "string" ? next : "" })}
-            />
-          ) : (
-            <TabPageTitle>{activeTab}</TabPageTitle>
-          )}
-        </div>
-
-        {activeTab === "Overview" && (
-          <>
-            <div className="mx-auto h-[24px] w-full max-w-[728px] bg-white" />
-            <div className="mx-auto w-full max-w-[728px]">
-              <TextEdit
-                value={issue.description}
-                onChange={(description) => patchIssue(issue.id, { description })}
-                onSlashCommand={runIssueSlashCommand}
-                onAiCommandSignal={runIssueAiSignal}
-              />
+      {/** Same body layout as `ProjectPage`: centered max width + stacked sections with px-[44px]. */}
+      <div className="mx-auto flex w-full min-w-0 max-w-[828px] flex-col">
+        <div className="flex w-full min-w-0 flex-col">
+          <div className="w-full shrink-0 px-[44px] pt-[60px]">
+            <div className="w-full">
+              {activeTab === "Overview" ? (
+                <TextEditTitle
+                  id={titleId}
+                  placeholder={titlePlaceholderUi}
+                  value={titleValue}
+                  onChange={(next) => patchIssue(issue.id, { title: typeof next === "string" ? next : "" })}
+                />
+              ) : (
+                <TabPageTitle>{activeTab}</TabPageTitle>
+              )}
             </div>
-          </>
-        )}
+          </div>
 
-        {activeTab === "Links" && parentProject ? (
-          <div className="mx-auto w-full max-w-[828px]">
-            <div className="w-full px-[44px]">
+          {activeTab === "Overview" && (
+            <div className="w-full shrink-0 px-[44px]">
               <div className="h-[24px] w-full" />
-              <div className="w-full min-w-0 py-[12px]">
-                <h2
-                  className="m-0 min-h-[32px] text-[22px] leading-[28px] font-semibold text-[var(--fg-neutral-prominent)]"
-                  style={{
-                    fontFamily: '"Chip Display Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontFeatureSettings: '"lnum" 1, "tnum" 1',
-                  }}
-                >
-                  Parent
-                </h2>
+              <div className="w-full">
+                <TextEdit
+                  value={issue.description}
+                  onChange={(description) => patchIssue(issue.id, { description })}
+                  onSlashCommand={runIssueSlashCommand}
+                  onAiCommandSignal={runIssueAiSignal}
+                />
               </div>
             </div>
-            <div className="flex w-full min-w-0 flex-col">
-              <ListItemRow
-                ticketPrefix={parentProjectChip?.ticketPrefix ?? "Project"}
-                ticketNumber={parentProjectChip?.ticketNumber || "?"}
-                text={parentProject.title}
-                owners={OWNERS}
-                ownerId={parentProject.ownerId}
-                onOwnerChange={() => {}}
-                dueDateId={parentProject.dueDateId}
-                onDueDateChange={() => {}}
-                showMore={false}
-                onRowClick={() => navigate(`/projects/${encodeURIComponent(parentProject.id)}`)}
-              />
-            </div>
-          </div>
-        ) : null}
+          )}
 
-        {activeTab === "History" && (
-          <div className="mx-auto w-full max-w-[728px] pb-[40px] pt-[24px]">
-            <DocumentHistoryPlaceholder recordKind="issue" recordId={issue.id} />
-          </div>
-        )}
+          {activeTab === "Links" && parentProject ? (
+            <>
+              <div className="w-full shrink-0 px-[44px]">
+                <div className="h-[24px] w-full" />
+                <div className="w-full min-w-0 py-[12px]">
+                  <h2
+                    className="m-0 min-h-[32px] text-[22px] leading-[28px] font-semibold text-[var(--fg-neutral-prominent)]"
+                    style={{
+                      fontFamily: '"Chip Display Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+                      fontFeatureSettings: '"lnum" 1, "tnum" 1',
+                    }}
+                  >
+                    Parent
+                  </h2>
+                </div>
+              </div>
+              <div className="mt-[24px] w-full min-w-0">
+                <div className="flex w-full min-w-0 flex-col">
+                  <ListItemRow
+                    ticketPrefix={parentProjectChip?.ticketPrefix ?? "Project"}
+                    ticketNumber={parentProjectChip?.ticketNumber || "?"}
+                    text={parentProject.title}
+                    owners={OWNERS}
+                    ownerId={parentProject.ownerId}
+                    onOwnerChange={() => {}}
+                    dueDateId={parentProject.dueDateId}
+                    onDueDateChange={() => {}}
+                    showMore={false}
+                    onRowClick={() => navigate(`/projects/${encodeURIComponent(parentProject.id)}`)}
+                  />
+                </div>
+              </div>
+            </>
+          ) : null}
+
+          {activeTab === "History" && (
+            <div className="w-full shrink-0 px-[44px] pb-[40px] pt-[24px]">
+              <div className="mx-auto w-full max-w-[740px]">
+                <DocumentHistoryPlaceholder recordKind="issue" recordId={issue.id} />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </AppDocumentPageShell>
   )

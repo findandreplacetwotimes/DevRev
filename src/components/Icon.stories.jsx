@@ -31,6 +31,7 @@ const meta = {
         "arrowUp",
         "arrowRight",
         "page",
+        "project",
         "agent",
         "inbox",
         "discover",
@@ -126,6 +127,13 @@ export const ArrowRight = {
 export const Page = {
   args: {
     name: "page",
+  },
+}
+
+/** Figma `6044:7714` — Icons/Project (nav), 28×28. */
+export const Project = {
+  args: {
+    name: "project",
   },
 }
 

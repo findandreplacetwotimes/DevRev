@@ -13,7 +13,7 @@ const LABEL_STYLE = {
 
 /**
  * Chat column title row (Figma `5893:38592` Chat Title — 56px rail, leading pictogram + label).
- * Person / project lanes use the same grey chip avatar as `NavPanel` CHATS; build + Computer use icons.
+ * Person DMs use grey `ChatAvatar`; build / computer / project chat use `Icon` (`project` = Figma `6044:7714`).
  */
 export function ChatHeader({ title = "Build chat", iconName = "chat", avatarInitial = null }) {
   return (

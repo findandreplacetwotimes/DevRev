@@ -13,6 +13,14 @@ const LS_CHAT_WIDTH = "devrev.workspace.chatWidth.v1"
 const LS_CHAT_OPEN = "devrev.workspace.chatPanelOpen.v1"
 const LS_RECORD_OPEN = "devrev.workspace.recordPanelOpen.v1"
 
+function navItemFromPathname(pathname) {
+  if (pathname.startsWith("/issues")) return "issues"
+  if (pathname.startsWith("/projects")) return "projects"
+  if (pathname.startsWith("/sprints")) return "sprints"
+  if (pathname.startsWith("/about") || pathname.startsWith("/team-members")) return "about"
+  return null
+}
+
 function loadBool(key, defaultVal) {
   if (typeof window === "undefined") return defaultVal
   try {
@@ -73,6 +81,9 @@ export function AppWorkspaceChrome() {
   const [chatWidth, setChatWidth] = useState(loadChatWidth)
   const [chatPanelOpen, setChatPanelOpen] = useState(panelsInitial.chat)
   const [recordPanelOpen, setRecordPanelOpen] = useState(panelsInitial.record)
+  const [selectedNavItemId, setSelectedNavItemId] = useState(
+    () => navItemFromPathname(location.pathname) ?? "build-team"
+  )
 
   /** `person` chats use LLM as teammate; `ai` uses computer mode. */
   const [chatVariant, setChatVariant] = useState("build-team")
@@ -175,27 +186,12 @@ export function AppWorkspaceChrome() {
     }
   }, [chatPanelOpen, recordPanelOpen])
 
-  const pathname = location.pathname
-  const issueFromThreeLevelPath =
-    pathname.startsWith("/issues") &&
-    typeof location.state?.sourceProjectId === "string" &&
-    location.state.sourceProjectId.trim().length > 0
-
-  const selectedNavItemId = issueFromThreeLevelPath
-    ? "projects"
-    : pathname.startsWith("/issues")
-      ? "issues"
-    : pathname.startsWith("/projects")
-      ? "projects"
-    : pathname.startsWith("/sprints")
-      ? "sprints"
-    : pathname.startsWith("/about")
-      ? "about"
-    : pathname.startsWith("/team-members")
-      ? "about"
-      : chatVariant.startsWith("chat-") || chatVariant === "build-team"
-        ? chatVariant
-      : null
+  useEffect(() => {
+    const routeNavItem = navItemFromPathname(location.pathname)
+    if (routeNavItem) {
+      setSelectedNavItemId(routeNavItem)
+    }
+  }, [location.pathname])
 
   const toggleChatPanel = () => {
     setChatPanelOpen((prev) => {
@@ -271,6 +267,7 @@ export function AppWorkspaceChrome() {
 
   const openProjectChat = useCallback(() => {
     setChatVariant("chat-project")
+    setSelectedNavItemId("chat-project")
     setChatPanelOpen((prev) => {
       if (!prev) {
         try {
@@ -286,6 +283,7 @@ export function AppWorkspaceChrome() {
 
   const openBuildTeamChat = useCallback(() => {
     setChatVariant("build-team")
+    setSelectedNavItemId("build-team")
     ensureChatPanelOpenPersist()
   }, [])
 
@@ -296,6 +294,7 @@ export function AppWorkspaceChrome() {
 
   /** Build team → chat lane only (person). Does not navigate or change record panel — same as Computer for “chat-only”. */
   const handleNavSelectItem = (itemId) => {
+    setSelectedNavItemId(itemId)
     if (itemId === "build-team") {
       setChatVariant("build-team")
       ensureChatPanelOpenPersist()

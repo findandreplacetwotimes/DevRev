@@ -1,5 +1,7 @@
 /** SVG glyphs from Figma (App — Arcade v0.3 SOR). Arrow.right `6003:7021`: `Icons/Arrow.up` rotated 90° in 28×28. */
 const ICON_MAP = {
+  /** Nav / project chip — Figma `6044:7714` Icons/Project, 28×28. */
+  project: "/icons/project-nav.png",
   team: "/icons/team-bolt.svg",
   calendar: "/icons/calendar.svg",
   search: "/icons/search.svg",
@@ -27,6 +29,19 @@ const ICON_MAP = {
 export function Icon({ name = "team", className = "", size = "default" }) {
   const isLarge = size === "large"
   const wrap = `relative inline-flex ${isLarge ? "size-[40px]" : "size-[28px]"} shrink-0 overflow-hidden ${className}`
+
+  if (name === "project") {
+    return (
+      <span className={wrap}>
+        <img
+          src={ICON_MAP.project}
+          alt=""
+          className="pointer-events-none absolute left-0 top-0 size-[28px] max-w-none select-none object-contain"
+          draggable={false}
+        />
+      </span>
+    )
+  }
 
   if (name === "team") {
     return (

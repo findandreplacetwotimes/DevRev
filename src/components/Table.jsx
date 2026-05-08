@@ -108,7 +108,7 @@ function fitColumnWidths(widths, containerInnerWidth) {
   return out
 }
 
-export function Table({ className = "", rows = null }) {
+export function Table({ className = "", rows = null, issueNavState = null }) {
   const navigate = useNavigate()
   const { issues, patchIssue } = useIssues()
   const [columnWidths, setColumnWidths] = useState(loadStoredColumnWidths)
@@ -322,7 +322,10 @@ export function Table({ className = "", rows = null }) {
               toggleRowSelected(issue.id)
               return
             }
-            navigate(`/issues/${encodeURIComponent(issue.id)}`)
+            navigate(
+              `/issues/${encodeURIComponent(issue.id)}`,
+              issueNavState != null && typeof issueNavState === "object" ? { state: issueNavState } : undefined
+            )
           }
 
           return (

@@ -32,15 +32,15 @@ function MeAvatar({ selected = false }) {
 }
 
 const PRIMARY_ITEMS = [
-  { id: "build-team", label: "Build team", iconName: "chat" },
   { id: "issues", label: "Issues", iconName: "page" },
-  { id: "projects", label: "Projects", iconName: "page" },
   { id: "sprints", label: "Sprints", iconName: "page" },
+  { id: "projects", label: "Projects", iconName: "page" },
   { id: "about", label: "About", iconName: "page" },
 ]
 
 const CHAT_ITEMS = [
-  { id: "chat-project", label: "Project chat", initial: "17" },
+  { id: "build-team", label: "Build team", iconName: "chat" },
+  { id: "chat-project", label: "Project chat", iconName: "project" },
   { id: "chat-arjun", label: "Arjun Patel", initial: "A" },
   { id: "chat-sneha", label: "Sneha Sharma", initial: "S" },
   { id: "chat-rohan", label: "Rohan Verma", initial: "R" },
@@ -193,7 +193,8 @@ export function NavPanel({
           <NavItem
             key={item.id}
             label={item.label}
-            leading={<ChatAvatar initial={item.initial} />}
+            iconName={item.iconName ?? "page"}
+            leading={typeof item.iconName === "string" ? undefined : <ChatAvatar initial={item.initial} />}
             selected={currentSelectedItemId === item.id}
             className="w-full"
             onClick={() => handleSelectItem(item.id)}

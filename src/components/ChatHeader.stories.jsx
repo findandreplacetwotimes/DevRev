@@ -32,12 +32,22 @@ export const Computer = {
   render: Default.render,
 }
 
-/** Person / project lanes: grey chip avatar (same as nav CHATS list). */
+/** Person DMs: grey chip avatar (same as nav CHATS list). */
 export const PersonChat = {
   args: {
     title: "Arjun Patel",
     avatarInitial: "A",
     iconName: "chat",
+  },
+  render: Default.render,
+}
+
+/** Project chat lane — Figma project icon (`6044:7714`). */
+export const ProjectChat = {
+  args: {
+    title: "Project chat",
+    iconName: "project",
+    avatarInitial: null,
   },
   render: Default.render,
 }
