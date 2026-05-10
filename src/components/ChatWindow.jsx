@@ -246,6 +246,7 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
             const sameGroupPersonSender =
               isGroupChat &&
               message.role === "person" &&
+              previous != null &&
               previous.role === "person" &&
               (message.senderInitial ?? "") === (previous.senderInitial ?? "")
             const isConsecutiveSameSender = sameRole && (!isGroupChat || message.role !== "person" || sameGroupPersonSender)
