@@ -91,7 +91,15 @@ export function TableCell({
       <div className={`flex h-[48px] w-full min-w-0 items-center overflow-visible border-b border-[#f2f2f3] py-[8px] ${className}`}>
         <span className="inline-flex size-[28px] shrink-0 items-center justify-center">
           <span className="relative inline-flex size-[18px] items-center justify-center rounded-[999px] bg-[var(--control-bg-hover)]">
-            <span className="text-[9.9px] text-[var(--foreground-secondary)]">{teamInitial}</span>
+            <span
+              className="text-[9.9px] text-[var(--foreground-secondary)]"
+              style={{
+                fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontVariationSettings: '"wght" 560',
+              }}
+            >
+              {teamInitial}
+            </span>
           </span>
         </span>
         <div className="flex min-w-0 items-center">

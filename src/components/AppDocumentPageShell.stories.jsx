@@ -38,7 +38,7 @@ export const IssueTopbar = {
     const [activeTab, setActiveTab] = useState("Overview")
     const [ownerId, setOwnerId] = useState(OWNERS[0]?.id ?? null)
     const [dueDateId, setDueDateId] = useState("today")
-    const tabs = ["Overview", "Links", "History"]
+    const tabs = ["Overview", "Links", "Activity"]
 
     return (
       <div className="h-screen w-full bg-white">
@@ -72,7 +72,7 @@ export const ProjectTopbar = {
     const [ownerId, setOwnerId] = useState(OWNERS[0]?.id ?? null)
     const [dueDateId, setDueDateId] = useState("today")
     const [healthId, setHealthId] = useState("on-track")
-    const tabs = ["Overview", "Brief", "Scope", "Links", "History"]
+    const tabs = ["Overview", "Brief", "Scope", "Links", "Activity"]
 
     return (
       <div className="h-screen w-full bg-white">

@@ -24,21 +24,40 @@ const ICON_MAP = {
   chevronDown: "/icons/chevron-down.svg",
   more: "/icons/more-horizontal.svg",
   page: "/icons/page.svg",
+  /** Figma `6069:8208` — Icons/Reply, Size=Micro (22×22 frame). */
+  reply: "/icons/reply.svg",
 }
 
 export function Icon({ name = "team", className = "", size = "default" }) {
   const isLarge = size === "large"
-  const wrap = `relative inline-flex ${isLarge ? "size-[40px]" : "size-[28px]"} shrink-0 overflow-hidden ${className}`
+  const isMicro = size === "micro"
+  const wrap = `relative inline-flex ${isMicro ? "size-[22px]" : isLarge ? "size-[40px]" : "size-[28px]"} shrink-0 overflow-hidden ${className}`
+
+  /** Centered glyph: 14×14 in micro (22 rail), 20×20 in large, 16×16 default — Figma Arcade icon grid. */
+  const centeredGlyph = isLarge ? "size-[20px]" : isMicro ? "size-[14px]" : "size-[16px]"
 
   if (name === "project") {
+    const imgCls = isMicro
+      ? "pointer-events-none absolute left-1/2 top-1/2 size-[18px] max-w-none -translate-x-1/2 -translate-y-1/2 select-none object-contain"
+      : "pointer-events-none absolute left-0 top-0 size-[28px] max-w-none select-none object-contain"
     return (
       <span className={wrap}>
-        <img
-          src={ICON_MAP.project}
-          alt=""
-          className="pointer-events-none absolute left-0 top-0 size-[28px] max-w-none select-none object-contain"
-          draggable={false}
-        />
+        <img src={ICON_MAP.project} alt="" className={imgCls} draggable={false} />
+      </span>
+    )
+  }
+
+  if (name === "reply") {
+    return (
+      <span className={wrap}>
+        <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${centeredGlyph}`}>
+          <img
+            src={ICON_MAP.reply}
+            alt=""
+            className="absolute inset-0 block size-full max-w-none select-none"
+            draggable={false}
+          />
+        </span>
       </span>
     )
   }
@@ -155,11 +174,7 @@ export function Icon({ name = "team", className = "", size = "default" }) {
   if (name === "plus") {
     return (
       <span className={wrap}>
-        <span
-          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${
-            isLarge ? "size-[20px]" : "size-[16px]"
-          }`}
-        >
+        <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${centeredGlyph}`}>
           <img
             src={isLarge ? ICON_MAP.plus : ICON_MAP.plusSmall}
             alt=""
@@ -174,11 +189,7 @@ export function Icon({ name = "team", className = "", size = "default" }) {
   if (name === "arrowUp") {
     return (
       <span className={wrap}>
-        <span
-          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${
-            isLarge ? "size-[20px]" : "size-[16px]"
-          }`}
-        >
+        <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${centeredGlyph}`}>
           <img
             src={isLarge ? ICON_MAP.arrowUpLarge : ICON_MAP.arrowUp}
             alt=""
@@ -193,11 +204,7 @@ export function Icon({ name = "team", className = "", size = "default" }) {
   if (name === "arrowRight") {
     return (
       <span className={wrap}>
-        <span
-          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${
-            isLarge ? "size-[20px]" : "size-[16px]"
-          }`}
-        >
+        <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${centeredGlyph}`}>
           <span className="relative block size-full rotate-90">
             <img
               src={isLarge ? ICON_MAP.arrowUpLarge : ICON_MAP.arrowUp}
@@ -216,9 +223,7 @@ export function Icon({ name = "team", className = "", size = "default" }) {
       <span className={wrap}>
         {/* Table row `Selector`: Figma ~`5938:41981` • 16×16 @ optical center */}
         <span
-          className={`absolute left-1/2 top-[calc(50%+0.5px)] -translate-x-1/2 -translate-y-1/2 ${
-            isLarge ? "size-[20px]" : "size-[16px]"
-          }`}
+          className={`absolute left-1/2 top-[calc(50%+0.5px)] -translate-x-1/2 -translate-y-1/2 ${centeredGlyph}`}
         >
           <img
             src={ICON_MAP[name]}
@@ -236,9 +241,7 @@ export function Icon({ name = "team", className = "", size = "default" }) {
       <span className={wrap}>
         {/* Figma `5906:39439` Icons/Clock (nav `5906:38856`): 16×16 centered, +0.5px optical offset */}
         <span
-          className={`absolute left-1/2 top-[calc(50%+0.5px)] -translate-x-1/2 -translate-y-1/2 ${
-            isLarge ? "size-[20px]" : "size-[16px]"
-          }`}
+          className={`absolute left-1/2 top-[calc(50%+0.5px)] -translate-x-1/2 -translate-y-1/2 ${centeredGlyph}`}
         >
           <img
             src={ICON_MAP.clock}
@@ -256,11 +259,7 @@ export function Icon({ name = "team", className = "", size = "default" }) {
   return (
     <span className={wrap}>
       {/* Figma `5662:256708` etc.: glyph 16×16 @ (6,6) inside 28×28 */}
-      <span
-        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${
-          isLarge ? "size-[20px]" : "size-[16px]"
-        }`}
-      >
+      <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${centeredGlyph}`}>
         <img src={src} alt="" className="absolute inset-0 block size-full max-w-none select-none" draggable={false} />
       </span>
     </span>

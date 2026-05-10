@@ -11,7 +11,7 @@ function stableHash(str) {
 }
 
 /**
- * Static timeline blocks for History tab (Figma Build app / Page `6003:7781` — no data source, no actions).
+ * Static timeline blocks for Activity tab (Figma Build app / Page `6003:7781` — no data source, no actions).
  * `recordKind` + `recordId` pick a variant so each issue/project shows different placeholder copy.
  */
 const PRESETS = [
@@ -204,7 +204,7 @@ export function DocumentHistoryPlaceholder({ recordKind = "issue", recordId }) {
   }, [recordKind, recordId])
 
   return (
-    <section className="w-full" aria-label="Placeholder history timeline (preview only)" role="presentation">
+    <section className="w-full" aria-label="Placeholder activity timeline (preview only)" role="presentation">
       {preset.groups.map((group, gi) => (
         <div key={gi} className={gi > 0 ? "mt-[24px]" : ""}>
           <HistoryTimelineGroup timestamp={<Timestamp datePart={group.timestamp.datePart} timePart={group.timestamp.timePart} />}>

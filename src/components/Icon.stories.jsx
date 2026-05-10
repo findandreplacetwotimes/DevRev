@@ -30,6 +30,7 @@ const meta = {
         "plus",
         "arrowUp",
         "arrowRight",
+        "reply",
         "page",
         "project",
         "agent",
@@ -42,7 +43,7 @@ const meta = {
     },
     size: {
       control: "select",
-      options: ["default", "large"],
+      options: ["default", "large", "micro"],
     },
   },
 }
@@ -114,6 +115,14 @@ export const Plus = {
 export const ArrowUp = {
   args: {
     name: "arrowUp",
+  },
+}
+
+/** Figma `6069:8208` — Reply, Micro (22×22). */
+export const ReplyMicro = {
+  args: {
+    name: "reply",
+    size: "micro",
   },
 }
 

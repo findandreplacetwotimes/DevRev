@@ -220,7 +220,7 @@ export function IssuePage() {
             </>
           ) : null}
 
-          {activeTab === "History" && (
+          {activeTab === "Activity" && (
             <div className="w-full shrink-0 px-[44px] pb-[40px] pt-[24px]">
               <div className="mx-auto w-full max-w-[740px]">
                 <DocumentHistoryPlaceholder recordKind="issue" recordId={issue.id} />

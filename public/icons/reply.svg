@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <!-- Micro reply glyph: hook + arrow to the left -->
+  <path
+    d="M13.25 12.5V9.25C13.25 7.86 12.14 6.75 10.75 6.75H4.75M4.75 6.75L7.25 4.25M4.75 6.75L7.25 9.25"
+    stroke="#211E20"
+    stroke-width="1.1"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
