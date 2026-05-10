@@ -33,18 +33,19 @@ function AvatarIcon({ initial = "M", isAgent = false, agentId = null }) {
       iconSrc = "/icons/computer-chat.svg"
       bgColor = "#6366F1" // Jabuticaba purple for Computer
     } else if (agentId === "claude") {
-      iconSrc = "/icons/claude-logo.svg"
-      bgColor = "#D97757" // Claude orange/coral
+      iconSrc = "/icons/claude-logo.png"
+      bgColor = "#CC785C" // Claude orange/coral
     } else {
       iconSrc = "/icons/agent.svg"
       bgColor = "#6366F1" // Default purple for other agents
     }
 
-    const iconSize = agentId === "computer" ? "w-[8px] h-[6px]" : "w-[10px] h-[10px]"
+    const iconSize = agentId === "computer" ? "w-[8px] h-[6px]" : agentId === "claude" ? "w-[12px] h-[12px]" : "w-[10px] h-[10px]"
+    const filterStyle = agentId === "claude" ? {} : { filter: "brightness(0) invert(1)" }
     return (
       <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
         <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[999px] flex items-center justify-center" style={{ backgroundColor: bgColor }}>
-          <img src={iconSrc} alt="" className={iconSize} style={{ filter: "brightness(0) invert(1)" }} />
+          <img src={iconSrc} alt="" className={iconSize} style={filterStyle} />
         </span>
       </span>
     )
