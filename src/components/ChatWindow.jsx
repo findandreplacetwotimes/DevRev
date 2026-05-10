@@ -48,7 +48,7 @@ function generateWeeklyRundown(projectId) {
     ? `• ${weeklyData.openBlockers} open blocker${weeklyData.openBlockers > 1 ? 's' : ''} need attention`
     : '• No blockers'
 
-  return `📊 Weekly rundown for ${projectId}:
+  return `📊 Weekly Project Rundown:
 • ${weeklyData.projectCompletion}% complete
 • ${weeklyData.issuesClosed} issues closed this week
 ${blockerText}
