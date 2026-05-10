@@ -38,10 +38,11 @@ function Avatar({ name, variant = "regular", isAgent = false, agentId = null }) 
       bgColor = "#6366F1" // Default purple for other agents
     }
 
+    const iconSize = agentId === "computer" ? "w-[8px] h-[6px]" : "w-[10px] h-[10px]"
     return (
       <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
         <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[999px] flex items-center justify-center" style={{ backgroundColor: bgColor }}>
-          <img src={iconSrc} alt="" className="w-[10px] h-[10px]" style={{ filter: "brightness(0) invert(1)" }} />
+          <img src={iconSrc} alt="" className={iconSize} style={{ filter: "brightness(0) invert(1)" }} />
         </span>
       </span>
     )
