@@ -26,11 +26,21 @@ function Avatar({ name, variant = "regular", isAgent = false, agentId = null }) 
 
   // Agent avatars use icons instead of initials
   if (isAgent) {
-    const iconSrc = agentId === "computer" ? "/icons/computer-chat.svg" : "/icons/agent.svg"
-    const bgClass = isWhite ? "bg-[#6366F1]" : "bg-[#6366F1]" // Jabuticaba purple for agents
+    let iconSrc, bgColor
+    if (agentId === "computer") {
+      iconSrc = "/icons/computer-chat.svg"
+      bgColor = "#6366F1" // Jabuticaba purple for Computer
+    } else if (agentId === "claude") {
+      iconSrc = "/icons/claude-logo.svg"
+      bgColor = "#CC785C" // Claude orange/coral
+    } else {
+      iconSrc = "/icons/agent.svg"
+      bgColor = "#6366F1" // Default purple for other agents
+    }
+
     return (
       <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
-        <span className={`absolute left-[5px] top-[5px] size-[18px] rounded-[999px] ${bgClass} flex items-center justify-center`}>
+        <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[999px] flex items-center justify-center" style={{ backgroundColor: bgColor }}>
           <img src={iconSrc} alt="" className="w-[10px] h-[10px]" style={{ filter: "brightness(0) invert(1)" }} />
         </span>
       </span>
