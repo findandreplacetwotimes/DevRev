@@ -16,13 +16,27 @@ const labelStyle = {
 const modalShadow =
   "0px 6px 13px rgba(0,0,0,0.10), 0px 23px 23px rgba(0,0,0,0.09), 0px 52px 31px rgba(0,0,0,0.05), 0px 92px 37px rgba(0,0,0,0.01), 0px 144px 40px rgba(0,0,0,0)"
 
-function Avatar({ name, variant = "regular" }) {
+function Avatar({ name, variant = "regular", isAgent = false, agentId = null }) {
   const initial = (name?.trim?.()?.[0] ?? "M").toUpperCase()
   const isWhite = variant === "white"
   /** White: border + white fill (emphasis / legacy). Regular: same as `MenuItem` AvatarIcon — subtle fill at rest, white on control hover. */
   const circleClass = isWhite
     ? "border border-white bg-white"
     : "bg-[var(--background-primary-subtle)] group-hover:border group-hover:border-white group-hover:bg-white group-hover/row:border group-hover/row:border-white group-hover/row:bg-white"
+
+  // Agent avatars use icons instead of initials
+  if (isAgent) {
+    const iconSrc = agentId === "computer" ? "/icons/computer-chat.svg" : "/icons/agent.svg"
+    const bgClass = isWhite ? "bg-[#6366F1]" : "bg-[#6366F1]" // Jabuticaba purple for agents
+    return (
+      <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
+        <span className={`absolute left-[5px] top-[5px] size-[18px] rounded-[999px] ${bgClass} flex items-center justify-center`}>
+          <img src={iconSrc} alt="" className="w-[10px] h-[10px]" style={{ filter: "brightness(0) invert(1)" }} />
+        </span>
+      </span>
+    )
+  }
+
   return (
     <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
       <span className={`absolute left-[5px] top-[5px] size-[18px] rounded-[999px] ${circleClass}`} />
@@ -130,6 +144,8 @@ export function OwnerSelector({
               state={selected ? "selected" : "rest"}
               label={owner.name}
               avatarInitial={ownerInitial(owner.name)}
+              isAgent={owner.isAgent ?? false}
+              agentId={owner.id}
               fullWidth
             />
           </button>
@@ -150,7 +166,12 @@ export function OwnerSelector({
         className={triggerClass}
       >
         {selectedOwner ? (
-          <Avatar name={selectedOwner.name} variant={rowSelected ? "white" : "regular"} />
+          <Avatar
+            name={selectedOwner.name}
+            variant={rowSelected ? "white" : "regular"}
+            isAgent={selectedOwner.isAgent ?? false}
+            agentId={selectedOwner.id}
+          />
         ) : isTableGreyEmpty ? null : appearance === "inline" ? (
           <span className="inline-flex size-[28px] shrink-0 items-center justify-center">
             <img src="/icons/person.svg" alt="" className="block size-[16px]" draggable={false} />

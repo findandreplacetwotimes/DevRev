@@ -25,7 +25,19 @@ export function MenuItemLabel({ label }) {
   )
 }
 
-function AvatarIcon({ initial = "M" }) {
+function AvatarIcon({ initial = "M", isAgent = false, agentId = null }) {
+  // Agent avatars use icons instead of initials
+  if (isAgent) {
+    const iconSrc = agentId === "computer" ? "/icons/computer-chat.svg" : "/icons/agent.svg"
+    return (
+      <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
+        <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[999px] bg-[#6366F1] flex items-center justify-center">
+          <img src={iconSrc} alt="" className="w-[10px] h-[10px]" style={{ filter: "brightness(0) invert(1)" }} />
+        </span>
+      </span>
+    )
+  }
+
   return (
     <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
       <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[999px] bg-[var(--background-primary-subtle)]" />
@@ -39,7 +51,7 @@ function AvatarIcon({ initial = "M" }) {
   )
 }
 
-export function MenuItem({ type = "leading", state = "rest", label = "Date", fullWidth = false, avatarInitial = "M" }) {
+export function MenuItem({ type = "leading", state = "rest", label = "Date", fullWidth = false, avatarInitial = "M", isAgent = false, agentId = null }) {
   const isHover = state === "hover"
   const isSelected = state === "selected"
   const isLabel = type === "label"
@@ -80,7 +92,7 @@ export function MenuItem({ type = "leading", state = "rest", label = "Date", ful
       ) : (
         <>
           <div className="inline-flex items-center">
-            {hasLeadingIcon && <AvatarIcon initial={avatarInitial} />}
+            {hasLeadingIcon && <AvatarIcon initial={avatarInitial} isAgent={isAgent} agentId={agentId} />}
             <MenuItemLabel label={label} />
           </div>
           {isSelected && <Icon name="check" />}
