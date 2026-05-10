@@ -370,7 +370,7 @@ export function NavPanel({
                   onClick={() => handleSelectItem(`project-${project.id}-chat`)}
                 />
                 <NavItem
-                  label="Main page"
+                  label="Scope"
                   iconName="page"
                   selected={currentSelectedItemId === `project-${project.id}`}
                   className="w-full h-[24px] text-[13px] px-[6px]"

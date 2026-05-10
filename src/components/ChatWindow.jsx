@@ -212,24 +212,24 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
     container.scrollTop = container.scrollHeight
   }, [chatMessages, activeVariant])
 
-  // Post weekly rundown once when opening a group chat
+  // Post weekly rundown once when opening the Agentic Kanban project chat
   useEffect(() => {
-    if (!isGroupChat) return
+    // Only post in the Agentic Kanban project chat (Project-0001)
+    const isAgenticKanbanChat = activeVariant === "project-Project-0001"
+    if (!isAgenticKanbanChat) return
 
-    // Only post once per chat variant per session
+    // Only post once per session
     if (hasPostedWeeklyRundown.current[activeVariant]) return
 
     // Post after a short delay (simulating Computer analyzing the project)
     const timer = setTimeout(() => {
-      const rundownMessage = generateWeeklyRundown(
-        activeVariant === "chat-project" ? "Project 17" : "Build Team"
-      )
+      const rundownMessage = generateWeeklyRundown("Agentic Kanban")
       postProactiveAgentMessage(rundownMessage)
       hasPostedWeeklyRundown.current[activeVariant] = true
     }, 2000) // 2 second delay
 
     return () => clearTimeout(timer)
-  }, [isGroupChat, activeVariant, postProactiveAgentMessage])
+  }, [activeVariant, postProactiveAgentMessage])
 
   return (
     <aside
