@@ -4,14 +4,6 @@ import { TextArea } from "./TextArea"
 import { getInlineSlashState, SLASH_LOADING_SUFFIX } from "../lib/slashCommandConfig"
 import { useSlashCommandWorkflow } from "../hooks/useSlashCommandWorkflow"
 
-const INPUT_TEXT_STYLE = {
-  fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-  fontSize: "13px",
-  lineHeight: "16px",
-  letterSpacing: "-0.13px",
-  fontVariationSettings: '"wght" 460',
-}
-
 export function MessageInput({ mode = "ai", initialValue = "", onSendMessage }) {
   const {
     value,

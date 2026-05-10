@@ -70,6 +70,7 @@ const preview = {
             "Menu",
             "TextEditTitle",
             "TextEdit",
+            "NakeAiStrip",
             "MessageInput",
             "MessageBubble",
             "AiMessageBubble",

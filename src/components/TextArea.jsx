@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { getInlineSlashState, SLASH_ACTIVE_COLOR, SLASH_TEXT_PROMINENT } from "../lib/slashCommandConfig"
-import { useInlineSuggestion } from "../hooks/useInlineSuggestion"
+import { getInlineSlashState, SLASH_TEXT_PROMINENT } from "../lib/slashCommandConfig"
+import { trimTrailingEmptyLines } from "../lib/trimTrailingEmptyLines"
 import { useSlashCommandWorkflow } from "../hooks/useSlashCommandWorkflow"
 
 const systemTextStyle = {
@@ -39,16 +39,6 @@ export function TextArea({
   } = workflow ?? internalWorkflow
   const inlineSlashState = useMemo(() => getInlineSlashState(value), [value])
   const hasInlineSlash = inlineSlashState.active
-  const [isCaretAtEnd, setIsCaretAtEnd] = useState(true)
-  const [isFocused, setIsFocused] = useState(false)
-  const { suggestion, clearSuggestion, acceptNextSuggestionWord } = useInlineSuggestion({
-    value,
-    loading,
-    isFocused,
-    isCaretAtEnd,
-    disabled: hasInlineSlash,
-    setValue,
-  })
 
   const autoResize = (element) => {
     if (!element) return
@@ -69,49 +59,25 @@ export function TextArea({
     element.focus()
     const end = element.value.length
     element.setSelectionRange(end, end)
-    setIsFocused(true)
-    setIsCaretAtEnd(true)
   }, [value, pendingFocusMainRef])
 
-  const updateCaretState = () => {
-    const element = textareaRef.current
-    if (!element) return
-    const atEnd = element.selectionStart === element.selectionEnd && element.selectionEnd === element.value.length
-    setIsCaretAtEnd(atEnd)
-    if (!atEnd) clearSuggestion()
-  }
-
   const handleFocus = () => {
-    setIsFocused(true)
     onFocusChange?.(true)
-    window.requestAnimationFrame(updateCaretState)
   }
 
   const handleKeyDown = async (event) => {
     if (onSubmit && event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
-      clearSuggestion()
       await onSubmit(value)
       return
     }
     if (event.key === "Tab" && event.ctrlKey) {
       event.preventDefault()
-      clearSuggestion()
       await runGrammarFix()
-      return
-    }
-    if (event.key === "Tab" && suggestion) {
-      event.preventDefault()
-      acceptNextSuggestionWord()
-      return
-    }
-    if (event.key === "Escape") {
-      clearSuggestion()
       return
     }
     if (event.key === "Enter" && event.metaKey) {
       event.preventDefault()
-      clearSuggestion()
       await runCommand()
     }
   }
@@ -137,8 +103,7 @@ export function TextArea({
           style={{ ...systemTextStyle, color: SLASH_TEXT_PROMINENT }}
         >
           {isEmpty ? <span className="text-[var(--control-content-secondary)]">{placeholder}</span> : beforeSlash}
-          {hasInlineSlash && <span style={{ color: SLASH_ACTIVE_COLOR }}>{slashSegment}</span>}
-          {suggestion && isCaretAtEnd && isFocused && !hasInlineSlash && <span className="text-[#8e8a8f]">{suggestion}</span>}
+          {hasInlineSlash && <span style={{ color: "rgba(71, 7, 209, 0.81)" }}>{slashSegment}</span>}
           {shouldPadMirror && "\n"}
         </div>
         <textarea
@@ -149,13 +114,10 @@ export function TextArea({
           onInput={(event) => autoResize(event.currentTarget)}
           onFocus={handleFocus}
           onBlur={() => {
-            setIsFocused(false)
             onFocusChange?.(false)
-            clearSuggestion()
+            const next = trimTrailingEmptyLines(value)
+            if (next !== value) setValue(next)
           }}
-          onClick={updateCaretState}
-          onKeyUp={updateCaretState}
-          onSelect={updateCaretState}
           onKeyDown={handleKeyDown}
           disabled={loading}
           className="relative w-full resize-none overflow-hidden bg-transparent text-transparent outline-none"

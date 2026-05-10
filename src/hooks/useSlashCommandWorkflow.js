@@ -141,11 +141,12 @@ ${textToFix}`
     }
   }
 
-  const runCommand = async () => {
+  const runCommand = async (inputOverride) => {
+    const input = inputOverride !== undefined && inputOverride !== null ? inputOverride : value
     setLoading(true)
     setErrorMessage("")
     try {
-      const { sourceText, command, replaceWithResult, valueWithoutCommand } = parseSlashCommand(value)
+      const { sourceText, command, replaceWithResult, valueWithoutCommand } = parseSlashCommand(input)
       const grammarMode = isGrammarCheckCommand(command)
 
       if (typeof executeLocalSlashCommand === "function") {
@@ -159,7 +160,7 @@ ${textToFix}`
           pendingFocusMainRef.current = true
           setFlaggedWords([])
           setValue(typeof local.nextValue === "string" ? local.nextValue : valueWithoutCommand)
-          return
+          return true
         }
       }
 
@@ -184,7 +185,7 @@ ${sourceText}`
         setFlaggedWords(Array.isArray(extracted) ? extracted.filter((item) => typeof item === "string") : [])
         pendingFocusMainRef.current = true
         setValue(valueWithoutCommand)
-        return
+        return true
       }
 
       const prompt = sourceText
@@ -236,23 +237,34 @@ ${command}`
           pendingFocusMainRef.current = true
           setValue(valueWithoutCommand)
           setFlaggedWords([])
-          return
+          return true
         }
         const nextText = typeof payload.text === "string" ? payload.text : sourceText
         pendingFocusMainRef.current = true
         setValue(replaceWithResult(nextText))
         setFlaggedWords([])
-        return
+        return true
       }
 
       pendingFocusMainRef.current = true
       setValue(replaceWithResult(response))
       setFlaggedWords([])
+      return true
     } catch (error) {
       setErrorMessage(error?.message || "AI request failed. Check API key and network.")
+      return false
     } finally {
       setLoading(false)
     }
+  }
+
+  /** Computer strip: run AI as a whole-page command without inserting `/…` into the main editor. */
+  const runComputerCommand = async (commandText) => {
+    const cmd = commandText.trim().replace(/^\//, "")
+    if (!cmd) return false
+    const base = value.trimEnd()
+    const synthetic = base === "" ? `/${cmd}` : `${base}\n/${cmd}`
+    return runCommand(synthetic)
   }
 
   return {
@@ -262,6 +274,7 @@ ${command}`
     updateMainText,
     updateCommandText,
     runCommand,
+    runComputerCommand,
     runGrammarFix,
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { getRandomDevTaskSample } from "../lib/devTaskPlaceholders"
+import { trimTrailingEmptyLines } from "../lib/trimTrailingEmptyLines"
 
 const TITLE_TYPOGRAPHY = {
   fontFamily: '"Chip Display Variable", "Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -66,6 +67,11 @@ export function TextEditTitle({
   const textareaBase =
     "w-full max-w-[740px] resize-none overflow-hidden bg-transparent outline-none placeholder:text-[var(--control-content-secondary)] "
 
+  const handleBlur = () => {
+    const next = trimTrailingEmptyLines(value)
+    if (next !== value) setValue(next)
+  }
+
   return (
     <section className="relative flex w-full max-w-[740px] min-w-0 flex-col items-stretch justify-center">
       <textarea
@@ -77,6 +83,7 @@ export function TextEditTitle({
         value={value}
         onChange={(event) => setValue(event.target.value)}
         onInput={(event) => autoResize(event.currentTarget)}
+        onBlur={handleBlur}
         style={{
           ...TITLE_TYPOGRAPHY,
           color: TEXT_PROMINENT,
