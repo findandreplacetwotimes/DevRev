@@ -152,7 +152,7 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
       style={{
         position: "fixed",
         right: "24px",
-        bottom: "24px",
+        bottom: "80px",
         width: "400px",
         height: "600px",
         transform: `translate(${position.x}px, ${position.y}px)`,
