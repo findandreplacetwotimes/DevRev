@@ -6,24 +6,27 @@ React + Tailwind project management app with AI-powered chat capabilities. Build
 
 ## Current Work
 
-### Active Branch: feat/nav-hierarchy ✅ READY FOR MERGE
-**PR**: https://github.com/findandreplacetwotimes/DevRev/pull/2
-**Status**: Complete with screenshots, ready for review
+### Active Branch: feat/project-chat-interactions 🚧 IN PROGRESS
+**Status**: Floating chat windows + invite flow complete, ready for project conversion feature
 
-Implemented Projects as Spaces architecture with hierarchical navigation:
-- **YOUR PROJECTS** section (non-collapsible, above teams) - projects with `isMember: true` show as expandable spaces
-- **YOUR TEAMS** section (renamed from Teams) - Build team shows Lobby (chat toggle), Issues, Roadmap, Sprints, About
-- **Chat toggle behavior** - each chat variant shows correct state independently
-- **Routing** - `/projects/:id` navigates to project space, project chat uses `project-{projectId}` variant
-- Removed Discuss button from project headers (chat access via nav)
+Implementing idea → collaboration → project journey:
+- **Floating Chat Windows** ✅ - Messenger-style windows with drag, minimize, messaging
+- **Invite Flow** ✅ - Add collaborators to chats with InvitePanel
+- **Arcade Design** ✅ - All components use design system tokens
+- **Convert to Project** ⏳ - Next: modal to convert chat → project
 
-**Files modified**: NavPanel.jsx, AppWorkspaceLayout.jsx, ProjectPage.jsx, ChatWindow.jsx, IssuesContext.jsx, issuesSeed.js
+**Files modified**: FloatingChatWindow.jsx, MinimizedChatTabs.jsx, InvitePanel.jsx, AppWorkspaceLayout.jsx, NavPanel.jsx, IssuesContext.jsx, aiClient.js, index.css
 
-**Next**: Merge PR after review
+**Next**: Convert to Project button + modal
 
 ---
 
-## Previous Branch: feat/project-chat-interactions
+## Previous Branch: feat/nav-hierarchy ✅ MERGED
+**PR**: https://github.com/findandreplacetwotimes/DevRev/pull/2
+
+---
+
+## Completed Features (feat/project-chat-interactions)
 
 ### Completed Features
 
@@ -94,6 +97,56 @@ Implemented Projects as Spaces architecture with hierarchical navigation:
 **Future Phases (marked for later):**
 - **Phase 2**: AI summarization before posting + preview dialog with editable summary
 - **Phase 3**: Multi-message selection + batch posting with combined summary
+
+#### 4. Floating Chat Windows ✅ COMPLETE
+- ✅ **Messenger-Style UI**
+  - White cards with Arcade design system
+  - Floating bottom-right position
+  - Draggable by header
+  - Multiple windows stack horizontally
+  
+- ✅ **Window Controls**
+  - Invite button (👤+) - opens InvitePanel
+  - Minimize (−) - becomes tab at bottom
+  - Close (×) - fully closes window
+  - Custom inline buttons with hover states
+  
+- ✅ **Message Sending**
+  - Text input with Arcade styling
+  - Send button (↑) - purple when active
+  - Enter key to send
+  - Auto-scroll to latest message
+  
+- ✅ **AI Integration**
+  - Computer responds via OpenRouter/OpenAI API
+  - Typing indicator (●●●) with animation
+  - Mock mode when no API key
+  - Human participants send mock responses
+  
+- ✅ **Minimized Tabs**
+  - White cards at bottom-right
+  - Show last message preview
+  - Click to restore window
+  - Close button on tab
+
+#### 5. Invite Flow ✅ COMPLETE
+- ✅ **InvitePanel Component**
+  - Full Arcade design system integration
+  - Search users with TextInput
+  - Add users to "pending" list
+  - Batch invite with confirmation
+  
+- ✅ **User Management**
+  - Mock user database (8 users)
+  - Filter by name/email search
+  - Show pending invites with remove option
+  - System messages when users added
+  
+- ✅ **Chat State Updates**
+  - Participants array updated in real-time
+  - System messages logged to chat
+  - Chat title updates with new participants
+  - Persists via localStorage
 
 ### 2. Branch Out Topic (SKIPPED)
 - Create focused sub-threads from main chat
