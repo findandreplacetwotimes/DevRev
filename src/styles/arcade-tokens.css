@@ -1,0 +1,710 @@
+/* Arcade Theme Tokens — extracted from devrev-web monorepo */
+
+/* ==========================================================================
+   Palette (from pallete.css)
+   ========================================================================== */
+
+:root {
+  --day: 0 0% 100%;
+  --night: 0 0% 6%;
+
+  --husk-100: 0 0% 100%;
+  --husk-200: 0 0% 98%;
+  --husk-300: 0 0% 96%;
+  --husk-400: 0 0% 91%;
+  --husk-500: 0 0% 81%;
+  --husk-600: 320 2% 64%;
+  --husk-700: 312 2% 47%;
+  --husk-800: 324 3% 31%;
+  --husk-900: 330 2% 24%;
+  --husk-1000: 330 2% 18%;
+  --husk-1100: 330 3% 13%;
+  --husk-1200: 0 6% 9%;
+  --husk-1300: 0 0% 9%;
+
+  --shuiguo-100: 199 88% 94%;
+  --shuiguo-200: 198 91% 82%;
+  --shuiguo-300: 198 94% 72%;
+  --shuiguo-400: 198 100% 64%;
+  --shuiguo-500: 198 94% 57%;
+  --shuiguo-600: 197 91% 40%;
+
+  --hardy-100: 89 89% 93%;
+  --hardy-200: 89 91% 87%;
+  --hardy-300: 89 88% 72%;
+  --hardy-400: 89 100% 64%;
+  --hardy-500: 89 85% 46%;
+  --hardy-600: 89 89% 32%;
+
+  --persimmon-100: 13 89% 93%;
+  --persimmon-200: 13 88% 83%;
+  --persimmon-300: 13 87% 67%;
+  --persimmon-400: 13 100% 60%;
+  --persimmon-500: 13 90% 54%;
+  --persimmon-600: 13 91% 36%;
+
+  --dragonfruit-100: 346 93% 95%;
+  --dragonfruit-200: 346 85% 87%;
+  --dragonfruit-300: 346 88% 74%;
+  --dragonfruit-400: 346 98% 58%;
+  --dragonfruit-500: 346 92% 46%;
+  --dragonfruit-600: 346 91% 41%;
+
+  --jabuticaba: 263 100% 45%;
+  --jabuticaba-100: 270 100% 94%;
+  --jabuticaba-200: 259 85% 85%;
+  --jabuticaba-300: 259 90% 65%;
+  --jabuticaba-400: 259 94% 44%;
+  --jabuticaba-500: 259 74% 24%;
+  --jabuticaba-600: 267 97% 15%;
+
+  --banginapalli: 54 100% 50%;
+  --banginapalli-100: 55 100% 93%;
+  --banginapalli-200: 55 100% 80%;
+  --banginapalli-300: 55 100% 69%;
+  --banginapalli-400: 48 100% 51%;
+  --banginapalli-500: 49 100% 38%;
+  --banginapalli-600: 55 100% 25%;
+
+  --maoshigua: 218 100% 67%;
+  --maoshigua-100: 196 79% 89%;
+  --maoshigua-200: 198 100% 79%;
+  --maoshigua-300: 213 100% 71%;
+  --maoshigua-400: 225 91% 59%;
+  --maoshigua-500: 225 100% 33%;
+  --maoshigua-600: 221 91% 22%;
+
+  --action: var(--banginapalli);
+  --intelligence: var(--jabuticaba);
+
+  --action-100: var(--banginapalli-100);
+  --action-200: var(--banginapalli-200);
+  --action-300: var(--banginapalli-300);
+  --action-400: var(--banginapalli-400);
+  --action-500: var(--banginapalli-500);
+  --action-600: var(--banginapalli-600);
+
+  --intelligence-100: var(--jabuticaba-100);
+  --intelligence-200: var(--jabuticaba-200);
+  --intelligence-300: var(--jabuticaba-300);
+  --intelligence-400: var(--jabuticaba-400);
+  --intelligence-500: var(--jabuticaba-500);
+  --intelligence-600: var(--jabuticaba-600);
+
+  &[data-arcade-theme='jabuticaba'] {
+    --action-100: var(--banginapalli-100);
+    --action-200: var(--banginapalli-200);
+    --action-300: var(--banginapalli-300);
+    --action-400: var(--banginapalli-400);
+    --action-500: var(--banginapalli-500);
+    --action-600: var(--banginapalli-600);
+
+    --intelligence-100: var(--jabuticaba-100);
+    --intelligence-200: var(--jabuticaba-200);
+    --intelligence-300: var(--jabuticaba-300);
+    --intelligence-400: var(--jabuticaba-400);
+    --intelligence-500: var(--jabuticaba-500);
+    --intelligence-600: var(--jabuticaba-600);
+  }
+
+  &[data-arcade-theme='dragonfruit'] {
+    --action-100: var(--hardy-100);
+    --action-200: var(--hardy-200);
+    --action-300: var(--hardy-300);
+    --action-400: var(--hardy-400);
+    --action-500: var(--hardy-500);
+    --action-600: var(--hardy-600);
+
+    --intelligence-100: var(--dragonfruit-100);
+    --intelligence-200: var(--dragonfruit-200);
+    --intelligence-300: var(--dragonfruit-300);
+    --intelligence-400: var(--dragonfruit-400);
+    --intelligence-500: var(--dragonfruit-500);
+    --intelligence-600: var(--dragonfruit-600);
+  }
+}
+
+/* ==========================================================================
+   Dark mode semantic tokens (from arcade.css)
+   ========================================================================== */
+
+:root[data-theme='arcade']:not(.light),
+:root[data-theme='arcade'] .rte-code-block,
+:root[data-theme='arcade'].light .force-inverted[class],
+:root[data-theme='arcade'] .force-dark {
+  --color-primary: var(--day);
+  --color-secondary: var(--husk-600);
+  --color-tertiary: var(--husk-400);
+  --color-on-primary: var(--husk-200);
+  --color-on-fill: var(--husk-900);
+  --color-night: var(--husk-900);
+  --color-surface-inset: var(--husk-1200);
+  --color-surface-backdrop: var(--husk-1100);
+  --color-intelligence: var(--intelligence-400);
+  --color-action: var(--action);
+  --color-contrast-action: var(--action-400);
+  --color-vibrant: var(--intelligence-200);
+  --color-foreground-tertiary: var(--husk-700);
+  --color-stroke-outline: var(--husk-600);
+  --color-foreground-intelligence-onbold: var(--intelligence-500);
+
+  /* Stroke Colors */
+  --color-stroke-bold: var(--husk-200);
+  --color-stroke-medium: var(--husk-600);
+  --color-stroke-subtle: var(--husk-700);
+  --color-stroke-destructive: var(--dragonfruit-400);
+  --color-stroke-critical: var(--persimmon-500);
+  --color-stroke-warning: var(--banginapalli-400);
+  --color-stroke-success: var(--hardy-600);
+  --color-stroke-info: var(--shuiguo-300);
+  --color-stroke-intelligence: var(--jabuticaba-300);
+  --stroke-field-idle-opacity: 0.35;
+  --stroke-field-hover-opacity: 1;
+
+  /* Background */
+  --bg-bubble-receiver: var(--husk-100);
+  --bg-bubble-sender: var(--husk-1100);
+  --bg-thoughts-background: var(--husk-900);
+  --bg-topic-card: var(--maoshigua-300);
+  --bg-sku-popular: var(--banginapalli-500);
+
+  --bg-layer-00: var(--night);
+  --bg-layer-01: var(--husk-1000);
+  --bg-layer-02: var(--husk-900);
+  --bg-layer-03: var(--husk-900);
+  --bg-layer-04: var(--husk-900);
+
+  --bg-outline-00: var(--husk-900);
+  --bg-outline-01: var(--husk-800);
+  --bg-outline-02: var(--husk-700);
+  --bg-outline-03: var(--husk-600);
+
+  --bg-interactive-primary-resting: var(--day);
+  --bg-interactive-primary-hovered: var(--action-400);
+  --bg-interactive-primary-pressed: var(--action-500);
+  --bg-interactive-secondary-resting: var(--husk-900);
+  --bg-interactive-secondary-hovered: var(--husk-800);
+  --bg-interactive-secondary-pressed: var(--husk-700);
+  --bg-interactive-tertiary-hovered: var(--husk-800);
+  --bg-interactive-tertiary-pressed: var(--husk-700);
+  --bg-interactive-destructive-resting: var(--dragonfruit-400);
+  --bg-interactive-destructive-hovered: var(--dragonfruit-300);
+  --bg-interactive-destructive-pressed: var(--dragonfruit-200);
+  --bg-interactive-smart-resting: var(--jabuticaba-400);
+  --bg-interactive-smart-hovered: var(--jabuticaba-300);
+  --bg-interactive-smart-pressed: var(--jabuticaba-200);
+  --bg-interactive-navigation-hovered: var(--husk-1000);
+  --bg-interactive-navigation-pressed: var(--husk-900);
+  --bg-interactive-bucket-resting: var(--husk-1000);
+  --bg-interactive-bucket-hovered: var(--husk-900);
+  --bg-interactive-bucket-pressed: var(--husk-800);
+  --bg-interactive-tab-hovered: var(--husk-900);
+  --bg-interactive-tab-pressed: var(--husk-800);
+  --bg-interactive-stack-pressed: var(--husk-700);
+  --bg-interactive-stack-resting: var(--husk-800);
+  --bg-interactive-stack-hovered: var(--husk-700);
+
+  --bg-input-text-resting: var(--husk-1000);
+  --bg-input-text-pressed: var(--husk-1000);
+  --bg-input-search-resting: var(--night);
+  --bg-input-search-pressed: var(--night);
+  --bg-input-select-active: var(--action-400);
+  --bg-input-select-pressed: var(--action-500);
+  --bg-input-select-hovered: var(--husk-600);
+  --bg-input-select-resting: var(--husk-600);
+  --bg-input-select-disabled: var(--husk-600);
+
+  /* smart loading bar */
+  /* TODO
+@Pranav
+ - change these hardcoded values when we have correct token values */
+  --bg-smart-loading: 250 80% 64%;
+
+  --bg-surface-paper: var(--husk-1100);
+
+  --gradient-smart-loading: linear-gradient(
+    to right,
+    hsla(var(--jabuticaba-400), 0),
+    hsla(var(--jabuticaba-400), 1),
+    hsla(var(--jabuticaba-400), 0)
+  );
+  --gradient-smart-loading-reverse: linear-gradient(
+    to right,
+    hsla(var(--jabuticaba-400), 1),
+    hsla(var(--jabuticaba-500), 1) 15%,
+    90%,
+    hsla(var(--jabuticaba-400), 1) 100%
+  );
+  /* Border */
+  --border-outline-00: var(--husk-1000);
+  --border-outline-01: var(--husk-900);
+  --border-outline-02: var(--husk-800);
+  --border-outline-03: var(--husk-700);
+  --border-outline-transparent-opacity: var(--day);
+
+  --border-interactive-primary-resting: var(--bg-interactive-primary-resting);
+  --border-interactive-primary-hovered: var(--bg-interactive-primary-hovered);
+  --border-interactive-primary-pressed: var(--bg-interactive-primary-pressed);
+  --border-interactive-secondary-resting: var(--bg-interactive-secondary-resting);
+  --border-interactive-secondary-hovered: var(--bg-interactive-secondary-hovered);
+  --border-interactive-secondary-pressed: var(--bg-interactive-secondary-pressed);
+  --border-interactive-tertiary-hovered: var(--bg-interactive-tertiary-hovered);
+  --border-interactive-tertiary-pressed: var(--bg-interactive-tertiary-pressed);
+  --border-interactive-destructive-resting: var(--bg-interactive-destructive-resting);
+  --border-interactive-destructive-hovered: var(--bg-interactive-destructive-hovered);
+  --border-interactive-destructive-pressed: var(--bg-interactive-destructive-pressed);
+  --border-interactive-smart-resting: var(--bg-interactive-smart-resting);
+  --border-interactive-smart-hovered: var(--bg-interactive-smart-hovered);
+  --border-interactive-smart-pressed: var(--bg-interactive-smart-pressed);
+  --border-interactive-navigation-hovered: var(--bg-interactive-navigation-hovered);
+  --border-interactive-navigation-pressed: var(--bg-interactive-navigation-pressed);
+  --border-interactive-bucket-resting: var(--bg-interactive-bucket-hovered);
+  --border-interactive-bucket-hovered: var(--bg-interactive-bucket-hovered);
+  --border-interactive-bucket-pressed: var(--bg-interactive-bucket-pressed);
+  --border-interactive-tab-hovered: var(--bg-interactive-tab-hovered);
+  --border-interactive-tab-pressed: var(--bg-interactive-tab-pressed);
+
+  --border-input-text-resting: var(--husk-600);
+  --border-input-text-hovered: var(--husk-400);
+  --border-input-text-pressed: var(--day);
+  --border-input-search-resting: var(--husk-600);
+  --border-input-search-hovered: var(--husk-400);
+  --border-input-search-pressed: var(--day);
+  --border-input-select-resting: var(--husk-800);
+  --border-input-select-hovered: var(--husk-600);
+  --border-input-select-active: var(--action-400);
+  --border-input-select-pressed: var(--action-500);
+  --border-input-select-disabled: var(--husk-900);
+
+  --border-field-idle: var(--husk-800);
+  --border-field-hovered: var(--husk-700);
+
+  /* text */
+  --text-color-highlight: var(--husk-100);
+  --text-color-primary: var(--color-primary);
+  --text-color-secondary: var(--color-secondary);
+  --text-color-tertiary: var(--color-tertiary);
+  --text-color-muted: var(--husk-700);
+  --text-color-inverted: var(--husk-1000);
+
+  --text-static-white: var(--day);
+  --text-static-black: var(--night);
+
+  --text-interactive-primary-resting: var(--text-static-black);
+  --text-interactive-secondary-resting: var(--text-color-primary);
+  --text-interactive-tertiary-resting: var(--text-color-secondary);
+  --text-interactive-tertiary-hovered: var(--text-color-primary);
+  --text-interactive-tertiary-active: var(--text-color-highlight);
+  --text-interactive-navigation-resting: var(--text-color-secondary);
+  --text-interactive-navigation-pressed: var(--text-color-primary);
+  --text-interactive-bucket-resting: var(--text-color-secondary);
+  --text-interactive-bucket-pressed: var(--text-color-primary);
+  --text-interactive-link-resting: var(--shuiguo-500);
+  --text-interactive-link-hovered: var(--shuiguo-400);
+  --text-interactive-tab-hovered: var(--text-color-primary);
+  --text-interactive-tab-resting: var(--text-color-secondary);
+  --text-interactive-tab-pressed: var(--text-color-primary);
+
+  --text-input-resting: var(--text-color-muted);
+  --text-input-active: var(--text-color-primary);
+  /* feedback */
+  --color-feedback-alert: var(--dragonfruit-400);
+  --color-feedback-warning: var(--banginapalli-400);
+  --color-feedback-success: var(--hardy-400);
+  --color-feedback-smart: var(--jabuticaba-400);
+  --color-feedback-inverted: var(--husk-1000);
+  --color-feedback-accent: var(--action-600);
+  --color-feedback-neutral: var(--husk-400);
+
+  --color-object-developer: var(--shuiguo-400);
+  --color-object-customer: var(--hardy-400);
+  --color-object-mention: var(--persimmon-400);
+  --color-object-engagement: var(--dragonfruit-400);
+  --color-object-opportunity: var(--hardy-400);
+  --color-object-conversation: var(--persimmon-400);
+  --color-object-ticket: var(--banginapalli-600);
+  --color-object-issue: var(--shuiguo-400);
+  --color-object-sub-feature: var(--hardy-400);
+  --color-object-database: var(--persimmon-400);
+  --color-object-linkable: var(--banginapalli-400);
+  --color-object-runnable: var(--hardy-400);
+  --color-object-api-cluster: var(--banginapalli-400);
+  --color-object-api: var(--hardy-400);
+  --color-object-product: var(--persimmon-400);
+  --color-object-enhancement: var(--hardy-400);
+  --color-object-feature: var(--hardy-400);
+  --color-object-capability: var(--shuiguo-400);
+  --color-object-sprint-board: var(--hardy-400);
+  --color-object-incident: var(--persimmon-400);
+
+  --color-transparent-opacity: var(--day);
+
+  --color-skeleton: var(--husk-400);
+  --color-skeleton-light: var(--day);
+  --color-skeleton-dark: var(--husk-400);
+
+  --color-decorative-red: var(--persimmon-300);
+  --color-decorative-orange: var(--banginapalli-400);
+  --color-decorative-yellow: var(--hardy-400);
+  --color-decorative-lime: var(--shuiguo-400);
+  --color-decorative-green: var(--hardy-400);
+  --color-decorative-sky: var(--husk-400);
+  --color-decorative-blue: var(--shuiguo-400);
+  --color-decorative-violet: var(--persimmon-400);
+  --color-decorative-pink: var(--jabuticaba-400);
+
+  --fill-opacity: 0.75;
+  --color-attachment-error: var(--dragonfruit-200);
+
+  --gradient-nav-primary: linear-gradient(
+    90deg,
+    rgba(22, 22, 22, 0) 35%,
+    rgba(22, 22, 22, 0.35) 70%,
+    rgba(16, 16, 16, 0.8) 100%
+  );
+
+  .outline-stroke-field-idle {
+    --tw-outline-opacity: 0.35;
+  }
+
+  .border-stroke-field-idle {
+    --tw-border-opacity: 0.35;
+  }
+
+  .bg-bubble-receiver {
+    --tw-bg-opacity: 0.1;
+  }
+
+  .bg-surface-paper {
+    --tw-bg-opacity: 0.85;
+  }
+
+  .bg-topic-card {
+    --tw-bg-opacity: 0.24;
+  }
+
+  .bg-sku-popular {
+    --tw-bg-opacity: 0.2;
+  }
+
+  .border-stroke-outline {
+    --tw-border-opacity: 0.2;
+  }
+
+  .agent-input-editor {
+    p.is-editor-empty:first-child::before {
+      --tw-text-opacity: 0.55;
+    }
+  }
+}
+
+:root[data-theme='arcade'].light .force-inverted[class].bg-bubble-sender {
+  --tw-bg-opacity: 0.85;
+}
+
+/* ==========================================================================
+   Light mode semantic tokens (from arcade.css)
+   ========================================================================== */
+
+:root[data-theme='arcade'].light,
+:root[data-theme='arcade'] .force-light,
+:root[data-theme='arcade'] .force-inverted[class] {
+  --color-primary: var(--husk-900);
+  --color-secondary: var(--husk-700);
+  --color-tertiary: var(--husk-600);
+  --color-on-primary: var(--husk-1300);
+  --color-on-fill: var(--husk-100);
+  --color-night: var(--husk-1000);
+  --color-surface-inset: var(--husk-400);
+  --color-action: var(--action);
+  --color-contrast-action: var(--action-400);
+  --color-intelligence: var(--intelligence);
+  --color-vibrant: var(--intelligence-600);
+  --color-surface-backdrop: var(--day);
+  --color-foreground-tertiary: var(--husk-700);
+  --color-stroke-outline: var(--husk-800);
+  --color-foreground-intelligence-onbold: var(--intelligence-100);
+
+  /* Stroke Colors */
+  --color-stroke-bold: var(--husk-1000);
+  --color-stroke-medium: var(--husk-700);
+  --color-stroke-subtle: var(--husk-700);
+  --color-stroke-destructive: var(--dragonfruit-600);
+  --color-stroke-critical: var(--persimmon-600);
+  --color-stroke-warning: var(--banginapalli-600);
+  --color-stroke-success: var(--hardy-600);
+  --color-stroke-info: var(--shuiguo-600);
+  --color-stroke-intelligence: var(--jabuticaba-500);
+  --stroke-field-idle-opacity: 0.2;
+  --stroke-field-hover-opacity: 1;
+
+  /* Background */
+  --bg-bubble-receiver: var(--husk-900);
+  --bg-bubble-sender: var(--husk-100);
+  --bg-thoughts-background: var(--husk-100);
+  --bg-topic-card: var(--maoshigua-100);
+  --bg-sku-popular: var(--banginapalli-100);
+
+  --bg-base: var(--husk-100);
+  --bg-layer-00: var(--husk-300);
+  --bg-layer-01: var(--day);
+  --bg-layer-02: var(--day);
+  --bg-layer-03: var(--day);
+  --bg-layer-04: var(--day);
+
+  --bg-outline-00: var(--husk-200);
+  --bg-outline-01: var(--husk-400);
+  --bg-outline-02: var(--husk-400);
+  --bg-outline-03: var(--husk-500);
+
+  --bg-interactive-primary-resting: var(--night);
+  --bg-interactive-primary-hovered: var(--action-400);
+  --bg-interactive-primary-pressed: var(--action-500);
+
+  --bg-interactive-secondary-resting: var(--husk-300);
+  --bg-interactive-secondary-hovered: var(--husk-400);
+  --bg-interactive-secondary-pressed: var(--husk-500);
+
+  --bg-interactive-tertiary-hovered: var(--husk-300);
+  --bg-interactive-tertiary-pressed: var(--husk-400);
+
+  --bg-interactive-destructive-resting: var(--dragonfruit-400);
+  --bg-interactive-destructive-hovered: var(--dragonfruit-500);
+  --bg-interactive-destructive-pressed: var(--dragonfruit-600);
+
+  --bg-interactive-smart-resting: var(--jabuticaba-400);
+  --bg-interactive-smart-hovered: var(--jabuticaba-500);
+  --bg-interactive-smart-pressed: var(--jabuticaba-600);
+
+  --bg-interactive-navigation-hovered: var(--husk-200);
+  --bg-interactive-navigation-pressed: var(--husk-400);
+
+  --bg-interactive-bucket-resting: var(--husk-100);
+  --bg-interactive-bucket-hovered: var(--husk-200);
+  --bg-interactive-bucket-pressed: var(--husk-300);
+  --bg-interactive-tab-hovered: var(--husk-200);
+  --bg-interactive-tab-pressed: var(--husk-300);
+  --bg-interactive-stack-pressed: var(--husk-400);
+  --bg-interactive-stack-resting: var(--husk-200);
+  --bg-interactive-stack-hovered: var(--husk-300);
+
+  --bg-input-text-resting: var(--day);
+  --bg-input-text-pressed: var(--day);
+  --bg-input-search-resting: var(--day);
+  --bg-input-search-pressed: var(--day);
+  --bg-input-select-active: var(--action-400);
+  --bg-input-select-pressed: var(--action-500);
+  --bg-input-select-disabled: var(--husk-100);
+  --bg-input-select-resting: var(--husk-100);
+  --bg-input-select-hovered: var(--husk-200);
+
+  /* smart loading bar */
+  /* TODO
+@Pranav
+ - change these hardcoded values when we have correct token values */
+  --bg-smart-loading: 250 80% 64%;
+
+  --bg-surface-paper: var(--husk-200);
+
+  --gradient-smart-loading: linear-gradient(
+    to right,
+    hsla(var(--jabuticaba-400), 0),
+    hsla(var(--jabuticaba-400), 1),
+    hsla(var(--jabuticaba-400), 0)
+  );
+  --gradient-smart-loading-reverse: linear-gradient(
+    to right,
+    hsla(var(--jabuticaba-400), 1),
+    hsla(var(--jabuticaba-500), 1) 15%,
+    90%,
+    hsla(var(--jabuticaba-400), 1) 100%
+  );
+  /* Border */
+  --border-outline-00: var(--husk-200);
+  --border-outline-01: var(--husk-400);
+  --border-outline-02: var(--husk-400);
+  --border-outline-03: var(--husk-500);
+  --border-outline-transparent-opacity: var(--night);
+
+  --border-interactive-primary-resting: var(--bg-interactive-primary-resting);
+  --border-interactive-primary-hovered: var(--bg-interactive-primary-hovered);
+  --border-interactive-primary-pressed: var(--bg-interactive-primary-pressed);
+  --border-interactive-secondary-resting: var(--bg-interactive-secondary-resting);
+  --border-interactive-secondary-hovered: var(--bg-interactive-secondary-hovered);
+  --border-interactive-secondary-pressed: var(--bg-interactive-secondary-pressed);
+  --border-interactive-tertiary-hovered: var(--bg-interactive-tertiary-hovered);
+  --border-interactive-tertiary-pressed: var(--bg-interactive-tertiary-pressed);
+  --border-interactive-destructive-resting: var(--bg-interactive-destructive-resting);
+  --border-interactive-destructive-hovered: var(--bg-interactive-destructive-hovered);
+  --border-interactive-destructive-pressed: var(--bg-interactive-destructive-pressed);
+  --border-interactive-smart-resting: var(--bg-interactive-smart-resting);
+  --border-interactive-smart-hovered: var(--bg-interactive-smart-hovered);
+  --border-interactive-smart-pressed: var(--bg-interactive-smart-pressed);
+  --border-interactive-navigation-hovered: var(--bg-interactive-navigation-hovered);
+  --border-interactive-navigation-pressed: var(--bg-interactive-navigation-pressed);
+  --border-interactive-bucket-resting: var(--bg-interactive-bucket-resting);
+  --border-interactive-bucket-hovered: var(--bg-interactive-bucket-hovered);
+  --border-interactive-bucket-pressed: var(--bg-interactive-bucket-pressed);
+  --border-interactive-tab-hovered: var(--bg-interactive-tab-hovered);
+  --border-interactive-tab-pressed: var(--bg-interactive-tab-pressed);
+
+  --border-input-text-resting: var(--husk-300);
+  --border-input-text-hovered: var(--husk-700);
+  --border-input-text-pressed: var(--husk-1000);
+  --border-input-search-resting: var(--husk-300);
+  --border-input-search-hovered: var(--husk-700);
+  --border-input-search-pressed: var(--husk-1000);
+  --border-input-select-resting: var(--husk-300);
+  --border-input-select-hovered: var(--husk-700);
+  --border-input-select-active: var(--action-400);
+  --border-input-select-pressed: var(--action-500);
+  --border-input-select-disabled: var(--husk-100);
+
+  --border-field-idle: var(--husk-700);
+  --border-field-hovered: var(--husk-800);
+
+  /* text */
+  --text-color-highlight: var(--husk-1000);
+  --text-color-primary: var(--color-primary);
+  --text-color-secondary: var(--color-secondary);
+  --text-color-tertiary: var(--color-tertiary);
+  --text-color-muted: var(--husk-500);
+  --text-color-inverted: var(--day);
+
+  --text-static-white: var(--day);
+  --text-static-black: var(--night);
+
+  --text-interactive-primary-resting: var(--text-static-white);
+  --text-interactive-secondary-resting: var(--text-color-primary);
+  --text-interactive-tertiary-resting: var(--text-color-secondary);
+  --text-interactive-tertiary-hovered: var(--text-color-primary);
+  --text-interactive-tertiary-active: var(--text-color-highlight);
+  --text-interactive-navigation-resting: var(--text-color-secondary);
+  --text-interactive-navigation-pressed: var(--text-color-primary);
+  --text-interactive-bucket-resting: var(--text-color-secondary);
+  --text-interactive-bucket-pressed: var(--text-color-primary);
+  --text-interactive-link-resting: var(--shuiguo-600);
+  --text-interactive-link-hovered: var(--shuiguo-600);
+  --text-interactive-tab-hovered: var(--husk-600);
+  --text-interactive-tab-resting: var(--husk-600);
+  --text-interactive-tab-pressed: var(--text-color-primary);
+
+  --text-input-resting: var(--text-color-muted);
+  --text-input-active: var(--text-color-primary);
+
+  /* feedback */
+  --color-feedback-alert: var(--dragonfruit-500);
+  --color-feedback-warning: var(--banginapalli-500);
+  --color-feedback-success: var(--hardy-500);
+  --color-feedback-smart: var(--jabuticaba-400);
+  --color-feedback-inverted: var(--husk-1000);
+  --color-feedback-accent: var(--action-400);
+  --color-feedback-neutral: var(--text-color-tertiary);
+
+  /* object */
+  --color-object-developer: var(--shuiguo-500);
+  --color-object-customer: var(--hardy-500);
+  --color-object-mention: var(--persimmon-500);
+  --color-object-engagement: var(--dragonfruit-500);
+  --color-object-opportunity: var(--hardy-500);
+  --color-object-conversation: var(--persimmon-500);
+  --color-object-ticket: var(--banginapalli-600);
+  --color-object-issue: var(--shuiguo-500);
+  --color-object-sub-feature: var(--hardy-500);
+  --color-object-database: var(--persimmon-500);
+  --color-object-linkable: var(--banginapalli-500);
+  --color-object-runnable: var(--text-color-tertiary);
+  --color-object-api-cluster: var(--banginapalli-500);
+  --color-object-api: var(--hardy-500);
+  --color-object-product: var(--persimmon-500);
+  --color-object-enhancement: var(--hardy-500);
+  --color-object-feature: var(--hardy-500);
+  --color-object-capability: var(--shuiguo-500);
+  --color-object-sprint-board: var(--hardy-500);
+  --color-object-incident: var(--persimmon-500);
+
+  --color-transparent-opacity: var(--husk-100);
+
+  /* skeleton */
+  --color-skeleton: var(--husk-400);
+  --color-skeleton-light: var(--day);
+  --color-skeleton-dark: var(--husk-400);
+
+  --color-decorative-red: var(--persimmon-500);
+  --color-decorative-orange: var(--persimmon-500);
+  --color-decorative-yellow: var(--banginapalli-500);
+  --color-decorative-lime: var(--hardy-500);
+  --color-decorative-green: var(--hardy-500);
+  --color-decorative-sky: var(--shuiguo-600);
+  --color-decorative-blue: var(--shuiguo-600);
+  --color-decorative-violet: var(--jabuticaba-500);
+  --color-decorative-pink: var(--dragonfruit-500);
+
+  --fill-opacity: 1;
+  --color-attachment-error: var(--dragonfruit-100);
+
+  --gradient-nav-primary: linear-gradient(
+    90deg,
+    rgba(176, 176, 176, 0) 55%,
+    rgba(176, 176, 176, 0.3) 87%,
+    rgba(103, 103, 103, 0.29) 100%
+  );
+
+  .outline-stroke-field-idle {
+    --tw-outline-opacity: 0.2;
+  }
+
+  .border-stroke-field-idle {
+    --tw-border-opacity: 0.2;
+  }
+
+  .bg-bubble-receiver {
+    --tw-bg-opacity: 0.1;
+  }
+
+  .bg-surface-paper {
+    --tw-bg-opacity: 0.85;
+  }
+
+  .border-field-idle {
+    --tw-border-opacity: 0.8;
+  }
+
+  .border-field-hovered {
+    --tw-border-opacity: 0.7;
+  }
+
+  .border-stroke-outline {
+    --tw-border-opacity: 0.1;
+  }
+
+  .agent-input-editor {
+    p.is-editor-empty:first-child::before {
+      --tw-text-opacity: 0.7;
+    }
+  }
+}
+
+:root[data-theme='arcade'] .force-inverted[class].bg-bubble-sender {
+  --tw-bg-opacity: 0.95;
+}
+
+/* ==========================================================================
+   Global Arcade overrides (from arcade.css)
+   ========================================================================== */
+
+:root[data-theme='arcade'] {
+  --accent-h: 340;
+  --accent-s: 3%;
+  --neutral-s: 3%;
+  --bg-base: hsl(var(--bg-layer-01));
+
+  body {
+    overscroll-behavior: none;
+  }
+}
+
+.measure-agent {
+  --agent-max-width: 42rem;
+  padding-inline: calc((100% - var(--agent-max-width)) / 2);
+}

@@ -7,11 +7,11 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
     <div
       style={{
         position: "fixed",
-        bottom: "24px",
-        right: "24px",
+        bottom: "12px",
+        right: "12px",
         display: "flex",
-        gap: "12px",
-        zIndex: 999,
+        gap: "8px",
+        zIndex: 1001,
         fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
       }}
     >

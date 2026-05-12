@@ -630,14 +630,14 @@ function InvitePanelFullPage({ chat }) {
   )
 }
 
-// Minimal sidebar for Computer page
+// Minimal sidebar for Computer page using Arcade design system
 function ComputerSidebar({ activeChat }) {
   const { chats } = useChats()
   const [showMore, setShowMore] = useState(false)
 
   const lobbySections = [
     { label: "Lobby: Teams & Spaces", avatars: ["🏢", "👥"] },
-    { label: "Lobby: Build", avatars: ["🔨", "⚙️", "🎨"] },
+    { label: "Lobby: Build", avatars: ["🔨", "⚙️"] },
   ]
 
   const chatItems = chats?.filter((c) => c.id !== activeChat?.id) || []
@@ -645,101 +645,60 @@ function ComputerSidebar({ activeChat }) {
 
   return (
     <div
+      className="arcade-sidebar"
       style={{
         width: "220px",
-        height: "100%",
-        borderRight: "1px solid #ececec",
-        background: "white",
-        display: "flex",
-        flexDirection: "column",
+        background: "hsl(var(--bg-layer-01))",
+        borderRight: "1px solid hsl(var(--border-outline-01))",
       }}
     >
       {/* Header */}
       <div
         style={{
-          padding: "12px 16px",
-          borderBottom: "1px solid #ececec",
+          padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
+          borderBottom: "1px solid hsl(var(--border-outline-01))",
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          gap: "var(--spacing-global-4xs)",
         }}
       >
         <button
           type="button"
+          className="arcade-btn arcade-btn--tertiary arcade-btn--S"
           title="Collapse sidebar"
           style={{
+            minWidth: "28px",
             width: "28px",
             height: "28px",
-            borderRadius: "4px",
-            background: "transparent",
-            border: "1px solid #ececec",
-            color: "var(--foreground-secondary)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "18px",
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--control-bg-hover)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent"
+            padding: "0",
+            fontSize: "14px",
           }}
         >
           ☰
         </button>
         <button
           type="button"
+          className="arcade-btn arcade-btn--tertiary arcade-btn--S"
           title="New Chat"
           style={{
             flex: 1,
-            padding: "6px 12px",
-            borderRadius: "4px",
-            background: "transparent",
-            border: "1px solid #ececec",
-            color: "var(--foreground-primary)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            fontSize: "13px",
-            lineHeight: "16px",
-            fontVariationSettings: '"wght" 460',
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--control-bg-hover)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent"
+            fontSize: "var(--fontSize-caption)",
+            fontWeight: "440",
+            gap: "var(--spacing-global-5xs)",
           }}
         >
-          <span style={{ fontSize: "16px" }}>💬</span> New Chat
+          <span style={{ fontSize: "14px" }}>💬</span> New Chat
         </button>
         <button
           type="button"
+          className="arcade-btn arcade-btn--tertiary arcade-btn--S"
           title="Close"
           style={{
+            minWidth: "28px",
             width: "28px",
             height: "28px",
-            borderRadius: "4px",
-            background: "transparent",
-            border: "1px solid #ececec",
-            color: "var(--foreground-secondary)",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "18px",
-            transition: "all 0.15s",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "var(--control-bg-hover)"
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent"
+            padding: "0",
+            fontSize: "16px",
           }}
         >
           ×
@@ -747,145 +706,112 @@ function ComputerSidebar({ activeChat }) {
       </div>
 
       {/* Lobby Sections */}
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid #ececec" }}>
+      <div
+        style={{
+          padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
+          borderBottom: "1px solid hsl(var(--border-outline-01))",
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--spacing-global-5xs)",
+        }}
+      >
         {lobbySections.map((section, idx) => (
-          <div
+          <button
             key={idx}
+            type="button"
+            className="arcade-menu-item"
             style={{
-              padding: "8px 0",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              cursor: "pointer",
-              borderRadius: "2px",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "var(--control-bg-hover)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent"
+              padding: "var(--spacing-global-3xs) var(--spacing-global-xs)",
+              fontSize: "var(--fontSize-caption)",
+              fontWeight: "440",
             }}
           >
-            <div style={{ display: "flex", gap: "2px" }}>
+            <div style={{ display: "flex", gap: "var(--spacing-global-5xs)", alignItems: "center" }}>
               {section.avatars.map((emoji, i) => (
-                <span key={i} style={{ fontSize: "12px" }}>
+                <span key={i} style={{ fontSize: "12px", lineHeight: "1" }}>
                   {emoji}
                 </span>
               ))}
             </div>
-            <span
-              style={{
-                fontSize: "13px",
-                lineHeight: "16px",
-                fontVariationSettings: '"wght" 460',
-                color: "var(--foreground-primary)",
-              }}
-            >
-              {section.label}
-            </span>
-          </div>
+            <span style={{ fontSize: "var(--fontSize-caption)" }}>{section.label}</span>
+          </button>
         ))}
       </div>
 
       {/* Chat List */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
-        <div
-          style={{
-            fontSize: "11px",
-            lineHeight: "14px",
-            fontVariationSettings: '"wght" 520',
-            color: "var(--foreground-secondary)",
-            marginBottom: "8px",
-            textTransform: "uppercase",
-            letterSpacing: "0.5px",
-          }}
-        >
+      <div style={{ flex: 1, overflowY: "auto", padding: "var(--spacing-global-xs) var(--spacing-global-sm)" }}>
+        <div className="arcade-sidebar__section-title" style={{ padding: "var(--spacing-global-3xs) 0" }}>
           Chat
         </div>
-        {visibleChats.map((chat) => {
-          const participantNames = chat.participants
-            .filter((p) => p !== "computer" && p !== "user")
-            .join(", ")
-          const label = chat.title || (chat.participants.includes("computer") ? "Computer" : participantNames)
-          const lastMsg = chat.messages[chat.messages.length - 1]
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-global-5xs)" }}>
+          {visibleChats.map((chat) => {
+            const participantNames = chat.participants
+              .filter((p) => p !== "computer" && p !== "user")
+              .join(", ")
+            const label = chat.title || (chat.participants.includes("computer") ? "Computer" : participantNames)
+            const lastMsg = chat.messages[chat.messages.length - 1]
 
-          return (
-            <div
-              key={chat.id}
-              style={{
-                padding: "8px",
-                marginBottom: "2px",
-                borderRadius: "2px",
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--control-bg-hover)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent"
-              }}
-            >
+            return (
               <div
+                key={chat.id}
+                className="arcade-menu-item"
                 style={{
-                  fontSize: "13px",
-                  lineHeight: "16px",
-                  fontVariationSettings: '"wght" 480',
-                  color: "var(--foreground-primary)",
-                  marginBottom: "2px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
+                  padding: "var(--spacing-global-3xs)",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: "var(--spacing-global-5xs)",
                 }}
               >
-                {chat.participants.length > 2 && (
-                  <span style={{ fontSize: "11px" }}>👥</span>
-                )}
-                <span className="truncate">{label}</span>
-              </div>
-              {lastMsg && (
                 <div
                   style={{
-                    fontSize: "12px",
-                    lineHeight: "15px",
-                    fontVariationSettings: '"wght" 450',
-                    color: "var(--foreground-secondary)",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
+                    fontSize: "var(--fontSize-caption)",
+                    fontWeight: "540",
+                    color: "hsl(var(--text-color-primary))",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "var(--spacing-global-4xs)",
+                    width: "100%",
                   }}
                 >
-                  {lastMsg.text}
+                  {chat.participants.length > 2 && (
+                    <span style={{ fontSize: "11px" }}>👥</span>
+                  )}
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {label}
+                  </span>
                 </div>
-              )}
-            </div>
-          )
-        })}
+                {lastMsg && (
+                  <div
+                    style={{
+                      fontSize: "var(--fontSize-caption)",
+                      fontWeight: "440",
+                      color: "hsl(var(--text-color-tertiary))",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      width: "100%",
+                    }}
+                  >
+                    {lastMsg.text}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
         {chatItems.length > 5 && (
           <button
             type="button"
+            className="arcade-btn arcade-btn--tertiary arcade-btn--S"
             onClick={() => setShowMore(!showMore)}
             style={{
-              padding: "6px 8px",
-              marginTop: "4px",
-              background: "transparent",
-              border: "none",
-              color: "var(--foreground-secondary)",
-              fontSize: "12px",
-              lineHeight: "15px",
-              fontVariationSettings: '"wght" 460',
-              cursor: "pointer",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--foreground-primary)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--foreground-secondary)"
+              width: "100%",
+              marginTop: "var(--spacing-global-4xs)",
+              fontSize: "var(--fontSize-caption)",
+              fontWeight: "440",
             }}
           >
-            {showMore ? "Show less" : `... More (${chatItems.length - 5})`}
+            {showMore ? "Show less" : `... More`}
           </button>
         )}
       </div>
@@ -893,25 +819,17 @@ function ComputerSidebar({ activeChat }) {
       {/* Bottom User Profile */}
       <div
         style={{
-          padding: "12px 16px",
-          borderTop: "1px solid #ececec",
+          padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
+          borderTop: "1px solid hsl(var(--border-outline-01))",
           display: "flex",
           alignItems: "center",
-          gap: "10px",
+          gap: "var(--spacing-global-xs)",
         }}
       >
         <div
+          className="arcade-avatar arcade-avatar--M"
           style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "50%",
-            background: "hsl(259 94% 44%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "12px",
-            fontWeight: "600",
-            color: "white",
+            background: "hsl(var(--intelligence-400))",
           }}
         >
           P
@@ -919,10 +837,9 @@ function ComputerSidebar({ activeChat }) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              fontSize: "13px",
-              lineHeight: "16px",
-              fontVariationSettings: '"wght" 480',
-              color: "var(--foreground-primary)",
+              fontSize: "var(--fontSize-caption)",
+              fontWeight: "540",
+              color: "hsl(var(--text-color-primary))",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -932,10 +849,9 @@ function ComputerSidebar({ activeChat }) {
           </div>
           <div
             style={{
-              fontSize: "11px",
-              lineHeight: "14px",
-              fontVariationSettings: '"wght" 450',
-              color: "var(--foreground-secondary)",
+              fontSize: "var(--fontSize-caption)",
+              fontWeight: "440",
+              color: "hsl(var(--text-color-tertiary))",
             }}
           >
             DevRev
