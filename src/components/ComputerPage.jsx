@@ -155,12 +155,16 @@ export function ComputerPage() {
 
   return (
     <div
-      className="flex h-full w-full"
+      className="flex h-screen w-full"
       style={{
         fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+        background: "white",
       }}
     >
-      {/* Left Panel - Chat */}
+      {/* Minimal Left Sidebar */}
+      <ComputerSidebar activeChat={activeChat} />
+
+      {/* Middle Panel - Chat */}
       <div
         className="flex flex-col"
         style={{
@@ -622,6 +626,322 @@ function InvitePanelFullPage({ chat }) {
         Invite people to collaborate
       </div>
       <InvitePanel chat={chat} isFullPage />
+    </div>
+  )
+}
+
+// Minimal sidebar for Computer page
+function ComputerSidebar({ activeChat }) {
+  const { chats } = useChats()
+  const [showMore, setShowMore] = useState(false)
+
+  const lobbySections = [
+    { label: "Lobby: Teams & Spaces", avatars: ["🏢", "👥"] },
+    { label: "Lobby: Build", avatars: ["🔨", "⚙️", "🎨"] },
+  ]
+
+  const chatItems = chats?.filter((c) => c.id !== activeChat?.id) || []
+  const visibleChats = showMore ? chatItems : chatItems.slice(0, 5)
+
+  return (
+    <div
+      style={{
+        width: "220px",
+        height: "100%",
+        borderRight: "1px solid #ececec",
+        background: "white",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Header */}
+      <div
+        style={{
+          padding: "12px 16px",
+          borderBottom: "1px solid #ececec",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        }}
+      >
+        <button
+          type="button"
+          title="Collapse sidebar"
+          style={{
+            width: "28px",
+            height: "28px",
+            borderRadius: "4px",
+            background: "transparent",
+            border: "1px solid #ececec",
+            color: "var(--foreground-secondary)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "18px",
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--control-bg-hover)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent"
+          }}
+        >
+          ☰
+        </button>
+        <button
+          type="button"
+          title="New Chat"
+          style={{
+            flex: 1,
+            padding: "6px 12px",
+            borderRadius: "4px",
+            background: "transparent",
+            border: "1px solid #ececec",
+            color: "var(--foreground-primary)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            fontSize: "13px",
+            lineHeight: "16px",
+            fontVariationSettings: '"wght" 460',
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--control-bg-hover)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent"
+          }}
+        >
+          <span style={{ fontSize: "16px" }}>💬</span> New Chat
+        </button>
+        <button
+          type="button"
+          title="Close"
+          style={{
+            width: "28px",
+            height: "28px",
+            borderRadius: "4px",
+            background: "transparent",
+            border: "1px solid #ececec",
+            color: "var(--foreground-secondary)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "18px",
+            transition: "all 0.15s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "var(--control-bg-hover)"
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent"
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Lobby Sections */}
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid #ececec" }}>
+        {lobbySections.map((section, idx) => (
+          <div
+            key={idx}
+            style={{
+              padding: "8px 0",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              cursor: "pointer",
+              borderRadius: "2px",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--control-bg-hover)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent"
+            }}
+          >
+            <div style={{ display: "flex", gap: "2px" }}>
+              {section.avatars.map((emoji, i) => (
+                <span key={i} style={{ fontSize: "12px" }}>
+                  {emoji}
+                </span>
+              ))}
+            </div>
+            <span
+              style={{
+                fontSize: "13px",
+                lineHeight: "16px",
+                fontVariationSettings: '"wght" 460',
+                color: "var(--foreground-primary)",
+              }}
+            >
+              {section.label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Chat List */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px" }}>
+        <div
+          style={{
+            fontSize: "11px",
+            lineHeight: "14px",
+            fontVariationSettings: '"wght" 520',
+            color: "var(--foreground-secondary)",
+            marginBottom: "8px",
+            textTransform: "uppercase",
+            letterSpacing: "0.5px",
+          }}
+        >
+          Chat
+        </div>
+        {visibleChats.map((chat) => {
+          const participantNames = chat.participants
+            .filter((p) => p !== "computer" && p !== "user")
+            .join(", ")
+          const label = chat.title || (chat.participants.includes("computer") ? "Computer" : participantNames)
+          const lastMsg = chat.messages[chat.messages.length - 1]
+
+          return (
+            <div
+              key={chat.id}
+              style={{
+                padding: "8px",
+                marginBottom: "2px",
+                borderRadius: "2px",
+                cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--control-bg-hover)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent"
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "13px",
+                  lineHeight: "16px",
+                  fontVariationSettings: '"wght" 480',
+                  color: "var(--foreground-primary)",
+                  marginBottom: "2px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                {chat.participants.length > 2 && (
+                  <span style={{ fontSize: "11px" }}>👥</span>
+                )}
+                <span className="truncate">{label}</span>
+              </div>
+              {lastMsg && (
+                <div
+                  style={{
+                    fontSize: "12px",
+                    lineHeight: "15px",
+                    fontVariationSettings: '"wght" 450',
+                    color: "var(--foreground-secondary)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {lastMsg.text}
+                </div>
+              )}
+            </div>
+          )
+        })}
+        {chatItems.length > 5 && (
+          <button
+            type="button"
+            onClick={() => setShowMore(!showMore)}
+            style={{
+              padding: "6px 8px",
+              marginTop: "4px",
+              background: "transparent",
+              border: "none",
+              color: "var(--foreground-secondary)",
+              fontSize: "12px",
+              lineHeight: "15px",
+              fontVariationSettings: '"wght" 460',
+              cursor: "pointer",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--foreground-primary)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--foreground-secondary)"
+            }}
+          >
+            {showMore ? "Show less" : `... More (${chatItems.length - 5})`}
+          </button>
+        )}
+      </div>
+
+      {/* Bottom User Profile */}
+      <div
+        style={{
+          padding: "12px 16px",
+          borderTop: "1px solid #ececec",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <div
+          style={{
+            width: "28px",
+            height: "28px",
+            borderRadius: "50%",
+            background: "hsl(259 94% 44%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "12px",
+            fontWeight: "600",
+            color: "white",
+          }}
+        >
+          P
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: "13px",
+              lineHeight: "16px",
+              fontVariationSettings: '"wght" 480',
+              color: "var(--foreground-primary)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            Prithvi Sharma
+          </div>
+          <div
+            style={{
+              fontSize: "11px",
+              lineHeight: "14px",
+              fontVariationSettings: '"wght" 450',
+              color: "var(--foreground-secondary)",
+            }}
+          >
+            DevRev
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

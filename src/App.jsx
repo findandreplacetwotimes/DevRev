@@ -12,6 +12,10 @@ import { ComputerPage } from "./components/ComputerPage"
 export default function App() {
   return (
     <Routes>
+      {/* Standalone Computer experience - outside workspace layout */}
+      <Route path="/computer" element={<ComputerPage />} />
+
+      {/* Main workspace with nav + chat + record panels */}
       <Route path="/" element={<AppWorkspaceLayout />}>
         <Route index element={<Navigate to="/issues" replace />} />
         <Route path="sprints" element={<SprintsPage />} />
@@ -21,7 +25,6 @@ export default function App() {
         <Route path="issues/:issueId" element={<IssuePage />} />
         <Route path="projects" element={<ProjectsListPage />} />
         <Route path="projects/:projectId" element={<ProjectPage />} />
-        <Route path="computer" element={<ComputerPage />} />
       </Route>
     </Routes>
   )
