@@ -28,15 +28,15 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
             key={chat.id}
             className="group"
             style={{
-              width: "280px",
-              minHeight: "56px",
+              width: "240px",
+              minHeight: "48px",
               borderRadius: "8px",
               background: "white",
               border: "1px solid #ececec",
               boxShadow: "0px 6px 13px rgba(0,0,0,0.10), 0px 23px 23px rgba(0,0,0,0.09)",
               display: "flex",
               alignItems: "center",
-              padding: "12px",
+              padding: "10px 12px",
               cursor: "pointer",
               transition: "all 0.15s",
             }}
@@ -44,14 +44,14 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
           >
             <div
               style={{
-                width: "28px",
-                height: "28px",
+                width: "24px",
+                height: "24px",
                 borderRadius: "50%",
                 background: "hsl(259 94% 44%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "12px",
+                fontSize: "11px",
                 fontWeight: "600",
                 color: "white",
                 flexShrink: 0,
@@ -62,7 +62,7 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
             <div
               style={{
                 flex: 1,
-                marginLeft: "10px",
+                marginLeft: "8px",
                 overflow: "hidden",
               }}
             >
