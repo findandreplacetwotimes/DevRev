@@ -16,7 +16,7 @@ const AVAILABLE_USERS = [
   { id: "akanksha", name: "Akanksha Deswal", email: "akanksha@devrev.ai" },
 ]
 
-export function InvitePanel({ chat, onClose }) {
+export function InvitePanel({ chat, onClose, isFullPage = false }) {
   const { patchChat } = useChats()
   const [searchQuery, setSearchQuery] = useState("")
   const [pendingInvites, setPendingInvites] = useState([])
@@ -67,41 +67,47 @@ export function InvitePanel({ chat, onClose }) {
     })
 
     setPendingInvites([])
-    onClose()
+    if (onClose) onClose()
   }
 
   const pendingUsers = AVAILABLE_USERS.filter((u) => pendingInvites.includes(u.id))
 
+  const containerClassName = isFullPage
+    ? "flex flex-col bg-white"
+    : "absolute top-0 right-0 bottom-0 w-[320px] flex flex-col bg-white border-l border-[#ececec] z-10"
+
   return (
-    <div className="absolute top-0 right-0 bottom-0 w-[320px] flex flex-col bg-white border-l border-[#ececec] z-10">
+    <div className={containerClassName}>
       {/* Header */}
-      <div className="flex items-center justify-between p-[20px] border-b border-[#ececec]">
-        <div>
-          <h3
-            className="m-0 text-[var(--foreground-primary)]"
-            style={{
-              fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: "15px",
-              lineHeight: "18px",
-              fontVariationSettings: '"wght" 520',
-            }}
-          >
-            Invite to Chat
-          </h3>
-          <p
-            className="m-0 mt-[6px] text-[var(--foreground-secondary)]"
-            style={{
-              fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: "12px",
-              lineHeight: "15px",
-              fontVariationSettings: '"wght" 450',
-            }}
-          >
-            Invited users can see all messages and files
-          </p>
+      {!isFullPage && (
+        <div className="flex items-center justify-between p-[20px] border-b border-[#ececec]">
+          <div>
+            <h3
+              className="m-0 text-[var(--foreground-primary)]"
+              style={{
+                fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: "15px",
+                lineHeight: "18px",
+                fontVariationSettings: '"wght" 520',
+              }}
+            >
+              Invite to Chat
+            </h3>
+            <p
+              className="m-0 mt-[6px] text-[var(--foreground-secondary)]"
+              style={{
+                fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: "12px",
+                lineHeight: "15px",
+                fontVariationSettings: '"wght" 450',
+              }}
+            >
+              Invited users can see all messages and files
+            </p>
+          </div>
+          <Control type="iconOnly" leadingIcon="close" label="" onClick={onClose} />
         </div>
-        <Control type="iconOnly" leadingIcon="close" label="" onClick={onClose} />
-      </div>
+      )}
 
       {/* Search */}
       <div className="p-[16px_20px]">

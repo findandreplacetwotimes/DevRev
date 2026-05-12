@@ -7,6 +7,7 @@ import { ProjectsListPage } from "./components/ProjectsListPage"
 import { SprintsPage } from "./components/SprintsPage"
 import { AboutPage } from "./components/AboutPage"
 import { TeamMembersPage } from "./components/TeamMembersPage"
+import { ComputerPage } from "./components/ComputerPage"
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="issues/:issueId" element={<IssuePage />} />
         <Route path="projects" element={<ProjectsListPage />} />
         <Route path="projects/:projectId" element={<ProjectPage />} />
+        <Route path="computer" element={<ComputerPage />} />
       </Route>
     </Routes>
   )
