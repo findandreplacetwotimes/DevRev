@@ -39,16 +39,16 @@ function loadChatWidth() {
 
 /** Never start with both panels hidden (blank canvas). */
 function loadInitialPanelOpen() {
-  const chat = loadBool(LS_CHAT_OPEN, true)
+  const chat = loadBool(LS_CHAT_OPEN, false)
   const record = loadBool(LS_RECORD_OPEN, true)
   if (!chat && !record) {
     try {
-      window.localStorage.setItem(LS_CHAT_OPEN, "true")
+      window.localStorage.setItem(LS_CHAT_OPEN, "false")
       window.localStorage.setItem(LS_RECORD_OPEN, "true")
     } catch {
       /* ignore */
     }
-    return { chat: true, record: true }
+    return { chat: false, record: true }
   }
   return { chat, record }
 }
@@ -181,20 +181,24 @@ export function AppWorkspaceChrome() {
     typeof location.state?.sourceProjectId === "string" &&
     location.state.sourceProjectId.trim().length > 0
 
+  // Extract project ID from URL for project space navigation
+  const projectIdMatch = pathname.match(/^\/projects\/([^/]+)/)
+  const urlProjectId = projectIdMatch ? projectIdMatch[1] : null
+
   const selectedNavItemId = issueFromThreeLevelPath
     ? "projects"
+    : urlProjectId
+      ? `project-${urlProjectId}`
     : pathname.startsWith("/issues")
-      ? "issues"
+      ? "build-issues"
     : pathname.startsWith("/projects")
       ? "projects"
     : pathname.startsWith("/sprints")
-      ? "sprints"
+      ? "build-sprints"
     : pathname.startsWith("/about")
-      ? "about"
+      ? "build-about"
     : pathname.startsWith("/team-members")
-      ? "about"
-      : chatVariant.startsWith("chat-") || chatVariant === "build-team"
-        ? chatVariant
+      ? "build-about"
       : null
 
   const toggleChatPanel = () => {
@@ -269,18 +273,16 @@ export function AppWorkspaceChrome() {
     })
   }
 
-  const openProjectChat = useCallback(() => {
+  const toggleProjectChat = useCallback(() => {
     setChatVariant("chat-project")
     setChatPanelOpen((prev) => {
-      if (!prev) {
-        try {
-          window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        return true
+      const next = !prev
+      try {
+        window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+      } catch {
+        /* ignore */
       }
-      return prev
+      return next
     })
   }, [])
 
@@ -290,25 +292,41 @@ export function AppWorkspaceChrome() {
   }, [])
 
   const workspaceOutletContext = useMemo(
-    () => ({ openProjectChat, openBuildTeamChat }),
-    [openProjectChat, openBuildTeamChat]
+    () => ({
+      toggleProjectChat,
+      openBuildTeamChat,
+      chatPanelOpen
+    }),
+    [toggleProjectChat, openBuildTeamChat, chatPanelOpen]
   )
 
-  /** Build team → chat lane only (person). Does not navigate or change record panel — same as Computer for “chat-only”. */
+  /** Handle nav item selection with new hierarchy */
+  /** Handle nav item selection with new hierarchy */
   const handleNavSelectItem = (itemId) => {
-    if (itemId === "build-team") {
+    // Build chat (under Build team) → toggle chat panel
+    if (itemId === "build-chat") {
       setChatVariant("build-team")
-      ensureChatPanelOpenPersist()
+      setChatPanelOpen((prev) => {
+        const next = !prev
+        try {
+          window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+        } catch {
+          /* ignore */
+        }
+        return next
+      })
       return
     }
-    if (itemId.startsWith("chat-")) {
-      setChatVariant(itemId)
-      ensureChatPanelOpenPersist()
-      return
-    }
-    if (itemId === "issues") {
+
+    // Workspace items
+    if (itemId === "chats") {
+      // Placeholder - could open a chats overview
       ensureRecordPanelOpen()
-      navigate("/issues")
+      return
+    }
+    if (itemId === "initiatives") {
+      // Placeholder route
+      ensureRecordPanelOpen()
       return
     }
     if (itemId === "projects") {
@@ -316,16 +334,70 @@ export function AppWorkspaceChrome() {
       navigate("/projects")
       return
     }
-    if (itemId === "sprints") {
+    if (itemId === "views") {
+      // Placeholder route
+      ensureRecordPanelOpen()
+      return
+    }
+
+    // Build team items
+    if (itemId === "build-issues") {
+      ensureRecordPanelOpen()
+      navigate("/issues")
+      return
+    }
+    if (itemId === "build-roadmap") {
+      // Placeholder route
+      ensureRecordPanelOpen()
+      return
+    }
+    if (itemId === "build-sprints") {
       ensureRecordPanelOpen()
       navigate("/sprints")
       return
     }
-    if (itemId === "about") {
+    if (itemId === "build-about") {
       ensureRecordPanelOpen()
       navigate("/about")
       return
     }
+
+    // Project space navigation
+    if (itemId.startsWith("project-")) {
+      const projectChatMatch = itemId.match(/^project-(.+)-chat$/)
+      if (projectChatMatch) {
+        const projectId = projectChatMatch[1]
+        setChatVariant(`project-${projectId}`)
+        setChatPanelOpen((prev) => {
+          const next = !prev
+          try {
+            window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+          } catch {
+            /* ignore */
+          }
+          return next
+        })
+        ensureRecordPanelOpen()
+        navigate(`/projects/${projectId}`)
+        return
+      }
+
+      const projectMainMatch = itemId.match(/^project-(.+)$/)
+      if (projectMainMatch) {
+        const projectId = projectMainMatch[1]
+        ensureRecordPanelOpen()
+        navigate(`/projects/${projectId}`)
+        return
+      }
+    }
+
+    // Legacy chat items (if any remain)
+    if (itemId.startsWith("chat-")) {
+      setChatVariant(itemId)
+      ensureChatPanelOpenPersist()
+      return
+    }
+
     /* Secondary nav (no route yet): show record canvas; leave chat lane as-is */
     ensureRecordPanelOpen()
   }
@@ -356,6 +428,7 @@ export function AppWorkspaceChrome() {
           onSelectItem={handleNavSelectItem}
           onComputerClick={handleComputerClick}
           chatPanelOpen={chatPanelOpen}
+          chatVariant={chatVariant}
           recordPanelOpen={recordPanelOpen}
           onToggleChatPanel={toggleChatPanel}
           onToggleRecordPanel={toggleRecordPanel}
