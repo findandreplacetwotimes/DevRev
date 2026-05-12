@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom"
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useAnchoredPopoverPosition } from "../hooks/useAnchoredPopoverPosition"
+import { useChats } from "../context/IssuesContext"
 import { ChatAvatar } from "./ChatAvatar"
 import { Control } from "./Control"
 import { MenuItem } from "./MenuItem"
@@ -39,14 +40,6 @@ const PRIMARY_ITEMS = [
   { id: "about", label: "About", iconName: "page" },
 ]
 
-const CHAT_ITEMS = [
-  { id: "chat-project", label: "Project chat", initial: "17" },
-  { id: "chat-arjun", label: "Arjun Patel", initial: "A" },
-  { id: "chat-sneha", label: "Sneha Sharma", initial: "S" },
-  { id: "chat-rohan", label: "Rohan Verma", initial: "R" },
-  { id: "chat-leela", label: "Leela Nair", initial: "L" },
-]
-
 const SECONDARY_ITEMS = [
   { id: "inbox", label: "Inbox", iconName: "inbox" },
   { id: "discover", label: "Discover", iconName: "discover" },
@@ -64,13 +57,36 @@ export function NavPanel({
   recordPanelOpen = true,
   onToggleChatPanel,
   onToggleRecordPanel,
+  onChatClick,
+  onNewChat,
 }) {
+  const { chats } = useChats()
   const [uncontrolledSelectedItemId, setUncontrolledSelectedItemId] = useState(defaultSelectedItemId)
   const isControlledSelection = selectedItemId !== undefined
   const currentSelectedItemId = isControlledSelection ? selectedItemId : uncontrolledSelectedItemId
+
+  const chatItems = useMemo(() => {
+    if (!chats) return []
+    return chats.map((chat) => {
+      const participantNames = chat.participants
+        .filter((p) => p !== "computer" && p !== "user")
+        .join(", ")
+      const isComputerOnly = chat.participants.includes("computer") && chat.participants.length === 2
+      const label = chat.title || (isComputerOnly ? "Computer" : participantNames || "New Chat")
+      const initial = isComputerOnly ? "C" : label[0]
+
+      return {
+        id: `chat-${chat.id}`,
+        label,
+        initial,
+        chatId: chat.id,
+      }
+    })
+  }, [chats])
+
   const allItemIds = useMemo(
-    () => [...PRIMARY_ITEMS, ...CHAT_ITEMS, ...SECONDARY_ITEMS].map((item) => item.id),
-    []
+    () => [...PRIMARY_ITEMS, ...chatItems, ...SECONDARY_ITEMS].map((item) => item.id),
+    [chatItems]
   )
 
   const hasPanelToggles =
@@ -88,6 +104,16 @@ export function NavPanel({
     if (!isControlledSelection) {
       setUncontrolledSelectedItemId(itemId)
     }
+
+    // Check if this is a chat item and call onChatClick
+    if (itemId.startsWith("chat-") && onChatClick) {
+      const chatItem = chatItems.find((c) => c.id === itemId)
+      if (chatItem) {
+        onChatClick(chatItem.chatId)
+        return
+      }
+    }
+
     onSelectItem?.(itemId)
   }
 
@@ -188,8 +214,42 @@ export function NavPanel({
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
       <div className="flex w-[194px] flex-col gap-[4px]">
-        <MenuItem type="label" label="Chats" fullWidth />
-        {CHAT_ITEMS.map((item) => (
+        <div className="flex w-full items-center justify-between px-[8px] py-[6px]">
+          <MenuItem type="label" label="Chats" fullWidth={false} />
+          <button
+            type="button"
+            onClick={() => {
+              if (onNewChat) {
+                onNewChat()
+              }
+            }}
+            style={{
+              width: "20px",
+              height: "20px",
+              borderRadius: "4px",
+              background: "transparent",
+              border: "none",
+              color: "rgba(0, 0, 0, 0.5)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "16px",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)"
+              e.currentTarget.style.color = "rgba(0, 0, 0, 0.8)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent"
+              e.currentTarget.style.color = "rgba(0, 0, 0, 0.5)"
+            }}
+          >
+            +
+          </button>
+        </div>
+        {chatItems.map((item) => (
           <NavItem
             key={item.id}
             label={item.label}

@@ -108,3 +108,30 @@ select {
 .animate-post-success {
   animation: post-success 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+/* Typing indicator animation */
+@keyframes typing-pulse {
+  0%, 60%, 100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+.typing-indicator {
+  display: inline-block;
+  letter-spacing: 2px;
+}
+
+.typing-indicator::before {
+  content: "●";
+  animation: typing-pulse 1.4s infinite;
+  animation-delay: 0s;
+}
+
+.typing-indicator::after {
+  content: "●●";
+  animation: typing-pulse 1.4s infinite;
+  animation-delay: 0.2s;
+}
