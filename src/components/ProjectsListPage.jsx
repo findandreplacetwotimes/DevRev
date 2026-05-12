@@ -1,9 +1,13 @@
+import { useState } from "react"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Control } from "./Control"
+import { ProjectCreateModal } from "./ProjectCreateModal"
 import { ProjectsTable } from "./ProjectsTable"
 import { TabPageTitle } from "./TabPageTitle"
 
 export function ProjectsListPage() {
+  const [showCreateModal, setShowCreateModal] = useState(false)
+
   return (
     <section className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[2px] bg-white" aria-label="Projects">
       <div className="min-h-[56px] w-full shrink-0">
@@ -12,7 +16,10 @@ export function ProjectsListPage() {
             <div className="flex min-w-0 flex-wrap items-center gap-[4px]">
               <Breadcrumbs root="Projects" item={null} />
             </div>
-            <Control type="iconOnly" leadingIcon="more" label="" />
+            <div className="flex shrink-0 items-center gap-[4px]">
+              <Control type="leading" leadingIcon="plus-small" label="New" onClick={() => setShowCreateModal(true)} />
+              <Control type="iconOnly" leadingIcon="more" label="" />
+            </div>
           </div>
         </header>
       </div>
@@ -27,6 +34,8 @@ export function ProjectsListPage() {
           <ProjectsTable />
         </div>
       </div>
+
+      <ProjectCreateModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
     </section>
   )
 }

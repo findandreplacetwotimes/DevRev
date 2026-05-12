@@ -31,8 +31,7 @@ export function AppDocumentPageShell({
                 {headerAfterPagePills}
               </div>
               <div className="flex shrink-0 items-center gap-[4px]">
-                {headerTrailing}
-                <Control type="iconOnly" leadingIcon="more" label="" />
+                {headerTrailing ?? <Control type="iconOnly" leadingIcon="more" label="" />}
               </div>
             </div>
             {!singleRowTopbar ? metaSlot : null}

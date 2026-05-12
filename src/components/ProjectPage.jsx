@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react"
-import { Navigate, useOutletContext, useParams } from "react-router-dom"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { createPortal } from "react-dom"
+import { Navigate, useLocation, useOutletContext, useParams } from "react-router-dom"
 import { useIssues } from "../context/IssuesContext"
 import { EMPTY_PROJECT_TITLE_PLACEHOLDER, projectBreadcrumbProjectSuffix } from "../lib/projectsApi"
 import { dueDateIdFromDate, parseDateInput } from "../lib/dueDates"
@@ -11,6 +12,7 @@ import { AppDocumentPageShell } from "./AppDocumentPageShell"
 import { Control } from "./Control"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { DueDateSelector } from "./DueDateSelector"
+import { MenuItem } from "./MenuItem"
 import { ProjectHealthSelector } from "./ProjectHealthSelector"
 import { OwnerSelector } from "./OwnerSelector"
 import { Page } from "./Page"
@@ -19,6 +21,89 @@ import { TextEdit } from "./TextEdit"
 import { TextEditTitle } from "./TextEditTitle"
 import { DocumentHistoryPlaceholder } from "./DocumentHistoryPlaceholder"
 import { ProjectMilestonesOverview } from "./ProjectMilestonesOverview"
+import { ProjectSettingsTab } from "./ProjectSettingsTab"
+import { ProjectSetupBanner } from "./ProjectSetupBanner"
+
+const modalShadow =
+  "0px 6px 13px rgba(0,0,0,0.10), 0px 23px 23px rgba(0,0,0,0.09), 0px 52px 31px rgba(0,0,0,0.05), 0px 92px 37px rgba(0,0,0,0.01), 0px 144px 40px rgba(0,0,0,0)"
+
+function ProjectMoreMenu({ onSettings }) {
+  const [open, setOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 })
+  const triggerRef = useRef(null)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!open || !triggerRef.current) return undefined
+    const compute = () => {
+      const rect = triggerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      setMenuPos({
+        top: Math.round(rect.bottom + 4),
+        right: Math.round(window.innerWidth - rect.right),
+      })
+    }
+    compute()
+    window.addEventListener("scroll", compute, true)
+    window.addEventListener("resize", compute)
+    const onDocDown = (event) => {
+      const t = event.target
+      if (triggerRef.current?.contains(t) || menuRef.current?.contains(t)) return
+      setOpen(false)
+    }
+    const onEsc = (event) => {
+      if (event.key === "Escape") setOpen(false)
+    }
+    document.addEventListener("pointerdown", onDocDown)
+    document.addEventListener("keydown", onEsc)
+    return () => {
+      window.removeEventListener("scroll", compute, true)
+      window.removeEventListener("resize", compute)
+      document.removeEventListener("pointerdown", onDocDown)
+      document.removeEventListener("keydown", onEsc)
+    }
+  }, [open])
+
+  const items = [
+    { id: "settings", label: "Settings" },
+    { id: "copy-link", label: "Copy link" },
+    { id: "subscribe", label: "Subscribe" },
+    { id: "delete", label: "Delete" },
+  ]
+
+  function handleItemClick(id) {
+    setOpen(false)
+    if (id === "settings") onSettings?.()
+  }
+
+  const menu = (
+    <div
+      ref={menuRef}
+      className="fixed z-[210] inline-flex w-[180px] flex-col items-start gap-[2px] rounded-[4px] bg-white p-[6px]"
+      style={{ boxShadow: modalShadow, top: `${menuPos.top}px`, right: `${menuPos.right}px` }}
+    >
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          className="w-full text-left"
+          onClick={() => handleItemClick(item.id)}
+        >
+          <MenuItem type="textOnly" state="rest" label={item.label} fullWidth />
+        </button>
+      ))}
+    </div>
+  )
+
+  return (
+    <div className="relative inline-flex">
+      <div ref={triggerRef}>
+        <Control type="iconOnly" leadingIcon="more" label="" onClick={() => setOpen((v) => !v)} />
+      </div>
+      {open && typeof document !== "undefined" ? createPortal(menu, document.body) : null}
+    </div>
+  )
+}
 
 function DiscussGlyph() {
   return (
@@ -39,9 +124,12 @@ function DiscussGlyph() {
 
 export function ProjectPage() {
   const { projectId: projectIdParam } = useParams()
+  const location = useLocation()
   const { openProjectChat } = useOutletContext() ?? {}
   const { projects, issues, patchProject, patchIssue } = useIssues()
   const [activeTab, setActiveTab] = useState("Overview")
+  const [showSettings, setShowSettings] = useState(false)
+  const [showSetupBanner, setShowSetupBanner] = useState(location.state?.justCreated === true)
 
   const canonicalId = useMemo(() => {
     const raw = projectIdParam != null ? decodeURIComponent(projectIdParam).trim() : ""
@@ -76,8 +164,8 @@ export function ProjectPage() {
   const trimmedTitle = project.title.trim()
   const titleValue = trimmedTitle.length ? project.title : ""
   const titlePlaceholderUi = trimmedTitle.length ? "Title" : EMPTY_PROJECT_TITLE_PLACEHOLDER
-  const showTextEditContent = activeTab === "Overview" || activeTab === "Brief"
-  const showMilestonesContent = activeTab === "Overview" || activeTab === "Scope"
+  const showTextEditContent = (activeTab === "Overview" || activeTab === "Brief") && !showSettings
+  const showMilestonesContent = (activeTab === "Overview" || activeTab === "Scope") && !showSettings
   const runProjectSlashCommand = async ({ command, valueWithoutCommand }) => {
     if (!ENABLE_LOCAL_SLASH_DATE_COMMAND) return { handled: false }
     if (!isDueDateSlashCommand(command)) return { handled: false }
@@ -129,6 +217,9 @@ export function ProjectPage() {
           onClick={() => openProjectChat?.()}
         />
       }
+      headerTrailing={
+        <ProjectMoreMenu onSettings={() => setShowSettings(true)} />
+      }
       metaSlot={
         <div className="flex w-full min-w-0 flex-nowrap items-center gap-1">
           <OwnerSelector
@@ -153,7 +244,18 @@ export function ProjectPage() {
         <div className="flex w-full min-w-0 flex-col">
           <div className="w-full shrink-0 px-[44px] pt-[60px]">
             <div className="w-full">
-              {activeTab === "Overview" ? (
+              {showSettings ? (
+                <div className="flex items-center gap-[6px]">
+                  <button
+                    type="button"
+                    onClick={() => setShowSettings(false)}
+                    className="inline-flex size-[28px] items-center justify-center rounded-[2px] border-0 bg-transparent p-0 text-[var(--foreground-primary)] hover:bg-[var(--control-bg-hover)] appearance-none"
+                  >
+                    <img src="/icons/breadcrumb-chevron.svg" alt="Back" className="block size-[16px] rotate-180" draggable={false} />
+                  </button>
+                  <TabPageTitle>Settings</TabPageTitle>
+                </div>
+              ) : activeTab === "Overview" ? (
                 <TextEditTitle
                   id={titleId}
                   placeholder={titlePlaceholderUi}
@@ -205,7 +307,18 @@ export function ProjectPage() {
               </div>
             </div>
           )}
+
+          {showSettings && (
+            <ProjectSettingsTab project={project} patchProject={patchProject} />
+          )}
         </div>
+
+        {showSetupBanner && !showSettings && (
+          <ProjectSetupBanner
+            onGoToSettings={() => setShowSettings(true)}
+            onDismiss={() => setShowSetupBanner(false)}
+          />
+        )}
       </div>
     </AppDocumentPageShell>
   )
