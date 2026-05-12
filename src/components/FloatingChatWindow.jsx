@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useChats } from "../context/IssuesContext"
 import { callAI } from "../lib/aiClient"
-import { Control } from "./Control"
 import { InvitePanel } from "./InvitePanel"
 
 export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
@@ -233,16 +232,92 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
               )}
             </div>
           </div>
-          <div style={{ display: "flex", gap: "4px" }}>
-            <Control
-              type="iconOnly"
-              leadingIcon="person"
-              label=""
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              type="button"
               onClick={() => setShowInvitePanel(!showInvitePanel)}
-              state={showInvitePanel ? "hover" : "rest"}
-            />
-            <Control type="iconOnly" leadingIcon="minus" label="" onClick={onMinimize} />
-            <Control type="iconOnly" leadingIcon="close" label="" onClick={onClose} />
+              title="Invite people"
+              style={{
+                width: "28px",
+                height: "28px",
+                borderRadius: "6px",
+                background: showInvitePanel
+                  ? "rgba(100, 80, 200, 0.2)"
+                  : "rgba(0, 0, 0, 0.03)",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                color: "var(--foreground-primary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "14px",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = showInvitePanel
+                  ? "rgba(100, 80, 200, 0.3)"
+                  : "rgba(0, 0, 0, 0.06)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = showInvitePanel
+                  ? "rgba(100, 80, 200, 0.2)"
+                  : "rgba(0, 0, 0, 0.03)"
+              }}
+            >
+              👤+
+            </button>
+            <button
+              type="button"
+              onClick={onMinimize}
+              style={{
+                width: "28px",
+                height: "28px",
+                borderRadius: "6px",
+                background: "rgba(0, 0, 0, 0.03)",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                color: "var(--foreground-primary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(0, 0, 0, 0.06)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(0, 0, 0, 0.03)"
+              }}
+            >
+              −
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                width: "28px",
+                height: "28px",
+                borderRadius: "6px",
+                background: "rgba(0, 0, 0, 0.03)",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                color: "var(--foreground-primary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "18px",
+                transition: "all 0.15s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(0, 0, 0, 0.06)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(0, 0, 0, 0.03)"
+              }}
+            >
+              ×
+            </button>
           </div>
         </div>
 
@@ -431,16 +506,42 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
               color: "var(--foreground-primary)",
             }}
           />
-          <Control
-            type="iconOnly"
-            leadingIcon="arrow-up"
-            label=""
+          <button
+            type="button"
             onClick={handleSendMessage}
+            disabled={!inputValue.trim() || isComputerTyping}
             style={{
-              opacity: inputValue.trim() && !isComputerTyping ? 1 : 0.5,
+              width: "32px",
+              height: "32px",
+              borderRadius: "6px",
+              background: inputValue.trim() && !isComputerTyping
+                ? "hsl(259 94% 44%)"
+                : "rgba(0, 0, 0, 0.03)",
+              border: "1px solid rgba(0, 0, 0, 0.08)",
+              color: inputValue.trim() && !isComputerTyping
+                ? "white"
+                : "var(--foreground-secondary)",
               cursor: inputValue.trim() && !isComputerTyping ? "pointer" : "not-allowed",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "16px",
+              fontWeight: "600",
+              transition: "all 0.15s",
             }}
-          />
+            onMouseEnter={(e) => {
+              if (inputValue.trim() && !isComputerTyping) {
+                e.currentTarget.style.background = "hsl(259 94% 50%)"
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (inputValue.trim() && !isComputerTyping) {
+                e.currentTarget.style.background = "hsl(259 94% 44%)"
+              }
+            }}
+          >
+            ↑
+          </button>
         </div>
 
         {/* Invite Panel */}
