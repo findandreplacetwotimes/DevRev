@@ -1,3 +1,5 @@
+import { Control } from "./Control"
+
 export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
   if (minimizedChats.length === 0) return null
 
@@ -10,12 +12,12 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
         display: "flex",
         gap: "12px",
         zIndex: 999,
+        fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
       }}
     >
       {minimizedChats.map((chat) => {
         const participantNames = chat.participants
-          .filter((p) => p !== "computer")
-          .map((p) => (p === "user" ? "You" : p))
+          .filter((p) => p !== "computer" && p !== "user")
           .join(", ")
         const title = chat.participants.includes("computer") && chat.participants.length === 2
           ? "Computer"
@@ -24,40 +26,32 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
         return (
           <div
             key={chat.id}
+            className="group"
             style={{
               width: "280px",
-              height: "56px",
-              borderRadius: "12px",
-              backdropFilter: "blur(20px) saturate(180%)",
-              background: "rgba(18, 18, 18, 0.85)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.3)",
+              minHeight: "56px",
+              borderRadius: "8px",
+              background: "white",
+              border: "1px solid #ececec",
+              boxShadow: "0px 6px 13px rgba(0,0,0,0.10), 0px 23px 23px rgba(0,0,0,0.09)",
               display: "flex",
               alignItems: "center",
-              padding: "12px 16px",
+              padding: "12px",
               cursor: "pointer",
               transition: "all 0.15s",
             }}
             onClick={() => onRestore(chat.id)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(28, 28, 28, 0.9)"
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(18, 18, 18, 0.85)"
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)"
-            }}
           >
             <div
               style={{
-                width: "32px",
-                height: "32px",
+                width: "28px",
+                height: "28px",
                 borderRadius: "50%",
                 background: "hsl(259 94% 44%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "white",
                 flexShrink: 0,
@@ -68,15 +62,17 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
             <div
               style={{
                 flex: 1,
-                marginLeft: "12px",
+                marginLeft: "10px",
                 overflow: "hidden",
               }}
             >
               <div
                 style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  color: "rgba(255, 255, 255, 0.95)",
+                  fontSize: "13px",
+                  lineHeight: "16px",
+                  letterSpacing: "-0.13px",
+                  fontVariationSettings: '"wght" 520',
+                  color: "var(--foreground-primary)",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -88,7 +84,9 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
                 <div
                   style={{
                     fontSize: "12px",
-                    color: "rgba(255, 255, 255, 0.5)",
+                    lineHeight: "15px",
+                    fontVariationSettings: '"wght" 450',
+                    color: "var(--foreground-secondary)",
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -98,40 +96,17 @@ export function MinimizedChatTabs({ minimizedChats, onRestore, onClose }) {
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onClose(chat.id)
-              }}
-              style={{
-                width: "24px",
-                height: "24px",
-                borderRadius: "6px",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: "rgba(255, 255, 255, 0.5)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "16px",
-                transition: "all 0.15s",
-                flexShrink: 0,
-                marginLeft: "8px",
-              }}
-              onMouseEnter={(e) => {
-                e.stopPropagation()
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)"
-              }}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{ marginLeft: "8px" }}
             >
-              ×
-            </button>
+              <Control
+                type="iconOnly"
+                leadingIcon="close"
+                label=""
+                onClick={() => onClose(chat.id)}
+              />
+            </div>
           </div>
         )
       })}

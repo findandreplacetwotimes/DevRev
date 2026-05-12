@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 import { useChats } from "../context/IssuesContext"
 import { callAI } from "../lib/aiClient"
+import { Control } from "./Control"
+import { InvitePanel } from "./InvitePanel"
 
 export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
   const { patchChat } = useChats()
@@ -8,6 +10,7 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [inputValue, setInputValue] = useState("")
   const [isComputerTyping, setIsComputerTyping] = useState(false)
+  const [showInvitePanel, setShowInvitePanel] = useState(false)
   const dragStartRef = useRef({ x: 0, y: 0, initialX: 0, initialY: 0 })
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
@@ -155,6 +158,7 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
         height: "600px",
         transform: `translate(${position.x}px, ${position.y}px)`,
         zIndex: 1000,
+        fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
         ...style,
       }}
     >
@@ -162,13 +166,11 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
         className="chat-window-container"
         style={{
           height: "100%",
-          borderRadius: "16px",
+          borderRadius: "8px",
           overflow: "hidden",
-          backdropFilter: "blur(20px) saturate(180%)",
-          background: "rgba(18, 18, 18, 0.85)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow:
-            "0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+          background: "white",
+          border: "1px solid #ececec",
+          boxShadow: "0px 6px 13px rgba(0,0,0,0.10), 0px 23px 23px rgba(0,0,0,0.09)",
           display: "flex",
           flexDirection: "column",
         }}
@@ -178,26 +180,27 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
           className="chat-header"
           onMouseDown={handleMouseDown}
           style={{
-            padding: "16px 20px",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            padding: "12px 16px",
+            borderBottom: "1px solid #ececec",
             cursor: isDragging ? "grabbing" : "grab",
             userSelect: "none",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            background: "white",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
-                width: "32px",
-                height: "32px",
+                width: "28px",
+                height: "28px",
                 borderRadius: "50%",
                 background: "hsl(259 94% 44%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "14px",
+                fontSize: "12px",
                 fontWeight: "600",
                 color: "white",
               }}
@@ -207,9 +210,11 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
             <div>
               <div
                 style={{
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  color: "rgba(255, 255, 255, 0.95)",
+                  fontSize: "13px",
+                  lineHeight: "16px",
+                  letterSpacing: "-0.13px",
+                  fontVariationSettings: '"wght" 520',
+                  color: "var(--foreground-primary)",
                 }}
               >
                 {title}
@@ -218,7 +223,9 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
                 <div
                   style={{
                     fontSize: "12px",
-                    color: "rgba(255, 255, 255, 0.5)",
+                    lineHeight: "15px",
+                    fontVariationSettings: '"wght" 450',
+                    color: "var(--foreground-secondary)",
                   }}
                 >
                   {chat.participants.length} participants
@@ -226,63 +233,16 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
               )}
             </div>
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
-            <button
-              type="button"
-              onClick={onMinimize}
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: "rgba(255, 255, 255, 0.7)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "18px",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.95)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)"
-              }}
-            >
-              −
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                width: "28px",
-                height: "28px",
-                borderRadius: "6px",
-                background: "rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: "rgba(255, 255, 255, 0.7)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "18px",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.95)"
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)"
-              }}
-            >
-              ×
-            </button>
+          <div style={{ display: "flex", gap: "4px" }}>
+            <Control
+              type="iconOnly"
+              leadingIcon="person"
+              label=""
+              onClick={() => setShowInvitePanel(!showInvitePanel)}
+              state={showInvitePanel ? "hover" : "rest"}
+            />
+            <Control type="iconOnly" leadingIcon="minus" label="" onClick={onMinimize} />
+            <Control type="iconOnly" leadingIcon="close" label="" onClick={onClose} />
           </div>
         </div>
 
@@ -292,8 +252,8 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
           style={{
             flex: 1,
             overflowY: "auto",
-            padding: "20px",
-            color: "rgba(255, 255, 255, 0.9)",
+            padding: "16px",
+            background: "#fafafa",
           }}
         >
           {chat.messages.length === 0 ? (
@@ -305,11 +265,17 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
                 justifyContent: "center",
                 height: "100%",
                 textAlign: "center",
-                color: "rgba(255, 255, 255, 0.4)",
               }}
             >
-              <div style={{ fontSize: "48px", marginBottom: "16px" }}>💬</div>
-              <div style={{ fontSize: "14px" }}>
+              <div style={{ fontSize: "48px", marginBottom: "12px" }}>💬</div>
+              <div
+                style={{
+                  fontSize: "13px",
+                  lineHeight: "16px",
+                  fontVariationSettings: '"wght" 460',
+                  color: "var(--foreground-secondary)",
+                }}
+              >
                 Start a conversation with {title}
               </div>
             </div>
@@ -318,13 +284,43 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
               {chat.messages.map((msg) => {
                 const isUser = msg.senderId === "user"
                 const isComputer = msg.senderId === "computer"
+                const isSystem = msg.senderId === "system"
                 const senderName = isUser ? "You" : isComputer ? "Computer" : msg.senderId
+
+                // System messages (like "X was added to the chat")
+                if (isSystem) {
+                  return (
+                    <div
+                      key={msg.id}
+                      style={{
+                        marginBottom: "12px",
+                        display: "flex",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: "2px",
+                          background: "var(--background-primary-subtle)",
+                          color: "var(--foreground-secondary)",
+                          fontSize: "12px",
+                          lineHeight: "15px",
+                          fontVariationSettings: '"wght" 450',
+                          textAlign: "center",
+                        }}
+                      >
+                        {msg.text}
+                      </div>
+                    </div>
+                  )
+                }
 
                 return (
                   <div
                     key={msg.id}
                     style={{
-                      marginBottom: "16px",
+                      marginBottom: "12px",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: isUser ? "flex-end" : "flex-start",
@@ -333,10 +329,12 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
                     {!isUser && (
                       <div
                         style={{
-                          fontSize: "12px",
-                          color: "rgba(255, 255, 255, 0.5)",
+                          fontSize: "11px",
+                          lineHeight: "14px",
+                          fontVariationSettings: '"wght" 460',
+                          color: "var(--foreground-secondary)",
                           marginBottom: "4px",
-                          marginLeft: "4px",
+                          marginLeft: "2px",
                         }}
                       >
                         {senderName}
@@ -344,17 +342,18 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
                     )}
                     <div
                       style={{
-                        maxWidth: "80%",
-                        padding: "12px 16px",
-                        borderRadius: "12px",
+                        maxWidth: "85%",
+                        padding: "8px 12px",
+                        borderRadius: "2px",
                         background: isUser
                           ? "hsl(259 94% 44%)"
-                          : isComputer
-                            ? "rgba(100, 80, 200, 0.2)"
-                            : "rgba(255, 255, 255, 0.1)",
-                        color: "white",
-                        fontSize: "14px",
-                        lineHeight: "1.5",
+                          : "white",
+                        color: isUser ? "white" : "var(--foreground-primary)",
+                        fontSize: "13px",
+                        lineHeight: "18px",
+                        letterSpacing: "-0.13px",
+                        fontVariationSettings: '"wght" 460',
+                        border: isUser ? "none" : "1px solid #ececec",
                       }}
                     >
                       {msg.text}
@@ -365,7 +364,7 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
               {isComputerTyping && (
                 <div
                   style={{
-                    marginBottom: "16px",
+                    marginBottom: "12px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
@@ -373,21 +372,24 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
                 >
                   <div
                     style={{
-                      fontSize: "12px",
-                      color: "rgba(255, 255, 255, 0.5)",
+                      fontSize: "11px",
+                      lineHeight: "14px",
+                      fontVariationSettings: '"wght" 460',
+                      color: "var(--foreground-secondary)",
                       marginBottom: "4px",
-                      marginLeft: "4px",
+                      marginLeft: "2px",
                     }}
                   >
                     Computer
                   </div>
                   <div
                     style={{
-                      padding: "12px 16px",
-                      borderRadius: "12px",
-                      background: "rgba(100, 80, 200, 0.2)",
-                      color: "rgba(255, 255, 255, 0.6)",
-                      fontSize: "14px",
+                      padding: "8px 12px",
+                      borderRadius: "2px",
+                      background: "white",
+                      border: "1px solid #ececec",
+                      color: "var(--foreground-secondary)",
+                      fontSize: "13px",
                     }}
                   >
                     <span className="typing-indicator">●●●</span>
@@ -403,11 +405,12 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
         <div
           className="chat-input"
           style={{
-            padding: "16px 20px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+            padding: "12px 16px",
+            borderTop: "1px solid #ececec",
             display: "flex",
             gap: "8px",
             alignItems: "center",
+            background: "white",
           }}
         >
           <input
@@ -418,51 +421,32 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isComputerTyping}
+            className="flex-1 px-[10px] py-[6px] rounded-[2px] bg-[var(--background-primary-subtle)] border border-transparent outline-none hover:bg-[var(--control-bg-hover)] transition-colors duration-150"
             style={{
-              flex: 1,
-              padding: "12px 16px",
-              borderRadius: "8px",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              color: "rgba(255, 255, 255, 0.9)",
-              fontSize: "14px",
-              outline: "none",
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)"
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)"
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)"
+              fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+              fontSize: "13px",
+              lineHeight: "16px",
+              letterSpacing: "-0.13px",
+              fontVariationSettings: '"wght" 460',
+              color: "var(--foreground-primary)",
             }}
           />
-          <button
-            type="button"
+          <Control
+            type="iconOnly"
+            leadingIcon="arrow-up"
+            label=""
             onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isComputerTyping}
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "8px",
-              background: inputValue.trim() && !isComputerTyping
-                ? "hsl(259 94% 44%)"
-                : "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              color: inputValue.trim() && !isComputerTyping
-                ? "white"
-                : "rgba(255, 255, 255, 0.3)",
+              opacity: inputValue.trim() && !isComputerTyping ? 1 : 0.5,
               cursor: inputValue.trim() && !isComputerTyping ? "pointer" : "not-allowed",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "18px",
-              transition: "all 0.15s",
             }}
-          >
-            ↑
-          </button>
+          />
         </div>
+
+        {/* Invite Panel */}
+        {showInvitePanel && (
+          <InvitePanel chat={chat} onClose={() => setShowInvitePanel(false)} />
+        )}
       </div>
     </div>
   )
