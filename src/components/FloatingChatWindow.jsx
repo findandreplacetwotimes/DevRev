@@ -250,8 +250,8 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "14px",
                 transition: "all 0.15s",
+                padding: "6px",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = showInvitePanel
@@ -264,7 +264,9 @@ export function FloatingChatWindow({ chat, onClose, onMinimize, style }) {
                   : "rgba(0, 0, 0, 0.03)"
               }}
             >
-              👤+
+              <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+                <path d="M5.83325 16.6667C5.83325 14.5833 7.49992 13 9.49992 13H13.7499C15.8333 13 17.4166 14.6667 17.4166 16.6667 M14.1667 4.33331C15.5 5.66665 15.5 7.91665 14.1667 9.24998C12.8333 10.5833 10.5833 10.5833 9.25 9.24998C7.91667 7.91665 7.91667 5.66665 9.25 4.33331C10.5833 2.99998 12.75 2.99998 14.1667 4.33331 M2.08325 9.99998H5.41659 M3.74992 11.6666V8.33331" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </button>
             <button
               type="button"
