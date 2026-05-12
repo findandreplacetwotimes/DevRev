@@ -144,11 +144,9 @@ export function ComputerPage() {
 
   if (!activeChat) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center">
-          <div className="text-2xl mb-2">⏳</div>
-          <div className="text-sm text-[var(--foreground-secondary)]">Loading...</div>
-        </div>
+      <div className="arcade-empty">
+        <div className="arcade-empty__icon">⏳</div>
+        <div className="arcade-empty__description">Loading...</div>
       </div>
     )
   }
@@ -157,8 +155,8 @@ export function ComputerPage() {
     <div
       className="flex h-screen w-full"
       style={{
-        fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-        background: "white",
+        fontFamily: "var(--font-text)",
+        background: "hsl(var(--bg-layer-00))",
       }}
     >
       {/* Minimal Left Sidebar */}
@@ -170,55 +168,25 @@ export function ComputerPage() {
         style={{
           width: "500px",
           height: "100%",
-          borderRight: "1px solid #ececec",
-          background: "white",
+          borderRight: "1px solid hsl(var(--border-outline-01))",
+          background: "hsl(var(--bg-layer-01))",
         }}
       >
         {/* Chat Header */}
         <div
           style={{
-            padding: "16px 20px",
-            borderBottom: "1px solid #ececec",
-            background: "white",
+            padding: "var(--spacing-global-base) var(--spacing-global-lg)",
+            borderBottom: "1px solid hsl(var(--border-outline-01))",
+            background: "hsl(var(--bg-layer-01))",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                background: "hsl(259 94% 44%)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "14px",
-                fontWeight: "600",
-                color: "white",
-              }}
-            >
-              C
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--spacing-global-sm)" }}>
+            <ComputerLogo size={36} />
             <div>
-              <div
-                style={{
-                  fontSize: "15px",
-                  lineHeight: "18px",
-                  letterSpacing: "-0.15px",
-                  fontVariationSettings: '"wght" 540',
-                  color: "var(--foreground-primary)",
-                }}
-              >
+              <div className="text-body-small-medium" style={{ color: "hsl(var(--text-color-primary))" }}>
                 Computer
               </div>
-              <div
-                style={{
-                  fontSize: "12px",
-                  lineHeight: "15px",
-                  fontVariationSettings: '"wght" 450',
-                  color: "var(--foreground-secondary)",
-                }}
-              >
+              <div className="text-caption" style={{ color: "hsl(var(--text-color-secondary))" }}>
                 AI assistant
               </div>
             </div>
@@ -229,76 +197,46 @@ export function ComputerPage() {
         <div
           className="flex-1 overflow-y-auto"
           style={{
-            padding: "20px",
-            background: "#fafafa",
+            padding: "var(--spacing-global-lg)",
+            background: "hsl(var(--bg-layer-00))",
           }}
         >
           {activeChat.messages.length === 0 ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                textAlign: "center",
-              }}
-            >
-              <div style={{ fontSize: "64px", marginBottom: "16px" }}>💭</div>
-              <div
-                style={{
-                  fontSize: "15px",
-                  lineHeight: "20px",
-                  fontVariationSettings: '"wght" 460',
-                  color: "var(--foreground-secondary)",
-                }}
-              >
-                Start a conversation with Computer
-              </div>
+            <div className="arcade-empty">
+              <div className="arcade-empty__icon">💭</div>
+              <div className="arcade-empty__description">Start a conversation with Computer</div>
             </div>
           ) : (
-            <div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-global-base)" }}>
               {activeChat.messages.map((msg) => {
                 const isUser = msg.senderId === "user"
-                const isComputer = msg.senderId === "computer"
-                const senderName = isUser ? "You" : "Computer"
 
                 return (
                   <div
                     key={msg.id}
                     style={{
-                      marginBottom: "16px",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: isUser ? "flex-end" : "flex-start",
+                      gap: "var(--spacing-global-4xs)",
                     }}
                   >
                     {!isUser && (
-                      <div
-                        style={{
-                          fontSize: "11px",
-                          lineHeight: "14px",
-                          fontVariationSettings: '"wght" 460',
-                          color: "var(--foreground-secondary)",
-                          marginBottom: "6px",
-                          marginLeft: "4px",
-                        }}
-                      >
-                        {senderName}
+                      <div className="text-caption" style={{ color: "hsl(var(--text-color-tertiary))" }}>
+                        Computer
                       </div>
                     )}
                     <div
+                      className="text-system"
                       style={{
                         maxWidth: "85%",
-                        padding: "10px 14px",
-                        borderRadius: "2px",
-                        background: isUser ? "hsl(259 94% 44%)" : "white",
-                        color: isUser ? "white" : "var(--foreground-primary)",
-                        fontSize: "14px",
-                        lineHeight: "20px",
-                        letterSpacing: "-0.14px",
-                        fontVariationSettings: '"wght" 460',
-                        border: isUser ? "none" : "1px solid #ececec",
+                        padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
+                        borderRadius: "8px",
+                        background: isUser
+                          ? "hsl(var(--bg-interactive-primary-resting))"
+                          : "hsl(var(--bg-layer-01))",
+                        color: isUser ? "hsl(var(--text-interactive-primary-resting))" : "hsl(var(--text-color-primary))",
+                        border: isUser ? "none" : "1px solid hsl(var(--border-outline-01))",
                       }}
                     >
                       {msg.text}
@@ -309,32 +247,23 @@ export function ComputerPage() {
               {isComputerTyping && (
                 <div
                   style={{
-                    marginBottom: "16px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
+                    gap: "var(--spacing-global-4xs)",
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      lineHeight: "14px",
-                      fontVariationSettings: '"wght" 460',
-                      color: "var(--foreground-secondary)",
-                      marginBottom: "6px",
-                      marginLeft: "4px",
-                    }}
-                  >
+                  <div className="text-caption" style={{ color: "hsl(var(--text-color-tertiary))" }}>
                     Computer
                   </div>
                   <div
+                    className="text-system"
                     style={{
-                      padding: "10px 14px",
-                      borderRadius: "2px",
-                      background: "white",
-                      border: "1px solid #ececec",
-                      color: "var(--foreground-secondary)",
-                      fontSize: "14px",
+                      padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
+                      borderRadius: "8px",
+                      background: "hsl(var(--bg-layer-01))",
+                      border: "1px solid hsl(var(--border-outline-01))",
+                      color: "hsl(var(--text-color-tertiary))",
                     }}
                   >
                     <span className="typing-indicator">●●●</span>
@@ -349,12 +278,12 @@ export function ComputerPage() {
         {/* Input */}
         <div
           style={{
-            padding: "16px 20px",
-            borderTop: "1px solid #ececec",
+            padding: "var(--spacing-global-base) var(--spacing-global-lg)",
+            borderTop: "1px solid hsl(var(--border-outline-01))",
             display: "flex",
-            gap: "10px",
+            gap: "var(--spacing-global-xs)",
             alignItems: "center",
-            background: "white",
+            background: "hsl(var(--bg-layer-01))",
           }}
         >
           <input
@@ -365,48 +294,20 @@ export function ComputerPage() {
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isComputerTyping}
-            className="flex-1 px-[12px] py-[8px] rounded-[2px] bg-[var(--background-primary-subtle)] border border-transparent outline-none hover:bg-[var(--control-bg-hover)] transition-colors duration-150"
-            style={{
-              fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: "14px",
-              lineHeight: "18px",
-              letterSpacing: "-0.14px",
-              fontVariationSettings: '"wght" 460',
-              color: "var(--foreground-primary)",
-            }}
+            className="arcade-input"
+            style={{ flex: 1 }}
           />
           <button
             type="button"
             onClick={handleSendMessage}
             disabled={!inputValue.trim() || isComputerTyping}
+            className="arcade-btn arcade-btn--primary"
             style={{
               width: "36px",
               height: "36px",
-              borderRadius: "6px",
-              background:
-                inputValue.trim() && !isComputerTyping
-                  ? "hsl(259 94% 44%)"
-                  : "rgba(0, 0, 0, 0.03)",
-              border: "1px solid rgba(0, 0, 0, 0.08)",
-              color:
-                inputValue.trim() && !isComputerTyping ? "white" : "var(--foreground-secondary)",
-              cursor: inputValue.trim() && !isComputerTyping ? "pointer" : "not-allowed",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              minWidth: "36px",
+              padding: "0",
               fontSize: "18px",
-              fontWeight: "600",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              if (inputValue.trim() && !isComputerTyping) {
-                e.currentTarget.style.background = "hsl(259 94% 50%)"
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (inputValue.trim() && !isComputerTyping) {
-                e.currentTarget.style.background = "hsl(259 94% 44%)"
-              }
             }}
           >
             ↑
@@ -415,72 +316,30 @@ export function ComputerPage() {
       </div>
 
       {/* Right Panel - Canvas or Invite */}
-      <div className="flex-1 flex flex-col" style={{ background: "white" }}>
+      <div className="flex-1 flex flex-col" style={{ background: "hsl(var(--bg-layer-01))" }}>
         {/* Right Panel Header */}
         <div
           style={{
-            padding: "16px 20px",
-            borderBottom: "1px solid #ececec",
+            padding: "var(--spacing-global-base) var(--spacing-global-lg)",
+            borderBottom: "1px solid hsl(var(--border-outline-01))",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "white",
+            background: "hsl(var(--bg-layer-01))",
           }}
         >
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className="arcade-tabs">
             <button
               type="button"
               onClick={() => setRightPanel("canvas")}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "2px",
-                background: rightPanel === "canvas" ? "hsl(259 94% 44%)" : "transparent",
-                color: rightPanel === "canvas" ? "white" : "var(--foreground-primary)",
-                border: rightPanel === "canvas" ? "none" : "1px solid #ececec",
-                fontSize: "13px",
-                lineHeight: "16px",
-                fontVariationSettings: '"wght" 480',
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                if (rightPanel !== "canvas") {
-                  e.currentTarget.style.background = "var(--control-bg-hover)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (rightPanel !== "canvas") {
-                  e.currentTarget.style.background = "transparent"
-                }
-              }}
+              className={`arcade-tab ${rightPanel === "canvas" ? "arcade-tab--active" : ""}`}
             >
               Canvas
             </button>
             <button
               type="button"
               onClick={() => setRightPanel("invite")}
-              style={{
-                padding: "6px 12px",
-                borderRadius: "2px",
-                background: rightPanel === "invite" ? "hsl(259 94% 44%)" : "transparent",
-                color: rightPanel === "invite" ? "white" : "var(--foreground-primary)",
-                border: rightPanel === "invite" ? "none" : "1px solid #ececec",
-                fontSize: "13px",
-                lineHeight: "16px",
-                fontVariationSettings: '"wght" 480',
-                cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-              onMouseEnter={(e) => {
-                if (rightPanel !== "invite") {
-                  e.currentTarget.style.background = "var(--control-bg-hover)"
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (rightPanel !== "invite") {
-                  e.currentTarget.style.background = "transparent"
-                }
-              }}
+              className={`arcade-tab ${rightPanel === "invite" ? "arcade-tab--active" : ""}`}
             >
               Invite
             </button>
@@ -490,31 +349,14 @@ export function ComputerPage() {
           <button
             type="button"
             onClick={handleConvertToProject}
-            style={{
-              padding: "6px 12px",
-              borderRadius: "2px",
-              background: "hsl(259 94% 44%)",
-              color: "white",
-              border: "none",
-              fontSize: "13px",
-              lineHeight: "16px",
-              fontVariationSettings: '"wght" 500',
-              cursor: "pointer",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "hsl(259 94% 50%)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "hsl(259 94% 44%)"
-            }}
+            className="arcade-btn arcade-btn--primary arcade-btn--M"
           >
             Convert to Project
           </button>
         </div>
 
         {/* Right Panel Content */}
-        <div className="flex-1 overflow-y-auto" style={{ padding: "20px" }}>
+        <div className="flex-1 overflow-y-auto" style={{ padding: "var(--spacing-global-lg)" }}>
           {rightPanel === "canvas" ? (
             <CanvasPanel chat={activeChat} />
           ) : (
@@ -528,43 +370,45 @@ export function ComputerPage() {
   )
 }
 
+// Computer logo component (two-bar logo)
+function ComputerLogo({ size = 28 }) {
+  return (
+    <div
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        background: "hsl(var(--intelligence-400))",
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+      }}
+    >
+      <svg
+        width={size * 0.5}
+        height={size * 0.5}
+        viewBox="0 0 14 14"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <rect x="1" y="3" width="12" height="2" rx="1" fill="white" />
+        <rect x="1" y="9" width="12" height="2" rx="1" fill="white" />
+      </svg>
+    </div>
+  )
+}
+
 // Canvas Panel - shows generated files
 function CanvasPanel({ chat }) {
   const files = chat?.files || []
 
   if (files.length === 0) {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "100%",
-          textAlign: "center",
-        }}
-      >
-        <div style={{ fontSize: "64px", marginBottom: "16px" }}>📄</div>
-        <div
-          style={{
-            fontSize: "15px",
-            lineHeight: "20px",
-            fontVariationSettings: '"wght" 480',
-            color: "var(--foreground-primary)",
-            marginBottom: "8px",
-          }}
-        >
-          No artifacts yet
-        </div>
-        <div
-          style={{
-            fontSize: "13px",
-            lineHeight: "18px",
-            fontVariationSettings: '"wght" 450',
-            color: "var(--foreground-secondary)",
-            maxWidth: "320px",
-          }}
-        >
+      <div className="arcade-empty">
+        <div className="arcade-empty__icon">📄</div>
+        <div className="arcade-empty__title">No artifacts yet</div>
+        <div className="arcade-empty__description">
           Ask Computer to create documents, designs, or other artifacts. They'll appear here.
         </div>
       </div>
@@ -572,36 +416,13 @@ function CanvasPanel({ chat }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-global-sm)" }}>
       {files.map((file) => (
-        <div
-          key={file.id}
-          style={{
-            padding: "16px",
-            borderRadius: "2px",
-            border: "1px solid #ececec",
-            background: "var(--background-primary-subtle)",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "14px",
-              lineHeight: "18px",
-              fontVariationSettings: '"wght" 500',
-              color: "var(--foreground-primary)",
-              marginBottom: "4px",
-            }}
-          >
+        <div key={file.id} className="arcade-card">
+          <div className="text-system-medium" style={{ color: "hsl(var(--text-color-primary))" }}>
             {file.name}
           </div>
-          <div
-            style={{
-              fontSize: "12px",
-              lineHeight: "16px",
-              fontVariationSettings: '"wght" 450',
-              color: "var(--foreground-secondary)",
-            }}
-          >
+          <div className="text-caption" style={{ color: "hsl(var(--text-color-secondary))" }}>
             {file.type}
           </div>
         </div>
@@ -614,15 +435,7 @@ function CanvasPanel({ chat }) {
 function InvitePanelFullPage({ chat }) {
   return (
     <div>
-      <div
-        style={{
-          fontSize: "15px",
-          lineHeight: "20px",
-          fontVariationSettings: '"wght" 520',
-          color: "var(--foreground-primary)",
-          marginBottom: "16px",
-        }}
-      >
+      <div className="text-body-small-medium" style={{ color: "hsl(var(--text-color-primary))", marginBottom: "var(--spacing-global-base)" }}>
         Invite people to collaborate
       </div>
       <InvitePanel chat={chat} isFullPage />
@@ -773,9 +586,7 @@ function ComputerSidebar({ activeChat }) {
                     width: "100%",
                   }}
                 >
-                  {chat.participants.length > 2 && (
-                    <span style={{ fontSize: "11px" }}>👥</span>
-                  )}
+                  {chat.participants.length > 2 && <span style={{ fontSize: "11px" }}>👥</span>}
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {label}
                   </span>
