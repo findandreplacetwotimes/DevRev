@@ -26,10 +26,22 @@ const PERSIST_DEBOUNCE_MS = 400
 const LS_ISSUES_KEY = "devrev.issues.local.v1"
 const LS_PROJECTS_KEY = "devrev.projects.local.v1"
 const LS_SPRINTS_KEY = "devrev.sprints.local.v1"
+const LS_CHATS_KEY = "devrev.chats.local.v1"
 
 /** @typedef {import("../lib/issuesApi").Issue} Issue */
 /** @typedef {import("../lib/issuesApi").Project} Project */
 /** @typedef {import("../lib/issuesApi").Sprint} Sprint */
+/**
+ * @typedef {Object} Chat
+ * @property {string} id - Unique chat identifier
+ * @property {string[]} participants - Array of participant IDs (includes 'computer' for AI agent)
+ * @property {Array<{id: string, senderId: string, text: string, timestamp: number}>} messages - Chat messages
+ * @property {Array<{id: string, name: string, url: string}>} files - Generated artifacts/files
+ * @property {number} createdAt - Unix timestamp
+ * @property {number} lastActivity - Unix timestamp of last message
+ * @property {string|null} projectId - Project ID if converted to project, null otherwise
+ * @property {string} title - Auto-generated or custom title
+ */
 const DUE_DATE_ROTATION = ["today", "tomorrow", "endOfWeek", "endOfNextWeek"]
 
 function pickDeterministicIndex(id, length) {
@@ -79,8 +91,9 @@ function normalizeProjectDisplayFields(row) {
     `Project brief for ${row.id} outlining milestones, execution approach, stakeholder alignment, timeline assumptions, risk mitigation, and expected delivery outcomes.`,
     600
   )
+  const history = Array.isArray(row.history) ? row.history : []
 
-  return { title, description, ownerId, dueDateId }
+  return { title, description, ownerId, dueDateId, history }
 }
 
 function readIssuesFromLocalStorage() {
@@ -158,6 +171,7 @@ function readProjectsFromLocalStorage() {
         stage: sanitizeStage(row.stage),
         healthId: sanitizeProjectHealthId(row.healthId),
         milestones: sanitizeProjectMilestonesArray(row.milestones),
+        history: Array.isArray(row.history) ? row.history : [],
       })
     }
     return out.length > 0 ? out : null
@@ -209,6 +223,94 @@ function writeSprintsToLocalStorage(sprints) {
   }
 }
 
+function createInitialChats() {
+  const now = Date.now()
+  return [
+    {
+      id: "chat-1",
+      participants: ["computer", "user"],
+      messages: [
+        {
+          id: "msg-1",
+          senderId: "computer",
+          text: "Hi! I'm Computer. How can I help you today?",
+          timestamp: now - 86400000 * 2,
+        },
+      ],
+      files: [],
+      createdAt: now - 86400000 * 2,
+      lastActivity: now - 86400000 * 2,
+      projectId: null,
+      title: "Computer",
+    },
+    {
+      id: "chat-2",
+      participants: ["prithvi", "polina", "user"],
+      messages: [
+        {
+          id: "msg-2",
+          senderId: "prithvi",
+          text: "Let's discuss the design system updates",
+          timestamp: now - 3600000,
+        },
+      ],
+      files: [],
+      createdAt: now - 86400000,
+      lastActivity: now - 3600000,
+      projectId: null,
+      title: "Prithvi, Polina",
+    },
+    {
+      id: "chat-3",
+      participants: ["computer", "prithvi", "tim", "user"],
+      messages: [],
+      files: [],
+      createdAt: now - 86400000 * 3,
+      lastActivity: now - 86400000 * 3,
+      projectId: null,
+      title: "Design System Discussion",
+    },
+  ]
+}
+
+function readChatsFromLocalStorage() {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = window.localStorage.getItem(LS_CHATS_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    const list = parsed?.chats
+    if (!Array.isArray(list) || list.length === 0) return null
+    /** @type {Chat[]} */
+    const out = []
+    for (const row of list) {
+      if (!row || typeof row !== "object") return null
+      if (typeof row.id !== "string") return null
+      out.push({
+        id: row.id,
+        participants: Array.isArray(row.participants) ? row.participants : [],
+        messages: Array.isArray(row.messages) ? row.messages : [],
+        files: Array.isArray(row.files) ? row.files : [],
+        createdAt: typeof row.createdAt === "number" ? row.createdAt : Date.now(),
+        lastActivity: typeof row.lastActivity === "number" ? row.lastActivity : Date.now(),
+        projectId: typeof row.projectId === "string" ? row.projectId : null,
+        title: typeof row.title === "string" ? row.title : "New Chat",
+      })
+    }
+    return out.length > 0 ? out : null
+  } catch {
+    return null
+  }
+}
+
+function writeChatsToLocalStorage(chats) {
+  try {
+    window.localStorage.setItem(LS_CHATS_KEY, JSON.stringify({ chats }))
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 export function IssuesProvider({ children }) {
   /** @type {[Issue[] | null, React.Dispatch<React.SetStateAction<Issue[] | null>>]} */
   const [issues, setIssues] = useState(null)
@@ -216,6 +318,8 @@ export function IssuesProvider({ children }) {
   const [projects, setProjects] = useState(null)
   /** @type {[Sprint[] | null, React.Dispatch<React.SetStateAction<Sprint[] | null>>]} */
   const [sprints, setSprints] = useState(null)
+  /** @type {[Chat[] | null, React.Dispatch<React.SetStateAction<Chat[] | null>>]} */
+  const [chats, setChats] = useState(null)
   const skipInitialSaveRef = useRef(true)
   /** @type {React.RefObject<Project[] | null>} */
   const projectsRef = useRef(null)
@@ -273,6 +377,7 @@ export function IssuesProvider({ children }) {
         const issueList = payload?.issues
         const projectList = payload?.projects
         const sprintList = payload?.sprints
+        const chatList = payload?.chats
         if (!cancelled && Array.isArray(issueList) && issueList.length > 0) {
           const normalizedProjects =
             Array.isArray(projectList) && projectList.length > 0
@@ -286,12 +391,16 @@ export function IssuesProvider({ children }) {
             Array.isArray(sprintList) && sprintList.length > 0
               ? normalizeSprintsClient(sprintList)
               : normalizeSprintsClient(createInitialSprints())
+          const normalizedChats =
+            Array.isArray(chatList) && chatList.length > 0 ? chatList : createInitialChats()
           writeIssuesToLocalStorage(reconciledIssues)
           writeProjectsToLocalStorage(normalizedProjects)
           writeSprintsToLocalStorage(normalizedSprints)
+          writeChatsToLocalStorage(normalizedChats)
           setProjects(normalizedProjects)
           setIssues(reconciledIssues)
           setSprints(normalizedSprints)
+          setChats(normalizedChats)
           return
         }
         throw new Error("Empty payload.")
@@ -299,12 +408,14 @@ export function IssuesProvider({ children }) {
         const storedIssues = !cancelled ? readIssuesFromLocalStorage() : null
         const storedProjects = !cancelled ? readProjectsFromLocalStorage() : null
         const storedSprints = !cancelled ? readSprintsFromLocalStorage() : null
+        const storedChats = !cancelled ? readChatsFromLocalStorage() : null
         const fallbackProjects = !cancelled
           ? normalizeProjectsClient(storedProjects ?? createInitialProjects())
           : null
         const fallbackSprints = !cancelled
           ? normalizeSprintsClient(storedSprints ?? createInitialSprints())
           : null
+        const fallbackChats = !cancelled ? storedChats ?? createInitialChats() : null
         const fallbackIssues = !cancelled
           ? reconcileIssueProjectFields(
               mergeSeedIssueProjectLinks(
@@ -313,10 +424,11 @@ export function IssuesProvider({ children }) {
               fallbackProjects ?? []
             )
           : null
-        if (fallbackIssues && fallbackProjects && fallbackSprints) {
+        if (fallbackIssues && fallbackProjects && fallbackSprints && fallbackChats) {
           setProjects(fallbackProjects)
           setIssues(fallbackIssues)
           setSprints(fallbackSprints)
+          setChats(fallbackChats)
         }
       }
     }
@@ -338,7 +450,7 @@ export function IssuesProvider({ children }) {
   }, [projects])
 
   useEffect(() => {
-    if (issues === null || projects === null || sprints === null) return undefined
+    if (issues === null || projects === null || sprints === null || chats === null) return undefined
 
     if (skipInitialSaveRef.current) {
       skipInitialSaveRef.current = false
@@ -349,11 +461,12 @@ export function IssuesProvider({ children }) {
       writeIssuesToLocalStorage(issues)
       writeProjectsToLocalStorage(projects)
       writeSprintsToLocalStorage(sprints)
+      writeChatsToLocalStorage(chats)
       try {
         await fetch(ISSUES_API_PATH, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ issues, projects, sprints }),
+          body: JSON.stringify({ issues, projects, sprints, chats }),
         })
       } catch {
         /** ignore — localStorage keeps a copy when the API route is unreachable */
@@ -361,7 +474,7 @@ export function IssuesProvider({ children }) {
     }, PERSIST_DEBOUNCE_MS)
 
     return () => window.clearTimeout(id)
-  }, [issues, projects, sprints])
+  }, [issues, projects, sprints, chats])
 
   /** @type {(issueId: string, patch: Partial<Issue>) => void} */
   const patchIssue = useCallback((issueId, patch) => {
@@ -419,20 +532,34 @@ export function IssuesProvider({ children }) {
     })
   }, [])
 
+  /** @type {(chatId: string, patch: Partial<Chat>) => void} */
+  const patchChat = useCallback((chatId, patch) => {
+    setChats((prev) => {
+      if (!prev) return prev
+      return prev.map((row) => {
+        if (row.id !== chatId) return row
+        return { ...row, ...patch }
+      })
+    })
+  }, [])
+
   const value = useMemo(
     () => ({
       issues,
       projects,
       sprints,
-      loading: issues === null || projects === null || sprints === null,
+      chats,
+      loading: issues === null || projects === null || sprints === null || chats === null,
       patchIssue,
       patchProject,
       patchSprint,
+      patchChat,
       setIssues,
       setProjects,
       setSprints,
+      setChats,
     }),
-    [issues, projects, sprints, patchIssue, patchProject, patchSprint]
+    [issues, projects, sprints, chats, patchIssue, patchProject, patchSprint, patchChat]
   )
 
   return <IssuesContext.Provider value={value}>{children}</IssuesContext.Provider>
@@ -459,5 +586,19 @@ export function useProjects() {
     loading: ctx.projects === null,
     patchProject: ctx.patchProject,
     setProjects: ctx.setProjects,
+  }
+}
+
+// eslint-disable-next-line react-refresh/only-export-components -- shared hook export
+export function useChats() {
+  const ctx = useContext(IssuesContext)
+  if (!ctx) {
+    throw new Error("useChats must be used within IssuesProvider")
+  }
+  return {
+    chats: ctx.chats,
+    loading: ctx.chats === null,
+    patchChat: ctx.patchChat,
+    setChats: ctx.setChats,
   }
 }

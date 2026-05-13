@@ -4,6 +4,9 @@ import { ChatHeader } from "./ChatHeader"
 import { MessageBubble } from "./MessageBubble"
 import { MessageInput } from "./MessageInput"
 import { getAiResponse } from "../lib/aiClient"
+import { hasAgentMention, stripAgentMention } from "../lib/mentionDetection"
+import { createDiscussionEvent } from "../lib/timelineHelpers"
+import { useIssues } from "../context/IssuesContext"
 
 const PERSON_REPLY_PROMPT_PREFIX =
   "You are a real teammate in a direct chat. Reply naturally, concise, and conversational in 1-3 sentences."
@@ -18,8 +21,38 @@ const CHAT_META = {
   ai: { title: "Computer", iconName: "computer", avatarInitial: null },
 }
 
+const AGENT_SENDER_ID = "computer"
+
+/**
+ * Generate a weekly project rundown message
+ */
+function generateWeeklyRundown(projectId) {
+  // Mock data - in production this would come from real project analytics
+  const weeklyData = {
+    projectCompletion: Math.floor(Math.random() * 15) + 75, // 75-90%
+    issuesClosed: Math.floor(Math.random() * 8) + 5,
+    openBlockers: Math.floor(Math.random() * 3),
+    daysToDeadline: Math.floor(Math.random() * 14) + 7, // 7-21 days
+    healthStatus: ['On Track', 'At Risk', 'On Track'][Math.floor(Math.random() * 3)],
+  }
+
+  const blockerText = weeklyData.openBlockers > 0
+    ? `• ${weeklyData.openBlockers} open blocker${weeklyData.openBlockers > 1 ? 's' : ''} need attention`
+    : '• No blockers'
+
+  return `📊 Weekly rundown for ${projectId}:
+• ${weeklyData.projectCompletion}% complete
+• ${weeklyData.issuesClosed} issues closed this week
+${blockerText}
+• ${weeklyData.daysToDeadline} days until next milestone
+• Status: ${weeklyData.healthStatus}
+
+${weeklyData.openBlockers > 0 ? 'I can help prioritize blockers if needed.' : 'Everything looks good. Let me know if you need anything.'}`
+}
+
 /** Chat column: fixed `width`, or `flexFill` to grow when the record panel is hidden. */
-export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
+export function ChatWindow({ width = 377, variant = "ai", flexFill = false, projectId = null, onTimelinePosted = null }) {
+  const { patchProject, projects } = useIssues()
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
     ai: [],
     "build-team": [
@@ -60,11 +93,18 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
       },
       {
         id: "seed-project-3",
+        role: "person",
+        senderInitial: AGENT_SENDER_ID,
+        isAgent: true,
+        text: "I've analyzed the project timeline. Current velocity suggests completion by Friday EOD if no blockers emerge.",
+      },
+      {
+        id: "seed-project-4",
         role: "user",
         text: "Perfect. If that lands today, we can start external pilot invites tomorrow.",
       },
       {
-        id: "seed-project-4",
+        id: "seed-project-5",
         role: "person",
         senderInitial: "L",
         text: "Sounds good - I'll also prep a short FAQ for support so rollout is smooth.",
@@ -76,17 +116,68 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
     "chat-leela": [],
   })
   const scrollContainerRef = useRef(null)
+  const hasPostedWeeklyRundown = useRef({})
   const isPersonChat = variant !== "ai"
   const activeVariant = variant
   const chatMessages = chatMessagesByVariant[activeVariant] ?? []
   const meta = CHAT_META[activeVariant] ?? CHAT_META.ai
   const isGroupChat = activeVariant === "build-team" || activeVariant === "chat-project"
 
+  // Post a proactive agent message
+  const postProactiveAgentMessage = (messageText) => {
+    if (!isGroupChat) return // Only post in group chats
+
+    const agentMessageId = `agent-proactive-${Date.now()}`
+    setChatMessagesByVariant((prev) => ({
+      ...prev,
+      [activeVariant]: [
+        ...(prev[activeVariant] ?? []),
+        {
+          id: agentMessageId,
+          role: "person",
+          senderInitial: AGENT_SENDER_ID,
+          isAgent: true,
+          text: messageText,
+        },
+      ],
+    }))
+  }
+
+  // Post a message to project timeline
+  const handlePostToTimeline = (messageText, onPosted) => {
+    if (!projectId) {
+      console.warn("Cannot post to timeline: no projectId")
+      return
+    }
+
+    // Get current project to append to existing history
+    const currentProject = projects?.find(p => p.id === projectId)
+    const currentHistory = currentProject?.history || []
+
+    const event = createDiscussionEvent(messageText)
+
+    // Prepend new event (most recent first)
+    patchProject(projectId, {
+      history: [event, ...currentHistory]
+    })
+
+    // Notify parent to show the posted event
+    if (onPosted) {
+      onPosted(event.id)
+    }
+
+    console.log("Posted to timeline:", event)
+  }
+
   const handleSendMessage = async (text) => {
     const userId = `user-${Date.now()}`
     const replyId = `reply-${Date.now()}`
-    const replyInitial =
-      isGroupChat && ["A", "R", "S", "M", "L"][Math.floor(Math.random() * 5)]
+    const mentionsAgent = isGroupChat && hasAgentMention(text)
+
+    // If agent is mentioned in group chat, agent replies; otherwise random teammate
+    const replyInitial = isGroupChat
+      ? (mentionsAgent ? AGENT_SENDER_ID : ["A", "R", "S", "M", "L"][Math.floor(Math.random() * 5)])
+      : null
 
     setChatMessagesByVariant((prev) => ({
       ...prev,
@@ -99,14 +190,24 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
           text: "...",
           loading: true,
           ...(replyInitial != null ? { senderInitial: replyInitial } : {}),
+          ...(mentionsAgent ? { isAgent: true } : {}),
         },
       ],
     }))
 
     try {
-      const response = await getAiResponse(
-        isPersonChat ? `${PERSON_REPLY_PROMPT_PREFIX}\n\nUser: ${text}` : text
-      )
+      let prompt = text
+
+      if (mentionsAgent) {
+        // Computer (AI agent) invoked via @mention - use Computer-specific prompt
+        const cleanedText = stripAgentMention(text)
+        prompt = `You are Computer, an AI assistant helping a project team. Respond naturally and concisely (1-3 sentences) to: ${cleanedText}`
+      } else if (isPersonChat) {
+        // Regular person chat - use teammate prompt
+        prompt = `${PERSON_REPLY_PROMPT_PREFIX}\n\nUser: ${text}`
+      }
+
+      const response = await getAiResponse(prompt)
       setChatMessagesByVariant((prev) => ({
         ...prev,
         [activeVariant]: (prev[activeVariant] ?? []).map((message) =>
@@ -129,6 +230,25 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
     if (!container) return
     container.scrollTop = container.scrollHeight
   }, [chatMessages, activeVariant])
+
+  // Post weekly rundown once when opening a group chat
+  useEffect(() => {
+    if (!isGroupChat) return
+
+    // Only post once per chat variant per session
+    if (hasPostedWeeklyRundown.current[activeVariant]) return
+
+    // Post after a short delay (simulating Computer analyzing the project)
+    const timer = setTimeout(() => {
+      const rundownMessage = generateWeeklyRundown(
+        activeVariant === "chat-project" ? "Project 17" : "Build Team"
+      )
+      postProactiveAgentMessage(rundownMessage)
+      hasPostedWeeklyRundown.current[activeVariant] = true
+    }, 2000) // 2 second delay
+
+    return () => clearTimeout(timer)
+  }, [isGroupChat, activeVariant, postProactiveAgentMessage])
 
   return (
     <aside
@@ -162,6 +282,8 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
                     type={personBubbleType}
                     state={message.loading ? "writing" : "default"}
                     senderInitial={message.senderInitial}
+                    isAgent={message.isAgent ?? false}
+                    onPostToTimeline={projectId ? () => handlePostToTimeline(message.text, onTimelinePosted) : null}
                   />
                 ) : (
                   <AiMessageBubble text={message.text} loading={Boolean(message.loading)} />

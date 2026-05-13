@@ -74,3 +74,36 @@ export const GroupPersonWriting = {
     state: "writing",
   },
 }
+
+export const GroupPersonWithActions = {
+  args: {
+    type: "groupPerson",
+    senderInitial: "M",
+    text: "Hover over this message to see the action buttons with polished tooltips",
+    onPostToTimeline: () => console.log("Posted to timeline"),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Hover over the message bubble to reveal Copy and Post to Timeline buttons. Tooltips appear after a 400ms delay with smooth animation. Clicking Post shows success feedback with a checkmark and purple highlight.",
+      },
+    },
+  },
+}
+
+export const GroupPersonAgent = {
+  args: {
+    type: "groupPerson",
+    senderInitial: "computer",
+    isAgent: true,
+    text: "I've analyzed the project timeline. Current velocity suggests completion by Friday EOD if no blockers emerge.",
+    onPostToTimeline: () => console.log("Posted to timeline"),
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Computer agent messages use the jabuticaba purple background with two-bar logo, matching the Arcade design system.",
+      },
+    },
+  },
+}

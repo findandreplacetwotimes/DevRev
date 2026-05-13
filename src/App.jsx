@@ -7,10 +7,15 @@ import { ProjectsListPage } from "./components/ProjectsListPage"
 import { SprintsPage } from "./components/SprintsPage"
 import { AboutPage } from "./components/AboutPage"
 import { TeamMembersPage } from "./components/TeamMembersPage"
+import { ComputerPage } from "./components/ComputerPage"
 
 export default function App() {
   return (
     <Routes>
+      {/* Standalone Computer experience - outside workspace layout */}
+      <Route path="/computer" element={<ComputerPage />} />
+
+      {/* Main workspace with nav + chat + record panels */}
       <Route path="/" element={<AppWorkspaceLayout />}>
         <Route index element={<Navigate to="/issues" replace />} />
         <Route path="sprints" element={<SprintsPage />} />

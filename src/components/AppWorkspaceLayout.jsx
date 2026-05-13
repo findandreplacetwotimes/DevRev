@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { useChats } from "../context/IssuesContext"
 import { ChatWindow } from "./ChatWindow"
+import { FloatingChatWindow } from "./FloatingChatWindow"
+import { MinimizedChatTabs } from "./MinimizedChatTabs"
 import { NavPanel } from "./NavPanel"
 
 const INITIAL_CHAT_WIDTH = 377
@@ -63,6 +66,7 @@ export function AppWorkspaceLayout() {
 export function AppWorkspaceChrome() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { chats, setChats } = useChats()
 
   const panelsInitRef = useRef(null)
   if (panelsInitRef.current === null) {
@@ -76,8 +80,14 @@ export function AppWorkspaceChrome() {
 
   /** `person` chats use LLM as teammate; `ai` uses computer mode. */
   const [chatVariant, setChatVariant] = useState("build-team")
+
+  // Floating chat windows state
+  const [openChatWindows, setOpenChatWindows] = useState([]) // Array of chat IDs
+  const [minimizedChats, setMinimizedChats] = useState([]) // Array of chat IDs
+
   const layoutRef = useRef(null)
   const dragStateRef = useRef(null)
+  const timelinePostedHandlerRef = useRef(null)
 
   const chatPanelOpenRef = useRef(chatPanelOpen)
   const recordPanelOpenRef = useRef(recordPanelOpen)
@@ -180,6 +190,12 @@ export function AppWorkspaceChrome() {
     pathname.startsWith("/issues") &&
     typeof location.state?.sourceProjectId === "string" &&
     location.state.sourceProjectId.trim().length > 0
+
+  // Extract projectId from route for project chat context
+  const currentProjectId = useMemo(() => {
+    const match = /^\/projects\/([^/]+)/.exec(pathname)
+    return match ? decodeURIComponent(match[1]) : null
+  }, [pathname])
 
   const selectedNavItemId = issueFromThreeLevelPath
     ? "projects"
@@ -289,12 +305,78 @@ export function AppWorkspaceChrome() {
     ensureChatPanelOpenPersist()
   }, [])
 
+  // Register timeline posted handler from ProjectPage
+  const registerTimelinePostedHandler = useCallback((handler) => {
+    timelinePostedHandlerRef.current = handler
+  }, [])
+
+  // Handle timeline posted from ChatWindow
+  const handleTimelinePosted = useCallback((eventId) => {
+    if (timelinePostedHandlerRef.current) {
+      timelinePostedHandlerRef.current(eventId)
+    }
+  }, [])
+
   const workspaceOutletContext = useMemo(
-    () => ({ openProjectChat, openBuildTeamChat }),
-    [openProjectChat, openBuildTeamChat]
+    () => ({ openProjectChat, openBuildTeamChat, onTimelinePosted: registerTimelinePostedHandler }),
+    [openProjectChat, openBuildTeamChat, registerTimelinePostedHandler]
   )
 
   /** Build team → chat lane only (person). Does not navigate or change record panel — same as Computer for “chat-only”. */
+  // Handle chat click from nav - open floating window
+  const handleChatClick = useCallback((chatId) => {
+    setOpenChatWindows((prev) => {
+      if (prev.includes(chatId)) return prev
+      return [...prev, chatId]
+    })
+    setMinimizedChats((prev) => prev.filter((id) => id !== chatId))
+  }, [])
+
+  // Handle minimize chat window
+  const handleMinimizeChat = useCallback((chatId) => {
+    setOpenChatWindows((prev) => prev.filter((id) => id !== chatId))
+    setMinimizedChats((prev) => {
+      if (prev.includes(chatId)) return prev
+      return [...prev, chatId]
+    })
+  }, [])
+
+  // Handle close chat window
+  const handleCloseChat = useCallback((chatId) => {
+    setOpenChatWindows((prev) => prev.filter((id) => id !== chatId))
+    setMinimizedChats((prev) => prev.filter((id) => id !== chatId))
+  }, [])
+
+  // Handle restore minimized chat
+  const handleRestoreChat = useCallback((chatId) => {
+    setMinimizedChats((prev) => prev.filter((id) => id !== chatId))
+    setOpenChatWindows((prev) => {
+      if (prev.includes(chatId)) return prev
+      return [...prev, chatId]
+    })
+  }, [])
+
+  // Handle new chat creation
+  const handleNewChat = useCallback(() => {
+    const newChatId = `chat-${Date.now()}`
+    const newChat = {
+      id: newChatId,
+      participants: ["computer", "user"],
+      messages: [],
+      files: [],
+      createdAt: Date.now(),
+      lastActivity: Date.now(),
+      projectId: null,
+      title: "Computer",
+    }
+    setChats((prev) => {
+      if (!prev) return [newChat]
+      return [...prev, newChat]
+    })
+    // Open the new chat immediately
+    handleChatClick(newChatId)
+  }, [setChats, handleChatClick])
+
   const handleNavSelectItem = (itemId) => {
     if (itemId === "build-team") {
       setChatVariant("build-team")
@@ -302,8 +384,7 @@ export function AppWorkspaceChrome() {
       return
     }
     if (itemId.startsWith("chat-")) {
-      setChatVariant(itemId)
-      ensureChatPanelOpenPersist()
+      // Handled by handleChatClick
       return
     }
     if (itemId === "issues") {
@@ -348,6 +429,17 @@ export function AppWorkspaceChrome() {
   const showSplitHandle = chatPanelOpen && recordPanelOpen
   const chatFillsRemainder = chatPanelOpen && !recordPanelOpen
 
+  // Get chat objects for open and minimized chats
+  const openChatObjects = useMemo(() => {
+    if (!chats) return []
+    return openChatWindows.map((id) => chats.find((c) => c.id === id)).filter(Boolean)
+  }, [chats, openChatWindows])
+
+  const minimizedChatObjects = useMemo(() => {
+    if (!chats) return []
+    return minimizedChats.map((id) => chats.find((c) => c.id === id)).filter(Boolean)
+  }, [chats, minimizedChats])
+
   return (
     <main className="flex h-screen items-stretch justify-center bg-white">
       <div ref={layoutRef} className="flex h-full w-full min-w-0 items-stretch">
@@ -359,10 +451,18 @@ export function AppWorkspaceChrome() {
           recordPanelOpen={recordPanelOpen}
           onToggleChatPanel={toggleChatPanel}
           onToggleRecordPanel={toggleRecordPanel}
+          onChatClick={handleChatClick}
+          onNewChat={handleNewChat}
         />
 
         {chatPanelOpen ? (
-          <ChatWindow width={chatWidth} variant={chatVariant} flexFill={chatFillsRemainder} />
+          <ChatWindow
+            width={chatWidth}
+            variant={chatVariant}
+            flexFill={chatFillsRemainder}
+            projectId={chatVariant === "chat-project" ? currentProjectId : null}
+            onTimelinePosted={handleTimelinePosted}
+          />
         ) : null}
 
         {showSplitHandle ? (
@@ -387,6 +487,26 @@ export function AppWorkspaceChrome() {
           </div>
         ) : null}
       </div>
+
+      {/* Floating chat windows */}
+      {openChatObjects.map((chat, index) => (
+        <FloatingChatWindow
+          key={chat.id}
+          chat={chat}
+          onClose={() => handleCloseChat(chat.id)}
+          onMinimize={() => handleMinimizeChat(chat.id)}
+          style={{
+            right: `${24 + index * 420}px`,
+          }}
+        />
+      ))}
+
+      {/* Minimized chat tabs */}
+      <MinimizedChatTabs
+        minimizedChats={minimizedChatObjects}
+        onRestore={handleRestoreChat}
+        onClose={handleCloseChat}
+      />
     </main>
   )
 }

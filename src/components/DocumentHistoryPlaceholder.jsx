@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { HistoryDetailItem, HistoryItem, HistoryTimelineGroup } from "./HistoryItem"
 import { Timestamp } from "./Timestamp"
 
@@ -196,39 +196,115 @@ const PRESETS = [
   },
 ]
 
-export function DocumentHistoryPlaceholder({ recordKind = "issue", recordId }) {
+export function DocumentHistoryPlaceholder({ history = null, recordKind = "issue", recordId, highlightEventId = null }) {
   const preset = useMemo(() => {
     const key = `${recordKind}:${recordId ?? ""}`
     const h = stableHash(key) ^ stableHash(String(recordId ?? "").split("").reverse().join(""))
     return PRESETS[h % PRESETS.length]
   }, [recordKind, recordId])
 
+  // Use real history if available
+  const hasRealHistory = Array.isArray(history) && history.length > 0
+
+  // Group real history events by timestamp
+  const groupedHistory = useMemo(() => {
+    if (!hasRealHistory) return null
+
+    const groups = []
+    let currentGroup = null
+
+    for (const event of history) {
+      const timestampKey = `${event.timestamp.datePart}-${event.timestamp.timePart}`
+
+      if (!currentGroup || currentGroup.timestampKey !== timestampKey) {
+        currentGroup = {
+          timestampKey,
+          timestamp: event.timestamp,
+          items: []
+        }
+        groups.push(currentGroup)
+      }
+
+      currentGroup.items.push(event)
+    }
+
+    return groups
+  }, [history, hasRealHistory])
+
+  // Scroll to highlighted event when it changes
+  const highlightedRef = useRef(null)
+  useEffect(() => {
+    if (highlightEventId && highlightedRef.current) {
+      highlightedRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [highlightEventId])
+
   return (
-    <section className="w-full" aria-label="Placeholder history timeline (preview only)" role="presentation">
-      {preset.groups.map((group, gi) => (
-        <div key={gi} className={gi > 0 ? "mt-[24px]" : ""}>
-          <HistoryTimelineGroup timestamp={<Timestamp datePart={group.timestamp.datePart} timePart={group.timestamp.timePart} />}>
-            {group.items.map((item, ii) =>
-              item.type === "transition" ? (
-                <HistoryItem
-                  key={ii}
-                  actorInitial={item.actorInitial}
-                  attribute={item.attribute}
-                  fromValue={item.fromValue}
-                  toValue={item.toValue}
-                />
-              ) : (
-                <HistoryDetailItem
-                  key={ii}
-                  actorInitial={item.actorInitial}
-                  attribute={item.attribute}
-                  detail={item.detail}
-                />
-              )
-            )}
-          </HistoryTimelineGroup>
-        </div>
-      ))}
+    <section className="w-full" aria-label={hasRealHistory ? "History timeline" : "Placeholder history timeline (preview only)"} role={hasRealHistory ? "region" : "presentation"}>
+      {hasRealHistory ? (
+        // Render real history
+        groupedHistory.map((group, gi) => (
+          <div key={gi} className={gi > 0 ? "mt-[24px]" : ""}>
+            <HistoryTimelineGroup timestamp={<Timestamp datePart={group.timestamp.datePart} timePart={group.timestamp.timePart} />}>
+              {group.items.map((item) => {
+                const isHighlighted = item.id === highlightEventId
+                return item.type === "transition" ? (
+                  <div
+                    key={item.id}
+                    ref={isHighlighted ? highlightedRef : null}
+                    className={isHighlighted ? "animate-highlight" : ""}
+                  >
+                    <HistoryItem
+                      actorInitial={item.actorInitial}
+                      attribute={item.attribute}
+                      fromValue={item.fromValue}
+                      toValue={item.toValue}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    key={item.id}
+                    ref={isHighlighted ? highlightedRef : null}
+                    className={isHighlighted ? "animate-highlight" : ""}
+                  >
+                    <HistoryDetailItem
+                      actorInitial={item.actorInitial}
+                      attribute={item.attribute}
+                      detail={item.detail}
+                    />
+                  </div>
+                )
+              })}
+            </HistoryTimelineGroup>
+          </div>
+        ))
+      ) : (
+        // Render placeholder
+        preset.groups.map((group, gi) => (
+          <div key={gi} className={gi > 0 ? "mt-[24px]" : ""}>
+            <HistoryTimelineGroup timestamp={<Timestamp datePart={group.timestamp.datePart} timePart={group.timestamp.timePart} />}>
+              {group.items.map((item, ii) =>
+                item.type === "transition" ? (
+                  <HistoryItem
+                    key={ii}
+                    actorInitial={item.actorInitial}
+                    attribute={item.attribute}
+                    fromValue={item.fromValue}
+                    toValue={item.toValue}
+                  />
+                ) : (
+                  <HistoryDetailItem
+                    key={ii}
+                    actorInitial={item.actorInitial}
+                    attribute={item.attribute}
+                    detail={item.detail}
+                  />
+                )
+              )}
+            </HistoryTimelineGroup>
+          </div>
+        ))
+      )}
     </section>
   )
 }
