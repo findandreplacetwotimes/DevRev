@@ -9,19 +9,49 @@ const PERSON_REPLY_PROMPT_PREFIX =
   "You are a real teammate in a direct chat. Reply naturally, concise, and conversational in 1-3 sentences."
 
 const CHAT_META = {
-  "build-team": { title: "Build chat", iconName: "chat", avatarInitial: null },
-  "chat-project": { title: "Project chat", avatarInitial: "17" },
-  "chat-arjun": { title: "Arjun Patel", avatarInitial: "A" },
-  "chat-sneha": { title: "Sneha Sharma", avatarInitial: "S" },
-  "chat-rohan": { title: "Rohan Verma", avatarInitial: "R" },
-  "chat-leela": { title: "Leela Nair", avatarInitial: "L" },
-  ai: { title: "Computer", iconName: "computer", avatarInitial: null },
+  "build-team": { title: "Build chat", iconName: "chat", avatarInitial: null, members: [] },
+  "chat-project": {
+    title: "SummerEdge",
+    avatarInitial: "SE",
+    members: [
+      { initial: "A", name: "Alex" },
+      { initial: "P", name: "Priya" },
+      { initial: "D", name: "Dev" },
+      { initial: "T", name: "Tim" },
+    ],
+  },
+  "chat-arjun": { title: "Arjun Patel", avatarInitial: "A", members: [] },
+  "chat-sneha": { title: "Sneha Sharma", avatarInitial: "S", members: [] },
+  "chat-rohan": { title: "Rohan Verma", avatarInitial: "R", members: [] },
+  "chat-leela": { title: "Leela Nair", avatarInitial: "L", members: [] },
+  ai: { title: "Computer", iconName: "computer", avatarInitial: null, members: [] },
 }
 
 /** Chat column: fixed `width`, or `flexFill` to grow when the record panel is hidden. */
 export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
-    ai: [],
+    ai: [
+      {
+        id: "ai-sam-1",
+        role: "user",
+        text: "What are the key decisions made so far?",
+      },
+      {
+        id: "ai-sam-2",
+        role: "ai",
+        text: "3 confirmed decisions on this project:\n\n1. June 3 — Defer Hubspot integration to v2 (from \"Weekly sync — scope review\"). Reason: timeline risk if we take both.\n2. May 28 — Use OAuth2 for auth, not API keys (from \"API design review\"). Reason: enterprise customers require it.\n3. May 22 — Ship to 10 beta customers before GA (from \"Kickoff sync\"). Success criteria for the deadline.",
+      },
+      {
+        id: "ai-sam-3",
+        role: "user",
+        text: "Who's working on what right now?",
+      },
+      {
+        id: "ai-sam-4",
+        role: "ai",
+        text: "Current assignments:\n · @alex — ISS-430 (bulk contact import design), blocked on ISS-412\n · @priya — ISS-412 (fallback auth flow spec), due June 13\n · @dev — ISS-428 (OAuth token refresh), in review\n · @tim — ISS-425 (contact field mapping), in review",
+      },
+    ],
     "build-team": [
       {
         id: "seed-build-1",
@@ -48,26 +78,49 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
     ],
     "chat-project": [
       {
-        id: "seed-project-1",
-        role: "user",
-        text: "Quick update: Project 17 is at 80%. Remaining work is docs polish and onboarding copy.",
+        id: "proj-hist-1",
+        role: "ai",
+        text: "📋 Daily rundown — May 22\n\nKickoff sync completed. Key decisions:\n• Ship to 10 beta customers before GA (success criteria for July 15 deadline)\n• Team: @alex (eng lead), @priya (platform), @dev (backend), @tim (data)\n\nAction items created:\n• ISS-412 — Fallback auth flow spec → @priya\n• ISS-425 — Contact field mapping → @tim\n• ISS-428 — OAuth token refresh → @dev\n• ISS-430 — Bulk contact import design → @alex",
       },
       {
-        id: "seed-project-2",
+        id: "proj-hist-2",
         role: "person",
-        senderInitial: "M",
-        text: "Nice progress. I can take onboarding copy today and push a draft by EOD.",
+        senderInitial: "A",
+        text: "Good kickoff. I'll start scoping ISS-430 tomorrow once @priya has the auth spec direction locked.",
       },
       {
-        id: "seed-project-3",
-        role: "user",
-        text: "Perfect. If that lands today, we can start external pilot invites tomorrow.",
+        id: "proj-hist-3",
+        role: "ai",
+        text: "📋 Daily rundown — May 28\n\nAPI design review completed. Decision: Use OAuth2 for auth, not API keys — enterprise customers require it.\n\nProgress:\n• ISS-428 (OAuth token refresh) — @dev moved to In Progress\n• ISS-425 (contact field mapping) — @tim started research on field normalization\n\n⚠️ Dependency flagged: ISS-430 blocked until ISS-412 auth spec is finalized.",
       },
       {
-        id: "seed-project-4",
+        id: "proj-hist-4",
         role: "person",
-        senderInitial: "L",
-        text: "Sounds good - I'll also prep a short FAQ for support so rollout is smooth.",
+        senderInitial: "P",
+        text: "Auth spec is taking longer than expected — partner team hasn't shared their API contract yet. Targeting June 5 for a draft regardless.",
+      },
+      {
+        id: "proj-hist-5",
+        role: "person",
+        senderInitial: "D",
+        text: "OAuth token refresh PR is up for review. Used exponential backoff with jitter — handles the enterprise SSO edge case cleanly.",
+      },
+      {
+        id: "proj-hist-6",
+        role: "ai",
+        text: "📋 Daily rundown — June 3\n\nWeekly sync — scope review completed. Decision: Defer Hubspot integration to v2. Reason: timeline risk if we take both.\n\nProgress:\n• ISS-428 (OAuth token refresh) — @dev moved to In Review ✓\n• ISS-425 (contact field mapping) — @tim moved to In Review ✓\n• ISS-412 (fallback auth flow) — @priya in progress, due June 13\n• ISS-430 (bulk contact import) — @alex in progress, blocked on ISS-412\n\n🟢 Project health: On track\n6 meetings processed | 3 decisions logged | 1 active blocker",
+      },
+      {
+        id: "proj-hist-7",
+        role: "person",
+        senderInitial: "T",
+        text: "Field mapping PR is ready — went with a schema-driven approach so adding new CRM sources later is just config.",
+      },
+      {
+        id: "proj-hist-8",
+        role: "person",
+        senderInitial: "A",
+        text: "Nice. @priya once ISS-412 lands I can unblock the import flow — lmk if you need a hand with the partner API spec.",
       },
     ],
     "chat-arjun": [],
@@ -135,7 +188,7 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
       className={`flex h-full min-h-0 flex-col bg-white ${flexFill ? "min-w-[300px] flex-1" : "shrink-0"}`}
       style={flexFill ? undefined : { width }}
     >
-      <ChatHeader title={meta.title} iconName={meta.iconName} avatarInitial={meta.avatarInitial} />
+      <ChatHeader title={meta.title} iconName={meta.iconName} avatarInitial={meta.avatarInitial} members={meta.members} />
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto pl-[20px] pr-[10px]">
