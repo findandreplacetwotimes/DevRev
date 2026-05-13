@@ -555,7 +555,6 @@ function ComputerSidebar({ activeChat }) {
               .join(", ")
             const label = chat.title || (chat.participants.includes("computer") ? "Computer" : participantNames)
             const lastMsg = chat.messages[chat.messages.length - 1]
-            const isMultiUser = chat.participants.length > 2
 
             return (
               <button
@@ -570,7 +569,6 @@ function ComputerSidebar({ activeChat }) {
                 }}
               >
                 <div className="text-caption-medium" style={{ width: "100%", textAlign: "left" }}>
-                  {isMultiUser && "👥 "}
                   {label}
                 </div>
                 {lastMsg && (
