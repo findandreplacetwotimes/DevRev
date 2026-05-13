@@ -197,7 +197,7 @@ export function ComputerPage() {
         <div
           className="flex-1 overflow-y-auto"
           style={{
-            padding: "var(--spacing-global-lg)",
+            padding: "var(--spacing-global-xl) var(--spacing-global-lg)",
             background: "hsl(var(--bg-layer-00))",
           }}
         >
@@ -207,39 +207,62 @@ export function ComputerPage() {
               <div className="arcade-empty__description">Start a conversation with Computer</div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-global-base)" }}>
-              {activeChat.messages.map((msg) => {
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-global-lg)" }}>
+              {activeChat.messages.map((msg, idx) => {
                 const isUser = msg.senderId === "user"
+                const isComputer = msg.senderId === "computer"
+                const senderName = isUser ? "You" : isComputer ? "Computer" : msg.senderId
+                const showTimestamp = idx === 0 || (activeChat.messages[idx - 1].timestamp - msg.timestamp) > 300000
 
                 return (
-                  <div
-                    key={msg.id}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: isUser ? "flex-end" : "flex-start",
-                      gap: "var(--spacing-global-4xs)",
-                    }}
-                  >
-                    {!isUser && (
-                      <div className="text-caption" style={{ color: "hsl(var(--text-color-tertiary))" }}>
-                        Computer
+                  <div key={msg.id}>
+                    {showTimestamp && (
+                      <div
+                        className="text-caption"
+                        style={{
+                          color: "hsl(var(--text-color-tertiary))",
+                          textAlign: "center",
+                          marginBottom: "var(--spacing-global-sm)",
+                        }}
+                      >
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                       </div>
                     )}
                     <div
-                      className="text-system"
                       style={{
-                        maxWidth: "85%",
-                        padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
-                        borderRadius: "8px",
-                        background: isUser
-                          ? "hsl(var(--bg-interactive-primary-resting))"
-                          : "hsl(var(--bg-layer-01))",
-                        color: isUser ? "hsl(var(--text-interactive-primary-resting))" : "hsl(var(--text-color-primary))",
-                        border: isUser ? "none" : "1px solid hsl(var(--border-outline-01))",
+                        display: "flex",
+                        gap: "var(--spacing-global-xs)",
+                        alignItems: "flex-start",
                       }}
                     >
-                      {msg.text}
+                      {!isUser && (
+                        <div style={{ flexShrink: 0, marginTop: "2px" }}>
+                          {isComputer ? (
+                            <ComputerLogo size={24} />
+                          ) : (
+                            <div className="arcade-avatar arcade-avatar--S" style={{ background: "hsl(var(--husk-500))" }}>
+                              {senderName[0]}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="text-caption" style={{ color: "hsl(var(--text-color-secondary))", marginBottom: "var(--spacing-global-5xs)" }}>
+                          {senderName}
+                        </div>
+                        <div
+                          className="text-system"
+                          style={{
+                            padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
+                            borderRadius: "8px",
+                            background: "hsl(var(--husk-200))",
+                            color: "hsl(var(--text-color-primary))",
+                            wordBreak: "break-word",
+                          }}
+                        >
+                          {msg.text}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )
@@ -248,25 +271,28 @@ export function ComputerPage() {
                 <div
                   style={{
                     display: "flex",
-                    flexDirection: "column",
+                    gap: "var(--spacing-global-xs)",
                     alignItems: "flex-start",
-                    gap: "var(--spacing-global-4xs)",
                   }}
                 >
-                  <div className="text-caption" style={{ color: "hsl(var(--text-color-tertiary))" }}>
-                    Computer
+                  <div style={{ flexShrink: 0, marginTop: "2px" }}>
+                    <ComputerLogo size={24} />
                   </div>
-                  <div
-                    className="text-system"
-                    style={{
-                      padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
-                      borderRadius: "8px",
-                      background: "hsl(var(--bg-layer-01))",
-                      border: "1px solid hsl(var(--border-outline-01))",
-                      color: "hsl(var(--text-color-tertiary))",
-                    }}
-                  >
-                    <span className="typing-indicator">●●●</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="text-caption" style={{ color: "hsl(var(--text-color-secondary))", marginBottom: "var(--spacing-global-5xs)" }}>
+                      Computer
+                    </div>
+                    <div
+                      className="text-system"
+                      style={{
+                        padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
+                        borderRadius: "8px",
+                        background: "hsl(var(--husk-200))",
+                        color: "hsl(var(--text-color-tertiary))",
+                      }}
+                    >
+                      <span className="typing-indicator">●●●</span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -555,6 +581,8 @@ function ComputerSidebar({ activeChat }) {
               .join(", ")
             const label = chat.title || (chat.participants.includes("computer") ? "Computer" : participantNames)
             const lastMsg = chat.messages[chat.messages.length - 1]
+            const isMultiUser = chat.participants.length > 2
+            const participantCount = chat.participants.filter((p) => p !== "user").length
 
             return (
               <button
@@ -563,29 +591,47 @@ function ComputerSidebar({ activeChat }) {
                 className="arcade-menu-item"
                 style={{
                   padding: "var(--spacing-global-3xs)",
-                  flexDirection: "column",
+                  gap: "var(--spacing-global-xs)",
                   alignItems: "flex-start",
-                  gap: "var(--spacing-global-5xs)",
                 }}
               >
-                <div className="text-caption-medium" style={{ width: "100%", textAlign: "left" }}>
-                  {label}
+                <div style={{ flexShrink: 0, marginTop: "2px" }}>
+                  {chat.participants.includes("computer") && chat.participants.length === 2 ? (
+                    <ComputerLogo size={20} />
+                  ) : (
+                    <div
+                      className="arcade-avatar arcade-avatar--S"
+                      style={{
+                        background: "hsl(var(--husk-500))",
+                        width: "20px",
+                        height: "20px",
+                        fontSize: "9px",
+                      }}
+                    >
+                      {isMultiUser ? participantCount : label[0]}
+                    </div>
+                  )}
                 </div>
-                {lastMsg && (
-                  <div
-                    className="text-caption"
-                    style={{
-                      color: "hsl(var(--text-color-tertiary))",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      width: "100%",
-                      textAlign: "left",
-                    }}
-                  >
-                    {lastMsg.text}
+                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "var(--spacing-global-5xs)" }}>
+                  <div className="text-caption-medium" style={{ width: "100%", textAlign: "left" }}>
+                    {label}
                   </div>
-                )}
+                  {lastMsg && (
+                    <div
+                      className="text-caption"
+                      style={{
+                        color: "hsl(var(--text-color-tertiary))",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        width: "100%",
+                        textAlign: "left",
+                      }}
+                    >
+                      {lastMsg.text}
+                    </div>
+                  )}
+                </div>
               </button>
             )
           })}
