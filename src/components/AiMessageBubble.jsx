@@ -1,3 +1,5 @@
+import { renderTextWithMentions } from "../lib/mentionRenderer"
+
 const TAG_STYLE = {
   fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
   fontSize: "9px",
@@ -30,7 +32,7 @@ export function AiMessageBubble({
         </span>
       </div>
       <p className="w-full whitespace-pre-wrap break-words text-[rgba(48,46,47,0.94)]" style={TEXT_STYLE}>
-        {text}
+        {renderTextWithMentions(text)}
       </p>
     </section>
   )

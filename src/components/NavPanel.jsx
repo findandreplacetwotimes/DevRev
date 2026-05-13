@@ -40,12 +40,40 @@ const PRIMARY_ITEMS = [
 ]
 
 const CHAT_ITEMS = [
-  { id: "chat-project", label: "Project chat", initial: "17" },
+  { id: "chat-project", label: "SummerEdge", initial: "SE", memberAvatars: ["A", "P", "D", "T"] },
   { id: "chat-arjun", label: "Arjun Patel", initial: "A" },
   { id: "chat-sneha", label: "Sneha Sharma", initial: "S" },
   { id: "chat-rohan", label: "Rohan Verma", initial: "R" },
   { id: "chat-leela", label: "Leela Nair", initial: "L" },
 ]
+
+const NAV_AVATAR_COLORS = ["#5c3d2e", "#6b7c3a", "#2d4a3e", "#7a4a2a"]
+
+function NavAvatarStack({ initials = [] }) {
+  if (!initials.length) return null
+  return (
+    <span className="ml-auto flex shrink-0 items-center">
+      {initials.slice(0, 3).map((letter, i) => (
+        <span
+          key={letter}
+          className="inline-flex size-[16px] items-center justify-center rounded-full border border-white"
+          style={{
+            backgroundColor: NAV_AVATAR_COLORS[i % NAV_AVATAR_COLORS.length],
+            marginLeft: i > 0 ? "-5px" : "0",
+            zIndex: initials.length - i,
+          }}
+        >
+          <span
+            className="text-[7px] text-white"
+            style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 520' }}
+          >
+            {letter}
+          </span>
+        </span>
+      ))}
+    </span>
+  )
+}
 
 const SECONDARY_ITEMS = [
   { id: "inbox", label: "Inbox", iconName: "inbox" },
@@ -188,12 +216,13 @@ export function NavPanel({
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
       <div className="flex w-[194px] flex-col gap-[4px]">
-        <MenuItem type="label" label="Chats" fullWidth />
+        <MenuItem type="label" label="Your Projects" fullWidth />
         {CHAT_ITEMS.map((item) => (
           <NavItem
             key={item.id}
             label={item.label}
             leading={<ChatAvatar initial={item.initial} />}
+            trailing={item.memberAvatars ? <NavAvatarStack initials={item.memberAvatars} /> : null}
             selected={currentSelectedItemId === item.id}
             className="w-full"
             onClick={() => handleSelectItem(item.id)}

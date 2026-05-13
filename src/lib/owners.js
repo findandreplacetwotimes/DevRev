@@ -9,6 +9,11 @@ export const OWNERS = [
   { id: "lucas-rodriguez", name: "Lucas Rodriguez" },
   { id: "sophia-walker", name: "Sophia Walker" },
   { id: "jackson-lee", name: "Jackson Lee" },
+  { id: "alex-chen", name: "Alex Chen" },
+  { id: "priya-kapoor", name: "Priya Kapoor" },
+  { id: "dev-patel", name: "Dev Patel" },
+  { id: "tim-brooks", name: "Tim Brooks" },
+  { id: "sam-rivera", name: "Sam Rivera" },
 ]
 
 export function getOwnerById(ownerId) {
