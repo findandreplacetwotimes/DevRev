@@ -2,6 +2,7 @@
 @import "@fontsource-variable/inter";
 @import "./styles/arcade-tokens.css";
 @import "./styles/typography-spacing.css";
+@import "./styles/arcade-components.css";
 
 @font-face {
   font-family: "Chip Text Variable";
