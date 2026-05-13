@@ -386,14 +386,14 @@ function ComputerLogo({ size = 28 }) {
       }}
     >
       <svg
-        width={size * 0.5}
-        height={size * 0.5}
-        viewBox="0 0 14 14"
+        width={size * 0.4}
+        height={size * 0.4}
+        viewBox="0 0 10 10"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <rect x="3" y="1" width="2" height="12" rx="1" fill="white" />
-        <rect x="9" y="1" width="2" height="12" rx="1" fill="white" />
+        <rect x="2" y="1.5" width="1.5" height="7" rx="0.75" fill="white" />
+        <rect x="6.5" y="1.5" width="1.5" height="7" rx="0.75" fill="white" />
       </svg>
     </div>
   )
@@ -449,8 +449,8 @@ function ComputerSidebar({ activeChat }) {
   const [showMore, setShowMore] = useState(false)
 
   const lobbySections = [
-    { label: "Lobby: Teams & Spaces", avatars: ["🏢", "👥"] },
-    { label: "Lobby: Build", avatars: ["🔨", "⚙️"] },
+    { label: "Lobby: Teams & Spaces" },
+    { label: "Lobby: Build" },
   ]
 
   const chatItems = chats?.filter((c) => c.id !== activeChat?.id) || []
@@ -497,10 +497,9 @@ function ComputerSidebar({ activeChat }) {
             flex: 1,
             fontSize: "var(--fontSize-caption)",
             fontWeight: "440",
-            gap: "var(--spacing-global-5xs)",
           }}
         >
-          <span style={{ fontSize: "14px" }}>💬</span> New Chat
+          New Chat
         </button>
         <button
           type="button"
@@ -532,21 +531,14 @@ function ComputerSidebar({ activeChat }) {
           <button
             key={idx}
             type="button"
-            className="arcade-menu-item"
+            className="arcade-menu-item text-caption"
             style={{
               padding: "var(--spacing-global-3xs) var(--spacing-global-xs)",
-              fontSize: "var(--fontSize-caption)",
               fontWeight: "440",
+              justifyContent: "flex-start",
             }}
           >
-            <div style={{ display: "flex", gap: "var(--spacing-global-5xs)", alignItems: "center" }}>
-              {section.avatars.map((emoji, i) => (
-                <span key={i} style={{ fontSize: "12px", lineHeight: "1" }}>
-                  {emoji}
-                </span>
-              ))}
-            </div>
-            <span style={{ fontSize: "var(--fontSize-caption)" }}>{section.label}</span>
+            {section.label}
           </button>
         ))}
       </div>
@@ -563,10 +555,12 @@ function ComputerSidebar({ activeChat }) {
               .join(", ")
             const label = chat.title || (chat.participants.includes("computer") ? "Computer" : participantNames)
             const lastMsg = chat.messages[chat.messages.length - 1]
+            const isMultiUser = chat.participants.length > 2
 
             return (
-              <div
+              <button
                 key={chat.id}
+                type="button"
                 className="arcade-menu-item"
                 style={{
                   padding: "var(--spacing-global-3xs)",
@@ -575,38 +569,26 @@ function ComputerSidebar({ activeChat }) {
                   gap: "var(--spacing-global-5xs)",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: "var(--fontSize-caption)",
-                    fontWeight: "540",
-                    color: "hsl(var(--text-color-primary))",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "var(--spacing-global-4xs)",
-                    width: "100%",
-                  }}
-                >
-                  {chat.participants.length > 2 && <span style={{ fontSize: "11px" }}>👥</span>}
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {label}
-                  </span>
+                <div className="text-caption-medium" style={{ width: "100%", textAlign: "left" }}>
+                  {isMultiUser && "👥 "}
+                  {label}
                 </div>
                 {lastMsg && (
                   <div
+                    className="text-caption"
                     style={{
-                      fontSize: "var(--fontSize-caption)",
-                      fontWeight: "440",
                       color: "hsl(var(--text-color-tertiary))",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       width: "100%",
+                      textAlign: "left",
                     }}
                   >
                     {lastMsg.text}
                   </div>
                 )}
-              </div>
+              </button>
             )
           })}
         </div>
@@ -637,34 +619,14 @@ function ComputerSidebar({ activeChat }) {
           gap: "var(--spacing-global-xs)",
         }}
       >
-        <div
-          className="arcade-avatar arcade-avatar--M"
-          style={{
-            background: "hsl(var(--intelligence-400))",
-          }}
-        >
+        <div className="arcade-avatar arcade-avatar--M" style={{ background: "hsl(var(--intelligence-400))" }}>
           P
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: "var(--fontSize-caption)",
-              fontWeight: "540",
-              color: "hsl(var(--text-color-primary))",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <div className="text-caption-medium" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             Prithvi Sharma
           </div>
-          <div
-            style={{
-              fontSize: "var(--fontSize-caption)",
-              fontWeight: "440",
-              color: "hsl(var(--text-color-tertiary))",
-            }}
-          >
+          <div className="text-caption" style={{ color: "hsl(var(--text-color-tertiary))" }}>
             DevRev
           </div>
         </div>
