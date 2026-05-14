@@ -162,6 +162,9 @@ export function NavPanel({
   const isControlledSelection = selectedItemId !== undefined
   const currentSelectedItemId = isControlledSelection ? selectedItemId : uncontrolledSelectedItemId
 
+  // Collapsed state
+  const [isCollapsed, setIsCollapsed] = useState(false)
+
   // Section state
   const [myWorkOpen, setMyWorkOpen] = useState(false)
   const [workspaceOpen, setWorkspaceOpen] = useState(true)
@@ -281,43 +284,61 @@ export function NavPanel({
 
   return (
     <aside
-      className={`flex h-full min-h-0 w-[220px] shrink-0 flex-col items-start overflow-hidden border-r border-[#ececec] bg-white px-[12px] py-[14px] ${className}`}
+      className={`flex h-full min-h-0 shrink-0 flex-col items-start overflow-hidden border-r border-[#ececec] bg-white py-[14px] transition-all duration-200 ${isCollapsed ? 'w-[60px] px-[8px]' : 'w-[220px] px-[12px]'} ${className}`}
     >
-      <div className="flex w-full items-center gap-[4px]">
-        <button
-          type="button"
-          onClick={onComputerClick}
-          className="flex h-[29px] min-w-0 flex-1 items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
-        >
-          <img src="/icons/computer-wordmark.svg" alt="computer" className="h-[14px] w-[80px]" draggable={false} />
-        </button>
-        <Control type="iconOnly" leadingIcon="clock" label="" />
-      </div>
+      {/* Collapse toggle button */}
+      <button
+        type="button"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className={`mb-[8px] flex h-[32px] items-center justify-center rounded-[6px] transition-colors hover:bg-[var(--background-primary-subtle)] ${isCollapsed ? 'w-[44px]' : 'w-full'}`}
+        title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={`transition-transform duration-200 ${isCollapsed ? 'rotate-180' : ''}`}>
+          <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
 
-      <div className="h-[20px] w-[192px] shrink-0 bg-white" />
+      {!isCollapsed && (
+        <>
+          <div className="flex w-full items-center gap-[4px]">
+            <button
+              type="button"
+              onClick={onComputerClick}
+              className="flex h-[29px] min-w-0 flex-1 items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+            >
+              <img src="/icons/computer-wordmark.svg" alt="computer" className="h-[14px] w-[80px]" draggable={false} />
+            </button>
+            <Control type="iconOnly" leadingIcon="clock" label="" />
+          </div>
+        </>
+      )}
 
-      {/* MY WORK */}
-      <div className="w-[194px]">
-        <CollapsibleSection
-          title="My Work"
-          isOpen={myWorkOpen}
-          onToggle={() => setMyWorkOpen(!myWorkOpen)}
-        >
-          {/* Empty for now */}
-        </CollapsibleSection>
-      </div>
+      {!isCollapsed && (
+        <>
+          <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
-      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+          {/* MY WORK */}
+          <div className="w-[194px]">
+            <CollapsibleSection
+              title="My Work"
+              isOpen={myWorkOpen}
+              onToggle={() => setMyWorkOpen(!myWorkOpen)}
+            >
+              {/* Empty for now */}
+            </CollapsibleSection>
+          </div>
 
-      {/* WORKSPACE */}
-      <div className="w-[194px]">
-        <CollapsibleSection
-          title="Workspace"
-          isOpen={workspaceOpen}
-          onToggle={() => setWorkspaceOpen(!workspaceOpen)}
-          showPlus
-        >
-          {WORKSPACE_ITEMS.map((item) => {
+          <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+
+          {/* WORKSPACE */}
+          <div className="w-[194px]">
+            <CollapsibleSection
+              title="Workspace"
+              isOpen={workspaceOpen}
+              onToggle={() => setWorkspaceOpen(!workspaceOpen)}
+              showPlus
+            >
+              {WORKSPACE_ITEMS.map((item) => {
             // Special case: Chats uses same icon as Lobby
             if (item.id === "chats") {
               return (
@@ -346,19 +367,46 @@ export function NavPanel({
       </div>
 
       <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+        </>
+      )}
 
       {/* YOUR PROJECTS */}
       {memberProjects.length > 0 && (
-        <div className="w-[194px] flex flex-col gap-[4px]">
-          <div className="flex h-[24px] items-center px-[6px]">
-            <span
-              className="text-[11px] uppercase tracking-[0.05em] text-[#737072]"
-              style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
-            >
-              Your Projects
-            </span>
-          </div>
-          {memberProjects.map((project) => {
+        <div className={`flex flex-col gap-[4px] ${isCollapsed ? 'w-full items-center' : 'w-[194px]'}`}>
+          {!isCollapsed && (
+            <div className="flex h-[24px] items-center px-[6px]">
+              <span
+                className="text-[11px] uppercase tracking-[0.05em] text-[#737072]"
+                style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
+              >
+                Your Projects
+              </span>
+            </div>
+          )}
+          {isCollapsed ? (
+            // Collapsed view: show only project avatars
+            memberProjects.map((project) => {
+              const getProjectAvatar = () => {
+                if (project.id === "Project-0001") {
+                  return <TeamAvatar color="purple" label="K" />
+                }
+                return <TeamAvatar color="orange" label={project.title?.[0] || "P"} />
+              }
+
+              return (
+                <button
+                  key={project.id}
+                  onClick={() => handleSelectItem(`project-${project.id}`)}
+                  className="flex h-[32px] w-[44px] items-center justify-center rounded-[6px] transition-colors hover:bg-[var(--background-primary-subtle)]"
+                  title={project.title}
+                >
+                  {getProjectAvatar()}
+                </button>
+              )
+            })
+          ) : (
+            // Expanded view: show full project tree
+            memberProjects.map((project) => {
             const isProjectOpen = projectStates[project.id] ?? false
             const isThisProjectChatActive = chatVariant === `project-${project.id}`
             const showChatOpen = chatPanelOpen && isThisProjectChatActive
@@ -409,22 +457,24 @@ export function NavPanel({
                 />
               </CollapsibleTeam>
             )
-          })}
+          })
+          )}
         </div>
       )}
 
       <div className="h-[12px] w-[192px] shrink-0 bg-white" />
 
       {/* YOUR TEAMS */}
-      <div className="w-[194px] flex flex-col gap-[4px]">
-        <div className="flex h-[24px] items-center px-[6px]">
-          <span
-            className="text-[11px] uppercase tracking-[0.05em] text-[#737072]"
-            style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
-          >
-            Your Teams
-          </span>
-        </div>
+      {!isCollapsed && (
+        <div className="w-[194px] flex flex-col gap-[4px]">
+          <div className="flex h-[24px] items-center px-[6px]">
+            <span
+              className="text-[11px] uppercase tracking-[0.05em] text-[#737072]"
+              style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
+            >
+              Your Teams
+            </span>
+          </div>
 
         {/* Build Team */}
         <CollapsibleTeam
@@ -516,17 +566,19 @@ export function NavPanel({
             />
           ))}
         </CollapsibleTeam>
-      </div>
+        </div>
+      )}
 
-      <div className="min-h-0 w-[192px] flex-1 bg-white" />
+      <div className={`min-h-0 flex-1 bg-white ${isCollapsed ? 'w-full' : 'w-[192px]'}`} />
 
       {/* CHATS */}
-      <div className="w-[194px]">
-        <CollapsibleSection
-          title="Chats"
-          isOpen={chatsOpen}
-          onToggle={() => setChatsOpen(!chatsOpen)}
-        >
+      {!isCollapsed && (
+        <div className="w-[194px]">
+          <CollapsibleSection
+            title="Chats"
+            isOpen={chatsOpen}
+            onToggle={() => setChatsOpen(!chatsOpen)}
+          >
           <NavItem
             label="12 Macros failing with inval..."
             leading={<span className="inline-flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-[var(--foreground-error)] text-[10px] font-medium text-white" style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}>12</span>}
@@ -556,12 +608,14 @@ export function NavPanel({
             onClick={() => {}}
           />
         </CollapsibleSection>
-      </div>
+        </div>
+      )}
 
-      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+      {!isCollapsed && <div className="h-[12px] w-[192px] shrink-0 bg-white" />}
 
       {/* Bottom items */}
-      <div className="flex w-full flex-col gap-[4px]">
+      {!isCollapsed && (
+        <div className="flex w-full flex-col gap-[4px]">
         {SECONDARY_ITEMS.slice(0, 3).map((item) => (
           <NavItem
             key={item.id}
@@ -585,9 +639,10 @@ export function NavPanel({
           aria-expanded={meMenuOpen}
           aria-controls={meMenuOpen ? `${meMenuId}-menu` : undefined}
         />
-      </div>
+        </div>
+      )}
 
-      {meMenuOpen && typeof document !== "undefined"
+      {!isCollapsed && meMenuOpen && typeof document !== "undefined"
         ? createPortal(
             <div
               ref={meMenuRef}
