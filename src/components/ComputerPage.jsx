@@ -182,7 +182,7 @@ export function ComputerPage() {
         flexShrink: 0,
         containerType: "inline-size"
       }}>
-        <div className="sidebar-header" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <div className="sidebar-header" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <button style={{
             position: "relative",
             display: "inline-flex",
@@ -195,51 +195,54 @@ export function ComputerPage() {
             outline: "solid 1px transparent",
             outlineOffset: "-1px",
             transition: "all 150ms",
-            cursor: "pointer"
+            cursor: "pointer",
+            width: "fit-content"
           }} className="collapse-btn fg-neutral-prominent" aria-label="Collapse sidebar">
             <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
               <path fill="currentColor" d="M30 7c.05-2.58-2.15-4.91-4.74-4.99L19.14 2H7c-2.58-.05-4.91 2.15-4.99 4.74C2 10.65 2 20.95 2 25c-.05 2.58 2.15 4.91 4.74 4.99 3.91 0 14.21.04 18.26.05 2.6.04 4.93-2.18 5.01-4.78zM4.17 25c.07-5.84.09-12.28-.01-18.15C4.18 5.39 5.5 4.08 7 4.09c1.63-.02 3.3-.04 5-.05v23.91c-1.75-.02-3.47-.04-5.15-.07-1.48-.07-2.72-1.43-2.68-2.88m23.68.15c0 1.47-1.32 2.81-2.85 2.81-3.53.04-7.29.04-11 .01V4.03c3.75-.01 7.56.01 11.15.07 1.5.06 2.75 1.44 2.7 2.9-.09 5.84-.12 12.28 0 18.15M9 12H7v8h2z"/>
             </svg>
           </button>
-          <button onClick={handleNewChat} style={{
-            position: "relative",
-            display: "flex",
-            flex: 1,
-            minWidth: 0,
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            padding: "0 16px",
-            height: "40px",
-            border: 0,
-            borderRadius: "9999px",
-            background: "hsl(var(--bg-neutral-prominent) / 0.08)",
-            transition: "transform 200ms cubic-bezier(0.4, 0, 0.2, 1)",
-            cursor: "pointer"
-          }} className="new-chat-btn fg-neutral-prominent" aria-label="New Chat">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path fill="currentColor" d="M3.411 14.097c-.263 1.47-1.155 2.655-2.161 3.717H2.5c1.781 0 3.556-.712 4.663-2.137 3.556.506 7.874.58 10.325-2.482 2.38-3.262 1.337-8.775-2.67-10.187-4.024-1.419-11.03-1.363-12.98 3.143C.806 8.764 1.03 12.271 3.4 14.09m12.875-1.781c-2.119 2.781-6.531 2.594-9.706 2.018-.25.413-.525.813-.944 1.15-.326.284-.692.51-1.082.68l-.397-.42c.32-.703.555-1.451.654-2.135l-.119-.093c-.219-.188-.45-.406-.65-.613-.956-1.037-1.219-2.412-1.206-3.825C2.8 7.433 3.356 5.883 4.6 4.926c2.55-1.843 6.825-1.83 9.681-.675 3.088 1.2 3.669 5.582 1.994 8.057"/>
-              <path fill="#211E20" d="M14.375 9.845a69 69 0 0 1-3.425-.155l-.329.33a64 64 0 0 1 .16 3.419H9.22q.035-1.708.155-3.42l-.33-.33c-1.138.08-2.281.134-3.419.156V8.283a64 64 0 0 1 3.418.16l.331-.33A69 69 0 0 1 9.22 4.69h1.562a64 64 0 0 1-.16 3.424l.33.33a64 64 0 0 1 3.424-.16z"/>
-            </svg>
-            <span className="new-chat-text text-system-medium">New Chat</span>
-          </button>
-          <button style={{
-            display: "inline-flex",
-            width: "40px",
-            height: "40px",
-            alignItems: "center",
-            justifyContent: "center",
-            border: 0,
-            borderRadius: "20px",
-            background: "hsl(var(--bg-neutral-prominent) / 0.08)",
-            transition: "transform 150ms",
-            flexShrink: 0,
-            cursor: "pointer"
-          }} className="close-sessions-btn fg-neutral-prominent" aria-label="Close sessions">
-            <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m4 4 8 8m0-8-8 8"/>
-            </svg>
-          </button>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button onClick={handleNewChat} style={{
+              position: "relative",
+              display: "flex",
+              flex: 1,
+              minWidth: 0,
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "0 16px",
+              height: "40px",
+              border: 0,
+              borderRadius: "9999px",
+              background: "hsl(var(--bg-neutral-prominent) / 0.08)",
+              transition: "transform 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+              cursor: "pointer"
+            }} className="new-chat-btn fg-neutral-prominent" aria-label="New Chat">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path fill="currentColor" d="M3.411 14.097c-.263 1.47-1.155 2.655-2.161 3.717H2.5c1.781 0 3.556-.712 4.663-2.137 3.556.506 7.874.58 10.325-2.482 2.38-3.262 1.337-8.775-2.67-10.187-4.024-1.419-11.03-1.363-12.98 3.143C.806 8.764 1.03 12.271 3.4 14.09m12.875-1.781c-2.119 2.781-6.531 2.594-9.706 2.018-.25.413-.525.813-.944 1.15-.326.284-.692.51-1.082.68l-.397-.42c.32-.703.555-1.451.654-2.135l-.119-.093c-.219-.188-.45-.406-.65-.613-.956-1.037-1.219-2.412-1.206-3.825C2.8 7.433 3.356 5.883 4.6 4.926c2.55-1.843 6.825-1.83 9.681-.675 3.088 1.2 3.669 5.582 1.994 8.057"/>
+                <path fill="#211E20" d="M14.375 9.845a69 69 0 0 1-3.425-.155l-.329.33a64 64 0 0 1 .16 3.419H9.22q.035-1.708.155-3.42l-.33-.33c-1.138.08-2.281.134-3.419.156V8.283a64 64 0 0 1 3.418.16l.331-.33A69 69 0 0 1 9.22 4.69h1.562a64 64 0 0 1-.16 3.424l.33.33a64 64 0 0 1 3.424-.16z"/>
+              </svg>
+              <span className="new-chat-text text-system-medium">New Chat</span>
+            </button>
+            <button style={{
+              display: "inline-flex",
+              width: "40px",
+              height: "40px",
+              alignItems: "center",
+              justifyContent: "center",
+              border: 0,
+              borderRadius: "20px",
+              background: "hsl(var(--bg-neutral-prominent) / 0.08)",
+              transition: "transform 150ms",
+              flexShrink: 0,
+              cursor: "pointer"
+            }} className="close-sessions-btn fg-neutral-prominent" aria-label="Close sessions">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m4 4 8 8m0-8-8 8"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="conversation-list" style={{ display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto" }}>
@@ -601,7 +604,6 @@ export function ComputerPage() {
               gap: "8px",
               padding: "12px 16px",
               background: "hsl(var(--bg-layer-01))",
-              border: "1px solid hsl(var(--border-outline-01))",
               borderRadius: "24px",
               transition: "all 150ms"
             }}>

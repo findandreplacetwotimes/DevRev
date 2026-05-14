@@ -53,6 +53,10 @@
   background: hsl(var(--bg-neutral-prominent) / 0.1);
 }
 
+.input-wrapper {
+  border: 1px solid hsl(var(--border-outline-01));
+}
+
 .input-wrapper:focus-within {
   border-color: hsl(var(--border-outline-01));
 }
