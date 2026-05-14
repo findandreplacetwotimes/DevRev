@@ -16,6 +16,10 @@ export function createEarlyIdeationChat() {
     id: chatId,
     title: "Design System Architecture",
     participants: ["user", "computer"],
+    participantAvatars: [
+      { id: "user", initials: "PS", color: "#4CAF50" },
+      { id: "computer", initials: "C", color: "#6366F1" },
+    ],
     messages: [
       {
         id: `${chatId}-msg-1`,
@@ -100,6 +104,12 @@ export function createArcadeOriginChat() {
     id: chatId,
     title: "New Design System",
     participants: ["user", "computer", "konstantin-dziuin", "dejan-mesar"],
+    participantAvatars: [
+      { id: "user", initials: "PS", color: "#4CAF50" },
+      { id: "computer", initials: "C", color: "#6366F1" },
+      { id: "konstantin-dziuin", initials: "KD", color: "#FF9800" },
+      { id: "dejan-mesar", initials: "DM", color: "#2196F3" },
+    ],
     messages: [
       {
         id: `${chatId}-msg-1`,
@@ -149,6 +159,30 @@ export function createArcadeOriginChat() {
         text: "Agreed. Typography system looks good too - Editorial + System tracks will work well. Let's finalize the visual language during the swarm and get everyone aligned on the direction.",
         timestamp: now - (10 * 24 * 60 * 60 * 1000) + (1 * 60 * 60 * 1000), // 1 hour later
       },
+      {
+        id: `${chatId}-msg-9`,
+        senderId: "konstantin-dziuin",
+        text: "I also added the color tokens and spacing scale. We now have semantic naming for all primitives - backgrounds, foregrounds, borders, and state colors. This should give us full coverage across light and dark themes.",
+        timestamp: now - (9 * 24 * 60 * 60 * 1000), // Feb 2
+      },
+      {
+        id: `${chatId}-msg-10`,
+        senderId: "user",
+        text: "Perfect. So we have the full technical foundation documented, token architecture defined, and component API patterns ready. This is turning into a substantial effort.",
+        timestamp: now - (9 * 24 * 60 * 60 * 1000) + (2 * 60 * 60 * 1000), // 2 hours later
+      },
+      {
+        id: `${chatId}-msg-11`,
+        senderId: "dejan-mesar",
+        text: "Agreed. We should convert this to a tracked project now. We need proper milestones, sprint planning, and coordination across Design and Platform teams. This is too big to keep as an ad-hoc discussion.",
+        timestamp: now - (9 * 24 * 60 * 60 * 1000) + (3 * 60 * 60 * 1000), // 3 hours later
+      },
+      {
+        id: `${chatId}-msg-12`,
+        senderId: "computer",
+        text: "I can help structure this as a project. Based on our artifacts and discussion, I suggest these milestones:\n1. Foundation & Tokens (semantic color system, spacing, typography)\n2. Core Components (Button, Input, Select, Avatar)\n3. Documentation & Tooling (Storybook, accessibility testing)\n4. Rollout & Migration (migration guide, codemods)\n\nWe have all the artifacts ready. Should I convert this chat to a project?",
+        timestamp: now - (9 * 24 * 60 * 60 * 1000) + (3.5 * 60 * 60 * 1000), // 3.5 hours later
+      },
     ],
     files: [
       {
@@ -176,9 +210,29 @@ export function createArcadeOriginChat() {
         name: "component-api-tdd.md",
         icon: "📄",
       },
+      {
+        id: `${chatId}-file-6`,
+        name: "color-tokens.json",
+        icon: "🎨",
+      },
+      {
+        id: `${chatId}-file-7`,
+        name: "spacing-scale.json",
+        icon: "📐",
+      },
+      {
+        id: `${chatId}-file-8`,
+        name: "component-api.md",
+        icon: "📄",
+      },
+      {
+        id: `${chatId}-file-9`,
+        name: "theme-provider-spec.md",
+        icon: "📄",
+      },
     ],
     createdAt: now - (19 * 24 * 60 * 60 * 1000),
-    lastActivity: now - (10 * 24 * 60 * 60 * 1000) + (1 * 60 * 60 * 1000),
+    lastActivity: now - (9 * 24 * 60 * 60 * 1000) + (3.5 * 60 * 60 * 1000),
     projectId: null, // Will be set after conversion
   }
 }

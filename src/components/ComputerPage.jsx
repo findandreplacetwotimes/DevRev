@@ -274,6 +274,7 @@ export function ComputerPage() {
           {computerChats.map((chat) => {
             const isActive = chat.id === activeChat?.id
             const messageCount = chat.messages.length
+            const isMultiplayer = chat.participants.length >= 3
 
             return (
               <div
@@ -303,6 +304,34 @@ export function ComputerPage() {
                     : "New Chat"
                   )}
                 </div>
+                {isMultiplayer && chat.participantAvatars && (
+                  <div className="conversation-avatars" style={{
+                    display: "flex",
+                    gap: "2px"
+                  }}>
+                    {chat.participantAvatars.map((avatar) => (
+                      <div
+                        key={avatar.id}
+                        className="avatar"
+                        style={{
+                          width: "20px",
+                          height: "20px",
+                          borderRadius: "50%",
+                          background: avatar.color,
+                          color: "white",
+                          fontSize: "9px",
+                          fontWeight: "540",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0
+                        }}
+                      >
+                        {avatar.initials}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })}
@@ -457,13 +486,10 @@ export function ComputerPage() {
             flexShrink: 0
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div style={{
-                fontSize: "0.875rem",
-                lineHeight: "1.125rem",
-                letterSpacing: "-0.005em",
-                fontVariationSettings: '"wght" 540',
-                color: "hsl(var(--fg-neutral-medium))"
-              }}>{activeChat.messages.length}</div>
+              {/* Chat icon - bubble for single player, chat bubble with people for multiplayer */}
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: "hsl(var(--fg-neutral-medium))" }}>
+                <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
               <div style={{
                 fontSize: "0.875rem",
                 lineHeight: "1.125rem",
@@ -471,9 +497,45 @@ export function ComputerPage() {
                 fontVariationSettings: '"wght" 540',
                 color: "hsl(var(--fg-neutral-prominent))"
               }}>{activeChat.title || (activeChat.messages.length > 0 ? activeChat.messages[0].text.substring(0, 40) + "..." : "New Chat")}</div>
+              {/* Dropdown for multiplayer chats */}
+              {activeChat.participants.length >= 3 && (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: "hsl(var(--fg-neutral-medium))" }}>
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* Multiplayer avatar indicator */}
+              {activeChat.participants.length >= 3 && activeChat.participantAvatars && (
+                <div style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "4px 8px 4px 4px",
+                  borderRadius: "16px",
+                  background: "hsl(var(--bg-layer-00))",
+                  border: "1px solid hsl(var(--border-outline-01))",
+                  cursor: "pointer"
+                }}>
+                  <img
+                    src={`https://i.pravatar.cc/150?img=12`}
+                    alt="Avatar"
+                    style={{
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "50%",
+                      objectFit: "cover"
+                    }}
+                  />
+                  <span style={{
+                    fontSize: "0.75rem",
+                    fontWeight: "540",
+                    color: "hsl(var(--fg-neutral-prominent))"
+                  }}>+{activeChat.participants.length - 1}</span>
+                </div>
+              )}
               {/* Convert to Project Button */}
               {canConvert && (
                 <button
@@ -487,8 +549,8 @@ export function ComputerPage() {
                     padding: "0 12px",
                     border: 0,
                     borderRadius: "6px",
-                    background: "hsl(var(--shuiguo-500))",
-                    color: "white",
+                    background: "hsl(var(--banginapalli-400))",
+                    color: "hsl(var(--husk-900))",
                     fontSize: "13px",
                     fontWeight: 500,
                     cursor: "pointer",
@@ -497,10 +559,10 @@ export function ComputerPage() {
                     outlineOffset: "-1px"
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "hsl(var(--shuiguo-600))"
+                    e.currentTarget.style.background = "hsl(48 100% 46%)"
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "hsl(var(--shuiguo-500))"
+                    e.currentTarget.style.background = "hsl(var(--banginapalli-400))"
                   }}
                   title="Convert this chat to a project"
                 >

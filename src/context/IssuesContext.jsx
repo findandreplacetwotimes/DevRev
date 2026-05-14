@@ -511,41 +511,14 @@ export function IssuesProvider({ children }) {
     const chat = chats?.find(c => c.id === chatId)
     if (!chat) return null
 
-    // Generate next project ID
-    const existingIds = projects?.map(p => {
-      const match = /^Project-(\d+)$/.exec(p.id)
-      return match ? Number.parseInt(match[1], 10) : 0
-    }) || []
-    const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0
-    const newProjectId = `Project-${String(maxId + 1).padStart(4, "0")}`
+    // For the demo, always navigate to the pre-seeded Arcade Design System project
+    const projectId = "Project-0004"
 
-    // Create project from chat
-    const newProject = {
-      id: newProjectId,
-      title: chat.title || "Project from Chat",
-      description: `Project created from chat conversation on ${new Date().toLocaleDateString()}`,
-      team: "Core",
-      ownerId: null,
-      dueDateId: null,
-      sprint: "",
-      stage: "in-progress",
-      healthId: "on-track",
-      milestones: [],
-      isMember: true, // Show in YOUR PROJECTS nav
-      history: [], // Start with empty history
-    }
+    // Update chat with projectId link to mark it as converted
+    patchChat(chatId, { projectId })
 
-    // Update chat with projectId link
-    patchChat(chatId, { projectId: newProjectId })
-
-    // Add project to projects array
-    setProjects((prev) => {
-      if (!prev) return [newProject]
-      return [...prev, newProject]
-    })
-
-    return newProjectId
-  }, [chats, projects, patchChat])
+    return projectId
+  }, [chats, patchChat])
 
   const value = useMemo(
     () => ({

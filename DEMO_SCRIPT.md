@@ -85,24 +85,23 @@ Chat titled **"New Design System"** exists with:
    - **Files**: 5 files
    - **Preview**: "This will create a new project..."
 6. **[MANUAL]** Click "Create Project" in modal
-7. **[SEEDED]** Navigation to `/projects/Project-0004`
+7. **[SEEDED]** Navigation to `/projects/Project-0004` (pre-seeded Arcade Design System project)
 8. **[SEEDED]** Project **"Arcade Design System"** appears in **YOUR PROJECTS** nav
-   - Project name shows as "Arcade Design System" (evolved from "New Design System")
+   - Project was pre-seeded on app load (not created dynamically)
    - Nested views visible: Chat, Scope, Timeline, Phases
-9. **[MANUAL]** Click on project in nav
-10. **[SEEDED]** Project page loads showing:
+9. **[SEEDED]** Project page loads showing:
     - 4 milestones: Foundation & Tokens, Core Components, Documentation & Tooling, Rollout & Migration
     - 8 issues assigned to team members and agents (Computer, Claude)
     - Health status: on-track
-11. **[SEEDED]** Original chat remains open/minimized
+10. **[SEEDED]** Original chat remains open/minimized
     - Chat now has `projectId` linked to Project-0004
 
 **What to highlight:**
 - Conditional button (only appears when chat is "project-ready")
 - Smooth transition from chat → modal → project
-- Project inherits context from chat (members, files, conversation history)
-- Chat stays accessible after conversion
-- Project appears immediately in navigation
+- Conversion links chat to existing Arcade project (pre-seeded for demo safety)
+- Chat stays accessible after conversion (marked with `projectId`)
+- Project was already in navigation (pre-seeded on load)
 
 ---
 
@@ -115,19 +114,30 @@ Chat titled **"New Design System"** exists with:
 ## Technical Notes
 
 ### Seed Data Location
-- **Chat seed**: `src/lib/demoConversionSeed.js` → `createArcadeOriginChat()`
-- **Project seed**: `src/lib/demoConversionSeed.js` → `createArcadeProject()`
-- **Issues seed**: `src/lib/demoConversionSeed.js` → `createArcadeIssues()`
+- **Chat seed**: `src/lib/demoConversionSeed.js`
+  - `createEarlyIdeationChat()` → 2-person chat with Computer (no convert button)
+  - `createArcadeOriginChat()` → 4-person collaborative chat (shows convert button)
+- **Project seed**: `src/lib/issuesSeed.js` → `createInitialProjects()` includes Project-0004
+- **Issues seed**: `src/lib/issuesSeed.js` → Issues 0017-0024 for Project-0004
 
 ### Integration
 Seed data is loaded in `src/context/IssuesContext.jsx`:
 ```js
-import { createArcadeOriginChat } from '../lib/demoConversionSeed'
+import { createEarlyIdeationChat, createArcadeOriginChat } from '../lib/demoConversionSeed'
 
-// In initial state or fallback:
-const demoChat = createArcadeOriginChat()
-setChats([...existingChats, demoChat])
+function createInitialChats() {
+  return [
+    createEarlyIdeationChat(),  // 2 participants, no button
+    createArcadeOriginChat(),   // 4 participants, has button
+  ]
+}
 ```
+
+### Conversion Behavior
+When user clicks "Create Project":
+- Chat's `projectId` field is set to `"Project-0004"`
+- Navigation to `/projects/Project-0004` (pre-seeded project)
+- No dynamic project creation (safe for repeated demos)
 
 ### Conversion Eligibility Criteria
 From `src/lib/chatHelpers.js`:
@@ -150,14 +160,16 @@ export function isChatReadyForProject(chat) {
 
 ## Expected Outcomes
 
-✅ Computer chat shows Canvas with files  
-✅ "Convert to Project" button appears conditionally  
+✅ Early ideation chat shows NO convert button (2 participants)  
+✅ Collaborative chat shows "Convert to Project" button (4 participants)  
+✅ Canvas shows files in both chats  
 ✅ Modal shows accurate preview (4 members, 5 files)  
-✅ Project created with title "Arcade Design System"  
-✅ Project appears in YOUR PROJECTS navigation  
-✅ 4 milestones and 8 issues visible in project  
-✅ Chat remains accessible with `projectId` link  
-✅ State persists across refresh (localStorage)
+✅ Conversion navigates to pre-seeded "Arcade Design System" project  
+✅ Project already visible in YOUR PROJECTS nav (pre-seeded)  
+✅ Project shows 4 milestones and 8 issues (pre-seeded)  
+✅ Chat marked with `projectId` after conversion  
+✅ State persists across refresh (localStorage)  
+✅ Safe to run demo multiple times (no duplicate project creation)
 
 ---
 
