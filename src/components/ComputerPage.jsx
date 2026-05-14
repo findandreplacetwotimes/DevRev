@@ -464,12 +464,14 @@ export function ComputerPage() {
                 width: "32px",
                 height: "32px",
                 padding: 0,
-                border: canvasOpen ? "1px solid hsl(var(--border-outline-01))" : "1px solid transparent",
-                borderRadius: "6px",
+                border: 0,
+                borderRadius: "4px",
                 background: canvasOpen ? "hsl(var(--bg-layer-02))" : "transparent",
-                color: "hsl(var(--fg-neutral-medium))",
+                color: "hsl(var(--fg-neutral-prominent))",
                 cursor: "pointer",
-                transition: "all 150ms"
+                transition: "all 150ms",
+                outline: canvasOpen ? "solid 1px hsl(var(--border-outline-01))" : "solid 1px transparent",
+                outlineOffset: "-1px"
               }}
               onMouseEnter={(e) => {
                 if (!canvasOpen) {
@@ -484,8 +486,8 @@ export function ComputerPage() {
               aria-label="Toggle Canvas"
               title="Canvas"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              <svg width="20" height="20" viewBox="0 0 32 32" fill="none" style={{ transform: "scaleX(-1)" }}>
+                <path fill="currentColor" d="M30 7c.05-2.58-2.15-4.91-4.74-4.99L19.14 2H7c-2.58-.05-4.91 2.15-4.99 4.74C2 10.65 2 20.95 2 25c-.05 2.58 2.15 4.91 4.74 4.99 3.91 0 14.21.04 18.26.05 2.6.04 4.93-2.18 5.01-4.78zM4.17 25c.07-5.84.09-12.28-.01-18.15C4.18 5.39 5.5 4.08 7 4.09c1.63-.02 3.3-.04 5-.05v23.91c-1.75-.02-3.47-.04-5.15-.07-1.48-.07-2.72-1.43-2.68-2.88m23.68.15c0 1.47-1.32 2.81-2.85 2.81-3.53.04-7.29.04-11 .01V4.03c3.75-.01 7.56.01 11.15.07 1.5.06 2.75 1.44 2.7 2.9-.09 5.84-.12 12.28 0 18.15M9 12H7v8h2z"/>
               </svg>
             </button>
           </div>
