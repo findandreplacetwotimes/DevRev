@@ -435,7 +435,12 @@ export function AppWorkspaceChrome() {
         />
 
         {chatPanelOpen ? (
-          <ChatWindow width={chatWidth} variant={chatVariant} flexFill={chatFillsRemainder} />
+          <ChatWindow
+            width={chatWidth}
+            variant={chatVariant}
+            flexFill={chatFillsRemainder}
+            projectId={urlProjectId}
+          />
         ) : null}
 
         {showSplitHandle ? (

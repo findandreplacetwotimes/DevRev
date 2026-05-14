@@ -356,11 +356,6 @@ export function ComputerPage() {
               color: "hsl(var(--fg-neutral-medium))",
               textTransform: "uppercase"
             }}>CHAT</div>
-            <div className="more-btn" style={{
-              fontSize: "0.875rem",
-              color: "hsl(var(--fg-neutral-medium))",
-              cursor: "pointer"
-            }}>⋯ More</div>
           </div>
 
         <div className="conversation-list" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>

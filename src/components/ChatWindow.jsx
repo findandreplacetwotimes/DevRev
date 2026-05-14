@@ -125,6 +125,13 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false, proj
   // Check if this is a project chat that has been converted from a conversation
   const convertedChat = projectId && chats ? chats.find(c => c.projectId === projectId) : null
 
+  // Debug logging
+  if (projectId) {
+    console.log('ChatWindow projectId:', projectId)
+    console.log('Available chats:', chats?.map(c => ({ id: c.id, title: c.title, projectId: c.projectId })))
+    console.log('Converted chat found:', convertedChat ? convertedChat.title : 'none')
+  }
+
   const chatMessages = convertedChat
     ? convertedChat.messages.map(msg => ({
         id: msg.id,
