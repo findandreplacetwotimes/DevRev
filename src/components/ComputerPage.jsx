@@ -731,12 +731,21 @@ export function ComputerPage() {
       </div>
 
       {/* Canvas Panel */}
-      {canvasOpen && (
-        <Canvas
-          onClose={() => setCanvasOpen(false)}
-          onMinimize={() => setCanvasOpen(false)}
-        />
-      )}
+      <div
+        style={{
+          width: canvasOpen ? "360px" : "0",
+          overflow: "hidden",
+          transition: "width 250ms ease-out",
+          flexShrink: 0
+        }}
+      >
+        {canvasOpen && (
+          <Canvas
+            onClose={() => setCanvasOpen(false)}
+            onMinimize={() => setCanvasOpen(false)}
+          />
+        )}
+      </div>
     </div>
   )
 }
