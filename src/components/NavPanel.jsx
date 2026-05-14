@@ -162,8 +162,8 @@ export function NavPanel({
   const isControlledSelection = selectedItemId !== undefined
   const currentSelectedItemId = isControlledSelection ? selectedItemId : uncontrolledSelectedItemId
 
-  // Collapsed state
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  // Collapsed state - default to collapsed
+  const [isCollapsed, setIsCollapsed] = useState(true)
 
   // Section state
   const [myWorkOpen, setMyWorkOpen] = useState(false)
