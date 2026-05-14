@@ -4,6 +4,60 @@
 @import "./styles/typography-spacing.css";
 @import "./styles/arcade-components.css";
 
+/* Computer page sidebar responsive button */
+@container (max-width: 280px) {
+  .new-chat-btn .new-chat-text {
+    display: none;
+  }
+  .new-chat-btn {
+    width: 40px;
+    flex: 0 0 40px;
+    padding: 0;
+  }
+}
+
+.collapse-btn:hover {
+  background: hsl(var(--bg-neutral-prominent) / 0.1);
+}
+
+.new-chat-btn:hover {
+  transform: scale(1.02);
+}
+
+.new-chat-btn:active {
+  transform: scale(0.97);
+}
+
+.new-chat-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-interactive-focused);
+}
+
+.close-sessions-btn:hover {
+  transform: scale(1.04);
+}
+
+.close-sessions-btn:active {
+  transform: scale(0.96);
+}
+
+.conversation-item:hover {
+  background: hsl(var(--bg-neutral-prominent) / 0.06);
+}
+
+.dm-item:hover {
+  background: hsl(var(--bg-neutral-prominent) / 0.06);
+}
+
+.send-btn:hover {
+  background: hsl(var(--bg-neutral-prominent) / 0.1);
+}
+
+.input-wrapper:focus-within {
+  border-color: hsl(var(--shuiguo-400));
+  box-shadow: var(--shadow-interactive-focused);
+}
+
 @font-face {
   font-family: "Chip Text Variable";
   src: url("/fonts/Chip_Text_Variable-Regular.ttf") format("truetype");

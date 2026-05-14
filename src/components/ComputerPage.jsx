@@ -159,7 +159,7 @@ export function ComputerPage() {
   }
 
   return (
-    <div style={{ display: "flex", width: "100%", height: "100%" }}>
+    <div style={{ display: "flex", width: "100%", height: "100vh", overflow: "hidden" }}>
       {/* Left Sidebar */}
       <div style={{
         width: "240px",
