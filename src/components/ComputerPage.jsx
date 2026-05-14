@@ -274,7 +274,7 @@ export function ComputerPage() {
           </div>
         </div>
 
-        <div className="conversation-list" style={{ display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto" }}>
+        <div className="conversation-list" style={{ display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto", flex: 1, minHeight: 0 }}>
           {computerChats.map((chat) => {
             const isActive = chat.id === activeChat?.id
             const messageCount = chat.messages.length
@@ -341,29 +341,29 @@ export function ComputerPage() {
           })}
         </div>
 
-        <div className="section-header" style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "8px 8px 4px",
-          marginTop: "8px"
-        }}>
-          <div className="section-title" style={{
-            fontSize: "0.75rem",
-            lineHeight: "1.125rem",
-            letterSpacing: "-0.02em",
-            fontVariationSettings: '"wght" 540',
-            color: "hsl(var(--fg-neutral-medium))",
-            textTransform: "uppercase"
-          }}>CHAT</div>
-          <div className="more-btn" style={{
-            fontSize: "0.875rem",
-            color: "hsl(var(--fg-neutral-medium))",
-            cursor: "pointer"
-          }}>⋯ More</div>
-        </div>
+        <div style={{ marginTop: "auto", paddingTop: "8px", borderTop: "1px solid hsl(var(--border-outline-01))" }}>
+          <div className="section-header" style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "8px 8px 4px"
+          }}>
+            <div className="section-title" style={{
+              fontSize: "0.75rem",
+              lineHeight: "1.125rem",
+              letterSpacing: "-0.02em",
+              fontVariationSettings: '"wght" 540',
+              color: "hsl(var(--fg-neutral-medium))",
+              textTransform: "uppercase"
+            }}>CHAT</div>
+            <div className="more-btn" style={{
+              fontSize: "0.875rem",
+              color: "hsl(var(--fg-neutral-medium))",
+              cursor: "pointer"
+            }}>⋯ More</div>
+          </div>
 
-        <div className="conversation-list" style={{ display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto" }}>
+        <div className="conversation-list" style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
           {[
             { label: "Devanshu Dangi, Prithvi...", count: 2 },
             { label: "Kunal Mohta, Pol...", count: 2, unread: true },
@@ -431,9 +431,9 @@ export function ComputerPage() {
             </div>
           ))}
         </div>
+        </div>
 
         <div className="dm-item" style={{
-          marginTop: "auto",
           paddingTop: "12px",
           borderTop: "1px solid hsl(var(--border-outline-01))",
           display: "flex",

@@ -233,7 +233,7 @@ export function createArcadeOriginChat() {
     ],
     createdAt: now - (19 * 24 * 60 * 60 * 1000),
     lastActivity: now - (9 * 24 * 60 * 60 * 1000) + (3.5 * 60 * 60 * 1000),
-    projectId: null, // Will be set after conversion
+    projectId: "Project-0004", // Pre-linked to Arcade Design project
   }
 }
 

@@ -134,9 +134,10 @@ function createInitialChats() {
 ```
 
 ### Conversion Behavior
-When user clicks "Create Project":
-- Chat's `projectId` field is set to `"Project-0004"`
-- Navigation to `/projects/Project-0004` (pre-seeded project)
+The "New Design System" chat is pre-linked to Project-0004:
+- Chat already has `projectId: "Project-0004"` in seed data
+- Arcade Design project chat shows this conversation immediately
+- "Convert to Project" button still works but just navigates (already linked)
 - No dynamic project creation (safe for repeated demos)
 
 ### Conversion Eligibility Criteria
