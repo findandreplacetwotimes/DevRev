@@ -1,8 +1,9 @@
 import { createPortal } from "react-dom"
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useAnchoredPopoverPosition } from "../hooks/useAnchoredPopoverPosition"
-import { useChats } from "../context/IssuesContext"
+import { useProjects } from "../context/IssuesContext"
 import { ChatAvatar } from "./ChatAvatar"
+import { ChatToggleIcon } from "./ChatToggleIcon"
 import { Control } from "./Control"
 import { MenuItem } from "./MenuItem"
 import { NavItem } from "./NavItem"
@@ -32,12 +33,110 @@ function MeAvatar({ selected = false }) {
   )
 }
 
-const PRIMARY_ITEMS = [
-  { id: "build-team", label: "Build team", iconName: "chat" },
-  { id: "issues", label: "Issues", iconName: "page" },
+function TeamAvatar({ color = "orange", label = "B" }) {
+  const bgColors = {
+    orange: "hsl(13 100% 60%)",
+    purple: "hsl(259 94% 44%)",
+    pink: "hsl(346 98% 58%)",
+  }
+
+  return (
+    <span
+      className="inline-flex size-[20px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-medium text-white"
+      style={{
+        background: bgColors[color] || bgColors.orange,
+        fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+        fontVariationSettings: '"wght" 540'
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
+function CollapsibleSection({ title, isOpen, onToggle, children, showPlus = false }) {
+  return (
+    <div className="flex w-full flex-col">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex h-[28px] w-full items-center gap-[4px] px-[6px] text-left transition-colors duration-150 hover:bg-[var(--background-primary-subtle)] rounded-[2px]"
+      >
+        <img
+          src="/icons/chevron-down.svg"
+          alt=""
+          className="size-[12px] transition-transform duration-200"
+          style={{ transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)" }}
+        />
+        <span
+          className="flex-1 text-[11px] uppercase tracking-[0.05em] text-[#737072]"
+          style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
+        >
+          {title}
+        </span>
+        {showPlus && (
+          <span className="text-[14px] text-[#737072] hover:text-[#898789]">+</span>
+        )}
+      </button>
+      {isOpen && (
+        <div className="flex w-full flex-col gap-[4px] mt-[4px]">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CollapsibleTeam({ name, avatar, isOpen, onToggle, children, selected = false }) {
+  return (
+    <div className="flex w-full flex-col">
+      <button
+        type="button"
+        onClick={onToggle}
+        className={`flex h-[28px] w-full items-center gap-[6px] px-[6px] text-left transition-colors duration-150 hover:bg-[var(--background-primary-subtle)] rounded-[2px] ${
+          selected ? "bg-[var(--background-primary-subtle)]" : ""
+        }`}
+      >
+        <img
+          src="/icons/chevron-down.svg"
+          alt=""
+          className="size-[12px] transition-transform duration-200"
+          style={{ transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)" }}
+        />
+        {avatar}
+        <span
+          className="flex-1 text-[14px] text-[#0f0e0f]"
+          style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 440' }}
+        >
+          {name}
+        </span>
+      </button>
+      {isOpen && (
+        <div className="flex w-full flex-col gap-[2px] ml-[26px] mt-[2px]">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const WORKSPACE_ITEMS = [
   { id: "projects", label: "Projects", iconName: "page" },
-  { id: "sprints", label: "Sprints", iconName: "page" },
-  { id: "about", label: "About", iconName: "page" },
+  { id: "views", label: "Views", iconName: "page", disabled: true },
+]
+
+const BUILD_TEAM_ITEMS = [
+  { id: "build-chat", label: "Lobby", iconName: "chat" },
+  { id: "build-issues", label: "Issues", iconName: "page" },
+  { id: "build-roadmap", label: "Roadmap", iconName: "page", disabled: true },
+  { id: "build-sprints", label: "Sprints", iconName: "page" },
+  { id: "build-about", label: "About", iconName: "page" },
+]
+
+const OTHER_TEAM_ITEMS = [
+  { id: "issues", label: "Issues", iconName: "page", disabled: true },
+  { id: "roadmap", label: "Roadmap", iconName: "page", disabled: true },
+  { id: "sprints", label: "Sprints", iconName: "page", disabled: true },
 ]
 
 const SECONDARY_ITEMS = [
@@ -50,44 +149,47 @@ const SECONDARY_ITEMS = [
 export function NavPanel({
   className = "",
   selectedItemId,
-  defaultSelectedItemId = "build-team",
+  defaultSelectedItemId = "projects",
   onSelectItem,
   onComputerClick,
   chatPanelOpen = true,
+  chatVariant = "build-team",
   recordPanelOpen = true,
   onToggleChatPanel,
   onToggleRecordPanel,
-  onChatClick,
-  onNewChat,
 }) {
-  const { chats } = useChats()
   const [uncontrolledSelectedItemId, setUncontrolledSelectedItemId] = useState(defaultSelectedItemId)
   const isControlledSelection = selectedItemId !== undefined
   const currentSelectedItemId = isControlledSelection ? selectedItemId : uncontrolledSelectedItemId
 
-  const chatItems = useMemo(() => {
-    if (!chats) return []
-    return chats.map((chat) => {
-      const participantNames = chat.participants
-        .filter((p) => p !== "computer" && p !== "user")
-        .join(", ")
-      const isComputerOnly = chat.participants.includes("computer") && chat.participants.length === 2
-      const label = chat.title || (isComputerOnly ? "Computer" : participantNames || "New Chat")
-      const initial = isComputerOnly ? "C" : label[0]
+  // Section state
+  const [myWorkOpen, setMyWorkOpen] = useState(false)
+  const [workspaceOpen, setWorkspaceOpen] = useState(true)
+  const [favouritesOpen, setFavouritesOpen] = useState(false)
+  const [buildTeamOpen, setBuildTeamOpen] = useState(true)
+  const [foundationsTeamOpen, setFoundationsTeamOpen] = useState(false)
+  const [growthTeamOpen, setGrowthTeamOpen] = useState(false)
+  const [supportTeamOpen, setSupportTeamOpen] = useState(false)
+  const [chatsOpen, setChatsOpen] = useState(false)
 
-      return {
-        id: `chat-${chat.id}`,
-        label,
-        initial,
-        chatId: chat.id,
-      }
-    })
-  }, [chats])
+  // Project spaces state
+  const { projects } = useProjects()
+  const [projectStates, setProjectStates] = useState({})
 
-  const allItemIds = useMemo(
-    () => [...PRIMARY_ITEMS, ...chatItems, ...SECONDARY_ITEMS].map((item) => item.id),
-    [chatItems]
-  )
+  // Filter projects with membership
+  const memberProjects = useMemo(() => {
+    if (!projects) return []
+    return projects.filter(p => p.isMember)
+  }, [projects])
+
+  const allItemIds = useMemo(() => {
+    const baseIds = [...WORKSPACE_ITEMS, ...BUILD_TEAM_ITEMS, ...SECONDARY_ITEMS].map((item) => item.id)
+    const projectIds = memberProjects.flatMap(p => [
+      `project-${p.id}`,
+      `project-${p.id}-chat`,
+    ])
+    return [...baseIds, ...projectIds]
+  }, [memberProjects])
 
   const hasPanelToggles =
     typeof onToggleChatPanel === "function" || typeof onToggleRecordPanel === "function"
@@ -104,16 +206,6 @@ export function NavPanel({
     if (!isControlledSelection) {
       setUncontrolledSelectedItemId(itemId)
     }
-
-    // Check if this is a chat item and call onChatClick
-    if (itemId.startsWith("chat-") && onChatClick) {
-      const chatItem = chatItems.find((c) => c.id === itemId)
-      if (chatItem) {
-        onChatClick(chatItem.chatId)
-        return
-      }
-    }
-
     onSelectItem?.(itemId)
   }
 
@@ -196,73 +288,262 @@ export function NavPanel({
 
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
-      <div className="flex w-[194px] flex-col gap-[4px]">
-        <MenuItem type="label" label="Build Team" fullWidth />
-
-        {PRIMARY_ITEMS.map((item) => (
-          <NavItem
-            key={item.id}
-            label={item.label}
-            iconName={item.iconName}
-            selected={currentSelectedItemId === item.id}
-            className="w-full"
-            onClick={() => handleSelectItem(item.id)}
-          />
-        ))}
+      {/* MY WORK */}
+      <div className="w-[194px]">
+        <CollapsibleSection
+          title="My Work"
+          isOpen={myWorkOpen}
+          onToggle={() => setMyWorkOpen(!myWorkOpen)}
+        >
+          {/* Empty for now */}
+        </CollapsibleSection>
       </div>
 
-      <div className="h-[20px] w-[192px] shrink-0 bg-white" />
+      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
 
-      <div className="flex w-[194px] flex-col gap-[4px]">
-        <div className="flex w-full items-center justify-between px-[8px] py-[6px]">
-          <MenuItem type="label" label="Chats" fullWidth={false} />
-          <button
-            type="button"
-            onClick={() => {
-              if (onNewChat) {
-                onNewChat()
-              }
-            }}
-            style={{
-              width: "20px",
-              height: "20px",
-              borderRadius: "4px",
-              background: "transparent",
-              border: "none",
-              color: "rgba(0, 0, 0, 0.5)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "16px",
-              transition: "all 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)"
-              e.currentTarget.style.color = "rgba(0, 0, 0, 0.8)"
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent"
-              e.currentTarget.style.color = "rgba(0, 0, 0, 0.5)"
-            }}
-          >
-            +
-          </button>
+      {/* WORKSPACE */}
+      <div className="w-[194px]">
+        <CollapsibleSection
+          title="Workspace"
+          isOpen={workspaceOpen}
+          onToggle={() => setWorkspaceOpen(!workspaceOpen)}
+          showPlus
+        >
+          {WORKSPACE_ITEMS.map((item) => {
+            // Special case: Chats uses same icon as Lobby
+            if (item.id === "chats") {
+              return (
+                <NavItem
+                  key={item.id}
+                  label={item.label}
+                  leading={<ChatToggleIcon isOpen={false} />}
+                  selected={currentSelectedItemId === item.id}
+                  className={`w-full ${item.disabled ? "cursor-not-allowed" : ""}`}
+                  onClick={() => !item.disabled && handleSelectItem(item.id)}
+                />
+              )
+            }
+            return (
+              <NavItem
+                key={item.id}
+                label={item.label}
+                iconName={item.iconName}
+                selected={currentSelectedItemId === item.id}
+                className={`w-full ${item.disabled ? "cursor-not-allowed" : ""}`}
+                onClick={() => !item.disabled && handleSelectItem(item.id)}
+              />
+            )
+          })}
+        </CollapsibleSection>
+      </div>
+
+      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+
+      {/* YOUR PROJECTS */}
+      {memberProjects.length > 0 && (
+        <div className="w-[194px] flex flex-col gap-[4px]">
+          <div className="flex h-[24px] items-center px-[6px]">
+            <span
+              className="text-[11px] uppercase tracking-[0.05em] text-[#737072]"
+              style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
+            >
+              Your Projects
+            </span>
+          </div>
+          {memberProjects.map((project) => {
+            const isProjectOpen = projectStates[project.id] ?? false
+            const isThisProjectChatActive = chatVariant === `project-${project.id}`
+            const showChatOpen = chatPanelOpen && isThisProjectChatActive
+            return (
+              <CollapsibleTeam
+                key={project.id}
+                name={project.title || project.id}
+                avatar={<TeamAvatar color="orange" label={project.title?.[0] || "P"} />}
+                isOpen={isProjectOpen}
+                onToggle={() => setProjectStates(prev => ({ ...prev, [project.id]: !isProjectOpen }))}
+              >
+                <NavItem
+                  label="Project chat"
+                  leading={<ChatToggleIcon isOpen={showChatOpen} />}
+                  selected={false}
+                  className="w-full h-[24px] text-[13px] px-[6px]"
+                  onClick={() => handleSelectItem(`project-${project.id}-chat`)}
+                />
+                <NavItem
+                  label="Scope"
+                  iconName="page"
+                  selected={currentSelectedItemId === `project-${project.id}`}
+                  className="w-full h-[24px] text-[13px] px-[6px]"
+                  onClick={() => handleSelectItem(`project-${project.id}`)}
+                />
+                <NavItem
+                  label="Execution Timeline"
+                  iconName="page"
+                  selected={false}
+                  className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+                  onClick={() => {}}
+                />
+                <NavItem
+                  label="Release Phases"
+                  iconName="page"
+                  selected={false}
+                  className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+                  onClick={() => {}}
+                />
+              </CollapsibleTeam>
+            )
+          })}
         </div>
-        {chatItems.map((item) => (
-          <NavItem
-            key={item.id}
-            label={item.label}
-            leading={<ChatAvatar initial={item.initial} />}
-            selected={currentSelectedItemId === item.id}
-            className="w-full"
-            onClick={() => handleSelectItem(item.id)}
-          />
-        ))}
+      )}
+
+      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+
+      {/* YOUR TEAMS */}
+      <div className="w-[194px] flex flex-col gap-[4px]">
+        <div className="flex h-[24px] items-center px-[6px]">
+          <span
+            className="text-[11px] uppercase tracking-[0.05em] text-[#737072]"
+            style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
+          >
+            Your Teams
+          </span>
+        </div>
+
+        {/* Build Team */}
+        <CollapsibleTeam
+          name="Build"
+          avatar={<TeamAvatar color="orange" label="B" />}
+          isOpen={buildTeamOpen}
+          onToggle={() => setBuildTeamOpen(!buildTeamOpen)}
+        >
+          {BUILD_TEAM_ITEMS.map((item) => {
+            // Special handling for Build chat
+            if (item.id === "build-chat") {
+              const isBuildChatActive = chatVariant === "build-team"
+              const showChatOpen = chatPanelOpen && isBuildChatActive
+              return (
+                <NavItem
+                  key={item.id}
+                  label={item.label}
+                  leading={<ChatToggleIcon isOpen={showChatOpen} />}
+                  selected={false}
+                  className="w-full h-[24px] text-[13px] px-[6px]"
+                  onClick={() => handleSelectItem(item.id)}
+                />
+              )
+            }
+            return (
+              <NavItem
+                key={item.id}
+                label={item.label}
+                iconName={item.iconName}
+                selected={currentSelectedItemId === item.id}
+                className={`w-full h-[24px] text-[13px] px-[6px] ${item.disabled ? "cursor-not-allowed" : ""}`}
+                onClick={() => !item.disabled && handleSelectItem(item.id)}
+              />
+            )
+          })}
+        </CollapsibleTeam>
+
+        {/* Other Teams - collapsed */}
+        <CollapsibleTeam
+          name="Foundations"
+          avatar={<TeamAvatar color="orange" label="F" />}
+          isOpen={foundationsTeamOpen}
+          onToggle={() => setFoundationsTeamOpen(!foundationsTeamOpen)}
+        >
+          {OTHER_TEAM_ITEMS.map((item) => (
+            <NavItem
+              key={`foundations-${item.id}`}
+              label={item.label}
+              iconName={item.iconName}
+              selected={false}
+              className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+              onClick={() => {}}
+            />
+          ))}
+        </CollapsibleTeam>
+
+        <CollapsibleTeam
+          name="Growth"
+          avatar={<TeamAvatar color="purple" label="G" />}
+          isOpen={growthTeamOpen}
+          onToggle={() => setGrowthTeamOpen(!growthTeamOpen)}
+        >
+          {OTHER_TEAM_ITEMS.map((item) => (
+            <NavItem
+              key={`growth-${item.id}`}
+              label={item.label}
+              iconName={item.iconName}
+              selected={false}
+              className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+              onClick={() => {}}
+            />
+          ))}
+        </CollapsibleTeam>
+
+        <CollapsibleTeam
+          name="Support"
+          avatar={<TeamAvatar color="pink" label="S" />}
+          isOpen={supportTeamOpen}
+          onToggle={() => setSupportTeamOpen(!supportTeamOpen)}
+        >
+          {OTHER_TEAM_ITEMS.map((item) => (
+            <NavItem
+              key={`support-${item.id}`}
+              label={item.label}
+              iconName={item.iconName}
+              selected={false}
+              className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+              onClick={() => {}}
+            />
+          ))}
+        </CollapsibleTeam>
       </div>
 
       <div className="min-h-0 w-[192px] flex-1 bg-white" />
 
+      {/* CHATS */}
+      <div className="w-[194px]">
+        <CollapsibleSection
+          title="Chats"
+          isOpen={chatsOpen}
+          onToggle={() => setChatsOpen(!chatsOpen)}
+        >
+          <NavItem
+            label="12 Macros failing with inval..."
+            leading={<span className="inline-flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-[var(--foreground-error)] text-[10px] font-medium text-white" style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}>12</span>}
+            selected={false}
+            className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+            onClick={() => {}}
+          />
+          <NavItem
+            label="Kavinash"
+            leading={<ChatAvatar initial="K" />}
+            selected={false}
+            className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+            onClick={() => {}}
+          />
+          <NavItem
+            label="13 Crash when importing la..."
+            leading={<span className="inline-flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-[var(--foreground-error)] text-[10px] font-medium text-white" style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}>13</span>}
+            selected={false}
+            className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+            onClick={() => {}}
+          />
+          <NavItem
+            label="Lina"
+            leading={<ChatAvatar initial="L" />}
+            selected={false}
+            className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+            onClick={() => {}}
+          />
+        </CollapsibleSection>
+      </div>
+
+      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+
+      {/* Bottom items */}
       <div className="flex w-full flex-col gap-[4px]">
         {SECONDARY_ITEMS.slice(0, 3).map((item) => (
           <NavItem

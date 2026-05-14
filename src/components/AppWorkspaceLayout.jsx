@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
-import { useChats } from "../context/IssuesContext"
 import { ChatWindow } from "./ChatWindow"
-import { FloatingChatWindow } from "./FloatingChatWindow"
-import { MinimizedChatTabs } from "./MinimizedChatTabs"
 import { NavPanel } from "./NavPanel"
 
 const INITIAL_CHAT_WIDTH = 377
@@ -42,16 +39,16 @@ function loadChatWidth() {
 
 /** Never start with both panels hidden (blank canvas). */
 function loadInitialPanelOpen() {
-  const chat = loadBool(LS_CHAT_OPEN, true)
+  const chat = loadBool(LS_CHAT_OPEN, false)
   const record = loadBool(LS_RECORD_OPEN, true)
   if (!chat && !record) {
     try {
-      window.localStorage.setItem(LS_CHAT_OPEN, "true")
+      window.localStorage.setItem(LS_CHAT_OPEN, "false")
       window.localStorage.setItem(LS_RECORD_OPEN, "true")
     } catch {
       /* ignore */
     }
-    return { chat: true, record: true }
+    return { chat: false, record: true }
   }
   return { chat, record }
 }
@@ -66,7 +63,6 @@ export function AppWorkspaceLayout() {
 export function AppWorkspaceChrome() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { chats, setChats } = useChats()
 
   const panelsInitRef = useRef(null)
   if (panelsInitRef.current === null) {
@@ -80,14 +76,8 @@ export function AppWorkspaceChrome() {
 
   /** `person` chats use LLM as teammate; `ai` uses computer mode. */
   const [chatVariant, setChatVariant] = useState("build-team")
-
-  // Floating chat windows state
-  const [openChatWindows, setOpenChatWindows] = useState([]) // Array of chat IDs
-  const [minimizedChats, setMinimizedChats] = useState([]) // Array of chat IDs
-
   const layoutRef = useRef(null)
   const dragStateRef = useRef(null)
-  const timelinePostedHandlerRef = useRef(null)
 
   const chatPanelOpenRef = useRef(chatPanelOpen)
   const recordPanelOpenRef = useRef(recordPanelOpen)
@@ -191,26 +181,24 @@ export function AppWorkspaceChrome() {
     typeof location.state?.sourceProjectId === "string" &&
     location.state.sourceProjectId.trim().length > 0
 
-  // Extract projectId from route for project chat context
-  const currentProjectId = useMemo(() => {
-    const match = /^\/projects\/([^/]+)/.exec(pathname)
-    return match ? decodeURIComponent(match[1]) : null
-  }, [pathname])
+  // Extract project ID from URL for project space navigation
+  const projectIdMatch = pathname.match(/^\/projects\/([^/]+)/)
+  const urlProjectId = projectIdMatch ? projectIdMatch[1] : null
 
   const selectedNavItemId = issueFromThreeLevelPath
     ? "projects"
+    : urlProjectId
+      ? `project-${urlProjectId}`
     : pathname.startsWith("/issues")
-      ? "issues"
+      ? "build-issues"
     : pathname.startsWith("/projects")
       ? "projects"
     : pathname.startsWith("/sprints")
-      ? "sprints"
+      ? "build-sprints"
     : pathname.startsWith("/about")
-      ? "about"
+      ? "build-about"
     : pathname.startsWith("/team-members")
-      ? "about"
-      : chatVariant.startsWith("chat-") || chatVariant === "build-team"
-        ? chatVariant
+      ? "build-about"
       : null
 
   const toggleChatPanel = () => {
@@ -285,18 +273,16 @@ export function AppWorkspaceChrome() {
     })
   }
 
-  const openProjectChat = useCallback(() => {
+  const toggleProjectChat = useCallback(() => {
     setChatVariant("chat-project")
     setChatPanelOpen((prev) => {
-      if (!prev) {
-        try {
-          window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        return true
+      const next = !prev
+      try {
+        window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+      } catch {
+        /* ignore */
       }
-      return prev
+      return next
     })
   }, [])
 
@@ -305,91 +291,42 @@ export function AppWorkspaceChrome() {
     ensureChatPanelOpenPersist()
   }, [])
 
-  // Register timeline posted handler from ProjectPage
-  const registerTimelinePostedHandler = useCallback((handler) => {
-    timelinePostedHandlerRef.current = handler
-  }, [])
-
-  // Handle timeline posted from ChatWindow
-  const handleTimelinePosted = useCallback((eventId) => {
-    if (timelinePostedHandlerRef.current) {
-      timelinePostedHandlerRef.current(eventId)
-    }
-  }, [])
-
   const workspaceOutletContext = useMemo(
-    () => ({ openProjectChat, openBuildTeamChat, onTimelinePosted: registerTimelinePostedHandler }),
-    [openProjectChat, openBuildTeamChat, registerTimelinePostedHandler]
+    () => ({
+      toggleProjectChat,
+      openBuildTeamChat,
+      chatPanelOpen
+    }),
+    [toggleProjectChat, openBuildTeamChat, chatPanelOpen]
   )
 
-  /** Build team → chat lane only (person). Does not navigate or change record panel — same as Computer for “chat-only”. */
-  // Handle chat click from nav - open floating window
-  const handleChatClick = useCallback((chatId) => {
-    setOpenChatWindows((prev) => {
-      if (prev.includes(chatId)) return prev
-      return [...prev, chatId]
-    })
-    setMinimizedChats((prev) => prev.filter((id) => id !== chatId))
-  }, [])
-
-  // Handle minimize chat window
-  const handleMinimizeChat = useCallback((chatId) => {
-    setOpenChatWindows((prev) => prev.filter((id) => id !== chatId))
-    setMinimizedChats((prev) => {
-      if (prev.includes(chatId)) return prev
-      return [...prev, chatId]
-    })
-  }, [])
-
-  // Handle close chat window
-  const handleCloseChat = useCallback((chatId) => {
-    setOpenChatWindows((prev) => prev.filter((id) => id !== chatId))
-    setMinimizedChats((prev) => prev.filter((id) => id !== chatId))
-  }, [])
-
-  // Handle restore minimized chat
-  const handleRestoreChat = useCallback((chatId) => {
-    setMinimizedChats((prev) => prev.filter((id) => id !== chatId))
-    setOpenChatWindows((prev) => {
-      if (prev.includes(chatId)) return prev
-      return [...prev, chatId]
-    })
-  }, [])
-
-  // Handle new chat creation
-  const handleNewChat = useCallback(() => {
-    const newChatId = `chat-${Date.now()}`
-    const newChat = {
-      id: newChatId,
-      participants: ["computer", "user"],
-      messages: [],
-      files: [],
-      createdAt: Date.now(),
-      lastActivity: Date.now(),
-      projectId: null,
-      title: "Computer",
-    }
-    setChats((prev) => {
-      if (!prev) return [newChat]
-      return [...prev, newChat]
-    })
-    // Open the new chat immediately
-    handleChatClick(newChatId)
-  }, [setChats, handleChatClick])
-
+  /** Handle nav item selection with new hierarchy */
+  /** Handle nav item selection with new hierarchy */
   const handleNavSelectItem = (itemId) => {
-    if (itemId === "build-team") {
+    // Build chat (under Build team) → toggle chat panel
+    if (itemId === "build-chat") {
       setChatVariant("build-team")
-      ensureChatPanelOpenPersist()
+      setChatPanelOpen((prev) => {
+        const next = !prev
+        try {
+          window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+        } catch {
+          /* ignore */
+        }
+        return next
+      })
       return
     }
-    if (itemId.startsWith("chat-")) {
-      // Handled by handleChatClick
-      return
-    }
-    if (itemId === "issues") {
+
+    // Workspace items
+    if (itemId === "chats") {
+      // Placeholder - could open a chats overview
       ensureRecordPanelOpen()
-      navigate("/issues")
+      return
+    }
+    if (itemId === "initiatives") {
+      // Placeholder route
+      ensureRecordPanelOpen()
       return
     }
     if (itemId === "projects") {
@@ -397,16 +334,70 @@ export function AppWorkspaceChrome() {
       navigate("/projects")
       return
     }
-    if (itemId === "sprints") {
+    if (itemId === "views") {
+      // Placeholder route
+      ensureRecordPanelOpen()
+      return
+    }
+
+    // Build team items
+    if (itemId === "build-issues") {
+      ensureRecordPanelOpen()
+      navigate("/issues")
+      return
+    }
+    if (itemId === "build-roadmap") {
+      // Placeholder route
+      ensureRecordPanelOpen()
+      return
+    }
+    if (itemId === "build-sprints") {
       ensureRecordPanelOpen()
       navigate("/sprints")
       return
     }
-    if (itemId === "about") {
+    if (itemId === "build-about") {
       ensureRecordPanelOpen()
       navigate("/about")
       return
     }
+
+    // Project space navigation
+    if (itemId.startsWith("project-")) {
+      const projectChatMatch = itemId.match(/^project-(.+)-chat$/)
+      if (projectChatMatch) {
+        const projectId = projectChatMatch[1]
+        setChatVariant(`project-${projectId}`)
+        setChatPanelOpen((prev) => {
+          const next = !prev
+          try {
+            window.localStorage.setItem(LS_CHAT_OPEN, String(next))
+          } catch {
+            /* ignore */
+          }
+          return next
+        })
+        ensureRecordPanelOpen()
+        navigate(`/projects/${projectId}`)
+        return
+      }
+
+      const projectMainMatch = itemId.match(/^project-(.+)$/)
+      if (projectMainMatch) {
+        const projectId = projectMainMatch[1]
+        ensureRecordPanelOpen()
+        navigate(`/projects/${projectId}`)
+        return
+      }
+    }
+
+    // Legacy chat items (if any remain)
+    if (itemId.startsWith("chat-")) {
+      setChatVariant(itemId)
+      ensureChatPanelOpenPersist()
+      return
+    }
+
     /* Secondary nav (no route yet): show record canvas; leave chat lane as-is */
     ensureRecordPanelOpen()
   }
@@ -429,17 +420,6 @@ export function AppWorkspaceChrome() {
   const showSplitHandle = chatPanelOpen && recordPanelOpen
   const chatFillsRemainder = chatPanelOpen && !recordPanelOpen
 
-  // Get chat objects for open and minimized chats
-  const openChatObjects = useMemo(() => {
-    if (!chats) return []
-    return openChatWindows.map((id) => chats.find((c) => c.id === id)).filter(Boolean)
-  }, [chats, openChatWindows])
-
-  const minimizedChatObjects = useMemo(() => {
-    if (!chats) return []
-    return minimizedChats.map((id) => chats.find((c) => c.id === id)).filter(Boolean)
-  }, [chats, minimizedChats])
-
   return (
     <main className="flex h-screen items-stretch justify-center bg-white">
       <div ref={layoutRef} className="flex h-full w-full min-w-0 items-stretch">
@@ -448,21 +428,14 @@ export function AppWorkspaceChrome() {
           onSelectItem={handleNavSelectItem}
           onComputerClick={handleComputerClick}
           chatPanelOpen={chatPanelOpen}
+          chatVariant={chatVariant}
           recordPanelOpen={recordPanelOpen}
           onToggleChatPanel={toggleChatPanel}
           onToggleRecordPanel={toggleRecordPanel}
-          onChatClick={handleChatClick}
-          onNewChat={handleNewChat}
         />
 
         {chatPanelOpen ? (
-          <ChatWindow
-            width={chatWidth}
-            variant={chatVariant}
-            flexFill={chatFillsRemainder}
-            projectId={chatVariant === "chat-project" ? currentProjectId : null}
-            onTimelinePosted={handleTimelinePosted}
-          />
+          <ChatWindow width={chatWidth} variant={chatVariant} flexFill={chatFillsRemainder} />
         ) : null}
 
         {showSplitHandle ? (
@@ -487,26 +460,6 @@ export function AppWorkspaceChrome() {
           </div>
         ) : null}
       </div>
-
-      {/* Floating chat windows */}
-      {openChatObjects.map((chat, index) => (
-        <FloatingChatWindow
-          key={chat.id}
-          chat={chat}
-          onClose={() => handleCloseChat(chat.id)}
-          onMinimize={() => handleMinimizeChat(chat.id)}
-          style={{
-            right: `${24 + index * 420}px`,
-          }}
-        />
-      ))}
-
-      {/* Minimized chat tabs */}
-      <MinimizedChatTabs
-        minimizedChats={minimizedChatObjects}
-        onRestore={handleRestoreChat}
-        onClose={handleCloseChat}
-      />
     </main>
   )
 }
