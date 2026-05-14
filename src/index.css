@@ -4,6 +4,26 @@
 @import "./styles/typography-spacing.css";
 @import "./styles/arcade-components.css";
 
+/* Ensure light mode defaults */
+:root {
+  --fg-neutral-prominent: var(--night);
+  --fg-neutral-medium: var(--husk-700);
+  --bg-layer-00: var(--husk-300);
+  --bg-layer-01: var(--day);
+  --bg-neutral-prominent: var(--night);
+  --border-outline-01: var(--husk-400);
+}
+
+/* Dark mode overrides */
+.dark {
+  --fg-neutral-prominent: var(--day);
+  --fg-neutral-medium: var(--husk-600);
+  --bg-layer-00: var(--night);
+  --bg-layer-01: var(--husk-1000);
+  --bg-neutral-prominent: var(--day);
+  --border-outline-01: var(--husk-1000);
+}
+
 /* Computer page sidebar responsive button */
 @container (max-width: 280px) {
   .new-chat-btn .new-chat-text {
