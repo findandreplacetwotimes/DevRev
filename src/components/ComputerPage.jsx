@@ -367,16 +367,10 @@ export function ComputerPage() {
           {[
             { label: "Devanshu Dangi, Prithvi...", count: 2 },
             { label: "Kunal Mohta, Pol...", count: 2, unread: true },
-            { label: "Yashraj, Kunal Mohta, Priyanka Pal, Akank...", count: 7 },
-            { label: "Pratham Gupta, Akanks...", count: 2 },
             { label: "Ribhu Chawla", img: 15 },
-            { label: "Adit Shah", img: 33 },
             { label: "Tom Shurrock", img: 68, unread: true },
-            { label: "Priyadharshan Ravichan...", count: 2 },
             { label: "Priyanka Pal", img: 45 },
-            { label: "Shivam Gupta, Advaith...", count: 3 },
             { label: "Smrithi Ullal", initials: "SU", bg: "#8B3A3A" },
-            { label: "Manasa, Shivam Gupta,...", count: 4 },
           ].map((item, idx) => (
             <div key={idx} className="dm-item" style={{
               display: "flex",

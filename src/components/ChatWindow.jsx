@@ -6,7 +6,8 @@ import { MessageInput } from "./MessageInput"
 import { getAiResponse } from "../lib/aiClient"
 import { hasAgentMention, stripAgentMention } from "../lib/mentionDetection"
 import { createDiscussionEvent } from "../lib/timelineHelpers"
-import { useIssues } from "../context/IssuesContext"
+import { useIssues, useChats } from "../context/IssuesContext"
+import { AVAILABLE_USERS } from "./InvitePanel"
 
 const PERSON_REPLY_PROMPT_PREFIX =
   "You are a real teammate in a direct chat. Reply naturally, concise, and conversational in 1-3 sentences."
@@ -53,6 +54,7 @@ ${weeklyData.openBlockers > 0 ? 'I can help prioritize blockers if needed.' : 'E
 /** Chat column: fixed `width`, or `flexFill` to grow when the record panel is hidden. */
 export function ChatWindow({ width = 377, variant = "ai", flexFill = false, projectId = null, onTimelinePosted = null }) {
   const { patchProject, projects } = useIssues()
+  const { chats } = useChats()
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
     ai: [],
     "build-team": [
@@ -119,9 +121,25 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false, proj
   const hasPostedWeeklyRundown = useRef({})
   const isPersonChat = variant !== "ai"
   const activeVariant = variant
-  const chatMessages = chatMessagesByVariant[activeVariant] ?? []
-  const meta = CHAT_META[activeVariant] ?? CHAT_META.ai
-  const isGroupChat = activeVariant === "build-team" || activeVariant === "chat-project"
+
+  // Check if this is a project chat that has been converted from a conversation
+  const convertedChat = projectId && chats ? chats.find(c => c.projectId === projectId) : null
+
+  const chatMessages = convertedChat
+    ? convertedChat.messages.map(msg => ({
+        id: msg.id,
+        role: msg.senderId === "user" ? "user" : "person",
+        text: msg.text,
+        senderInitial: msg.senderId === "computer" ? AGENT_SENDER_ID : (AVAILABLE_USERS.find(u => u.id === msg.senderId)?.initials || msg.senderId[0]?.toUpperCase()),
+        isAgent: msg.senderId === "computer",
+      }))
+    : (chatMessagesByVariant[activeVariant] ?? [])
+
+  const meta = convertedChat
+    ? { title: convertedChat.title || "Project chat", avatarInitial: null }
+    : (CHAT_META[activeVariant] ?? CHAT_META.ai)
+
+  const isGroupChat = convertedChat || activeVariant === "build-team" || activeVariant === "chat-project"
 
   // Post a proactive agent message
   const postProactiveAgentMessage = (messageText) => {
