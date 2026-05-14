@@ -420,7 +420,7 @@ export function ComputerPage() {
         alignItems: "center",
         background: "hsl(var(--bg-layer-00))",
         minWidth: 0,
-        overflowY: "auto"
+        overflow: "hidden"
       }}>
         {/* Centered Content Container */}
         <div style={{
@@ -428,7 +428,8 @@ export function ComputerPage() {
           maxWidth: "800px",
           display: "flex",
           flexDirection: "column",
-          height: "100%"
+          height: "100%",
+          overflow: "hidden"
         }}>
           <div className="chat-header" style={{
             display: "flex",
@@ -592,7 +593,7 @@ export function ComputerPage() {
           </div>
 
           <div className="input-area" style={{
-            padding: "16px 24px",
+            padding: "16px 24px 16px 24px",
             background: "hsl(var(--bg-layer-01))",
             borderTop: "1px solid hsl(var(--border-outline-01))"
           }}>
@@ -606,13 +607,18 @@ export function ComputerPage() {
               borderRadius: "24px",
               transition: "all 150ms"
             }}>
-              <svg className="input-icon" viewBox="0 0 20 20" fill="none" style={{
+              {/* Emoji icon */}
+              <svg className="input-icon" viewBox="0 0 24 24" fill="none" style={{
                 width: "20px",
                 height: "20px",
                 color: "hsl(var(--fg-neutral-medium))",
-                cursor: "pointer"
+                cursor: "pointer",
+                flexShrink: 0
               }}>
-                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 4v12m-6-6h12"/>
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="8.5" cy="9.5" r="1" fill="currentColor"/>
+                <circle cx="15.5" cy="9.5" r="1" fill="currentColor"/>
+                <path d="M8 14c0 2.2 1.8 4 4 4s4-1.8 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               <input
                 ref={inputRef}
@@ -634,6 +640,17 @@ export function ComputerPage() {
                   fontFamily: "inherit"
                 }}
               />
+              {/* Plus icon */}
+              <svg className="input-icon" viewBox="0 0 20 20" fill="none" style={{
+                width: "20px",
+                height: "20px",
+                color: "hsl(var(--fg-neutral-medium))",
+                cursor: "pointer",
+                flexShrink: 0
+              }}>
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 4v12m-6-6h12"/>
+              </svg>
+              {/* Send button */}
               <button
                 className="send-btn"
                 onClick={handleSendMessage}
@@ -646,14 +663,15 @@ export function ComputerPage() {
                   height: "32px",
                   border: 0,
                   borderRadius: "50%",
-                  background: "transparent",
-                  color: "hsl(var(--fg-neutral-medium))",
+                  background: inputValue.trim() && !isComputerTyping ? "hsl(var(--fg-neutral-prominent))" : "transparent",
+                  color: inputValue.trim() && !isComputerTyping ? "hsl(var(--day))" : "hsl(var(--fg-neutral-medium))",
                   cursor: "pointer",
-                  transition: "all 150ms"
+                  transition: "all 150ms",
+                  flexShrink: 0
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path fill="currentColor" d="M2 2l16 8-16 8 4-8z"/>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ transform: "translateY(1px)" }}>
+                  <path d="M8 2v12m0-12l-4 4m4-4l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             </div>
