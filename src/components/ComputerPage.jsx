@@ -429,26 +429,65 @@ export function ComputerPage() {
           <div className="chat-header" style={{
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
             gap: "8px",
             padding: "12px 24px",
             background: "hsl(var(--bg-layer-01))",
             borderBottom: "1px solid hsl(var(--border-outline-01))",
             flexShrink: 0
           }}>
-            <div style={{
-              fontSize: "0.875rem",
-              lineHeight: "1.125rem",
-              letterSpacing: "-0.005em",
-              fontVariationSettings: '"wght" 540',
-              color: "hsl(var(--fg-neutral-medium))"
-            }}>{activeChat.messages.length}</div>
-            <div style={{
-              fontSize: "0.875rem",
-              lineHeight: "1.125rem",
-              letterSpacing: "-0.005em",
-              fontVariationSettings: '"wght" 540',
-              color: "hsl(var(--fg-neutral-prominent))"
-            }}>{activeChat.title || (activeChat.messages.length > 0 ? activeChat.messages[0].text.substring(0, 40) + "..." : "New Chat")}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{
+                fontSize: "0.875rem",
+                lineHeight: "1.125rem",
+                letterSpacing: "-0.005em",
+                fontVariationSettings: '"wght" 540',
+                color: "hsl(var(--fg-neutral-medium))"
+              }}>{activeChat.messages.length}</div>
+              <div style={{
+                fontSize: "0.875rem",
+                lineHeight: "1.125rem",
+                letterSpacing: "-0.005em",
+                fontVariationSettings: '"wght" 540',
+                color: "hsl(var(--fg-neutral-prominent))"
+              }}>{activeChat.title || (activeChat.messages.length > 0 ? activeChat.messages[0].text.substring(0, 40) + "..." : "New Chat")}</div>
+            </div>
+
+            {/* Canvas Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setCanvasOpen(!canvasOpen)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "32px",
+                height: "32px",
+                padding: 0,
+                border: canvasOpen ? "1px solid hsl(var(--border-outline-01))" : "1px solid transparent",
+                borderRadius: "6px",
+                background: canvasOpen ? "hsl(var(--bg-layer-02))" : "transparent",
+                color: "hsl(var(--fg-neutral-medium))",
+                cursor: "pointer",
+                transition: "all 150ms"
+              }}
+              onMouseEnter={(e) => {
+                if (!canvasOpen) {
+                  e.currentTarget.style.background = "hsl(var(--bg-layer-02))"
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!canvasOpen) {
+                  e.currentTarget.style.background = "transparent"
+                }
+              }}
+              aria-label="Toggle Canvas"
+              title="Canvas"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </button>
           </div>
 
           <div className="messages-area" style={{
