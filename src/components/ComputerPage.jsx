@@ -564,242 +564,253 @@ export function ComputerPage() {
         flex: 1,
         display: "flex",
         flexDirection: "column",
+        alignItems: "center",
         background: "hsl(var(--bg-layer-00))",
-        minWidth: 0
+        minWidth: 0,
+        overflowY: "auto"
       }}>
-        <div className="chat-header" style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "12px 24px",
-          background: "hsl(var(--bg-layer-01))",
-          borderBottom: "1px solid hsl(var(--border-outline-01))"
-        }}>
-          <svg className="chat-icon" viewBox="0 0 16 16" fill="none" style={{
-            width: "16px",
-            height: "16px",
-            color: "hsl(var(--fg-neutral-medium))"
-          }}>
-            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-          </svg>
-          <div className="chat-title" style={{
-            fontSize: "0.875rem",
-            lineHeight: "1.125rem",
-            letterSpacing: "-0.005em",
-            fontVariationSettings: '"wght" 540',
-            color: "hsl(var(--fg-neutral-prominent))"
-          }}>{activeChat.messages.length}</div>
-          <div className="chat-title" style={{
-            fontSize: "0.875rem",
-            lineHeight: "1.125rem",
-            letterSpacing: "-0.005em",
-            fontVariationSettings: '"wght" 540',
-            color: "hsl(var(--fg-neutral-prominent))"
-          }}>{activeChat.title || "Computer"}</div>
-        </div>
-
-        <div className="messages-area" style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "24px",
+        {/* Centered Content Container */}
+        <div style={{
+          width: "100%",
+          maxWidth: "800px",
           display: "flex",
           flexDirection: "column",
-          gap: "16px"
+          height: "100%"
         }}>
-          {activeChat.messages.map((msg, idx) => {
-            const isComputer = msg.senderId === "computer"
-            const showTimestamp = idx === 0 || (msg.timestamp - activeChat.messages[idx - 1].timestamp) > 300000
-
-            return (
-              <div key={msg.id}>
-                {showTimestamp && (
-                  <div className="message-timestamp" style={{
-                    textAlign: "center",
-                    fontSize: "0.75rem",
-                    lineHeight: "1rem",
-                    color: "hsl(var(--fg-neutral-medium))",
-                    margin: "8px 0"
-                  }}>
-                    {new Date(msg.timestamp).toLocaleDateString('en-US', {
-                      month: 'long',
-                      day: 'numeric',
-                      year: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
-                  </div>
-                )}
-                <div className="message-group" style={{ display: "flex", gap: "16px" }}>
-                  <div className="message-avatar" style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "50%",
-                    background: isComputer ? "hsl(var(--husk-600))" : "#F57C00",
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center"
-                  }}>
-                    {isComputer ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ width: "18px", height: "18px" }}>
-                        <path fill="hsl(var(--day))" d="M8.403 14H5.919l-.495-9.297h3.194L8.405 14zm5.978-9.297h3.195L17.08 14h-2.483l-.214-9.297z"></path>
-                      </svg>
-                    ) : (
-                      <span style={{
-                        color: "white",
-                        fontSize: "13px",
-                        fontVariationSettings: '"wght" 540'
-                      }}>Y</span>
-                    )}
-                  </div>
-                  <div className="message-content" style={{ flex: 1, minWidth: 0 }}>
-                    <div className="message-header" style={{
-                      display: "flex",
-                      alignItems: "baseline",
-                      gap: "8px",
-                      marginBottom: "4px"
-                    }}>
-                      <span className="message-sender" style={{
-                        fontSize: "0.875rem",
-                        lineHeight: "1.125rem",
-                        fontVariationSettings: '"wght" 540',
-                        color: "hsl(var(--fg-neutral-prominent))"
-                      }}>{isComputer ? "Computer" : "You"}</span>
-                    </div>
-                    <div className="message-bubble" style={{
-                      background: "hsl(var(--bg-layer-01))",
-                      borderRadius: "12px",
-                      padding: "12px 16px",
-                      maxWidth: "90%"
-                    }}>
-                      <div className="message-text" style={{
-                        fontSize: "1rem",
-                        lineHeight: "1.5rem",
-                        color: "hsl(var(--fg-neutral-prominent))"
-                      }}>{msg.text}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-
-          {isComputerTyping && (
-            <div className="message-group" style={{ display: "flex", gap: "16px" }}>
-              <div className="message-avatar" style={{
-                width: "32px",
-                height: "32px",
-                borderRadius: "50%",
-                background: "hsl(var(--husk-600))",
-                flexShrink: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center"
-              }}>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ width: "18px", height: "18px" }}>
-                  <path fill="hsl(var(--day))" d="M8.403 14H5.919l-.495-9.297h3.194L8.405 14zm5.978-9.297h3.195L17.08 14h-2.483l-.214-9.297z"></path>
-                </svg>
-              </div>
-              <div className="message-content" style={{ flex: 1, minWidth: 0 }}>
-                <div className="message-header" style={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: "8px",
-                  marginBottom: "4px"
-                }}>
-                  <span className="message-sender" style={{
-                    fontSize: "0.875rem",
-                    lineHeight: "1.125rem",
-                    fontVariationSettings: '"wght" 540',
-                    color: "hsl(var(--fg-neutral-prominent))"
-                  }}>Computer</span>
-                </div>
-                <div className="message-bubble" style={{
-                  background: "hsl(var(--bg-layer-01))",
-                  borderRadius: "12px",
-                  padding: "12px 16px",
-                  maxWidth: "90%"
-                }}>
-                  <div className="message-text" style={{
-                    fontSize: "1rem",
-                    lineHeight: "1.5rem",
-                    color: "hsl(var(--fg-neutral-medium))"
-                  }}>
-                    <span className="typing-indicator">●●●</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <div className="input-area" style={{
-          padding: "16px 24px",
-          background: "hsl(var(--bg-layer-01))",
-          borderTop: "1px solid hsl(var(--border-outline-01))"
-        }}>
-          <div className="input-wrapper" style={{
+          <div className="chat-header" style={{
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            padding: "12px 16px",
+            padding: "12px 24px",
             background: "hsl(var(--bg-layer-01))",
-            border: "1px solid hsl(var(--border-outline-01))",
-            borderRadius: "24px",
-            transition: "all 150ms"
+            borderBottom: "1px solid hsl(var(--border-outline-01))"
           }}>
-            <svg className="input-icon" viewBox="0 0 20 20" fill="none" style={{
-              width: "20px",
-              height: "20px",
-              color: "hsl(var(--fg-neutral-medium))",
-              cursor: "pointer"
+            <svg className="chat-icon" viewBox="0 0 16 16" fill="none" style={{
+              width: "16px",
+              height: "16px",
+              color: "hsl(var(--fg-neutral-medium))"
             }}>
-              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 4v12m-6-6h12"/>
+              <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
             </svg>
-            <input
-              ref={inputRef}
-              type="text"
-              className="message-input"
-              placeholder="Send a message"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isComputerTyping}
-              style={{
-                flex: 1,
-                border: 0,
-                outline: "none",
-                background: "transparent",
-                fontSize: "1rem",
-                lineHeight: "1.5rem",
-                color: "hsl(var(--fg-neutral-prominent))",
-                fontFamily: "inherit"
-              }}
-            />
-            <button
-              className="send-btn"
-              onClick={handleSendMessage}
-              disabled={!inputValue.trim() || isComputerTyping}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "32px",
-                height: "32px",
-                border: 0,
-                borderRadius: "50%",
-                background: "transparent",
+            <div className="chat-title" style={{
+              fontSize: "0.875rem",
+              lineHeight: "1.125rem",
+              letterSpacing: "-0.005em",
+              fontVariationSettings: '"wght" 540',
+              color: "hsl(var(--fg-neutral-prominent))"
+            }}>{activeChat.messages.length}</div>
+            <div className="chat-title" style={{
+              fontSize: "0.875rem",
+              lineHeight: "1.125rem",
+              letterSpacing: "-0.005em",
+              fontVariationSettings: '"wght" 540',
+              color: "hsl(var(--fg-neutral-prominent))"
+            }}>{activeChat.title || "Computer"}</div>
+          </div>
+
+          <div className="messages-area" style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px"
+          }}>
+            {activeChat.messages.map((msg, idx) => {
+              const isComputer = msg.senderId === "computer"
+              const showTimestamp = idx === 0 || (msg.timestamp - activeChat.messages[idx - 1].timestamp) > 300000
+
+              return (
+                <div key={msg.id}>
+                  {showTimestamp && (
+                    <div className="message-timestamp" style={{
+                      textAlign: "center",
+                      fontSize: "0.75rem",
+                      lineHeight: "1rem",
+                      color: "hsl(var(--fg-neutral-medium))",
+                      margin: "8px 0"
+                    }}>
+                      {new Date(msg.timestamp).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                      })}
+                    </div>
+                  )}
+                  <div className="message-group" style={{ display: "flex", gap: "16px" }}>
+                    <div className="message-avatar" style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      background: isComputer ? "hsl(var(--husk-600))" : "#F57C00",
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}>
+                      {isComputer ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ width: "18px", height: "18px" }}>
+                          <path fill="hsl(var(--day))" d="M8.403 14H5.919l-.495-9.297h3.194L8.405 14zm5.978-9.297h3.195L17.08 14h-2.483l-.214-9.297z"></path>
+                        </svg>
+                      ) : (
+                        <span style={{
+                          color: "white",
+                          fontSize: "13px",
+                          fontVariationSettings: '"wght" 540'
+                        }}>Y</span>
+                      )}
+                    </div>
+                    <div className="message-content" style={{ flex: 1, minWidth: 0 }}>
+                      <div className="message-header" style={{
+                        display: "flex",
+                        alignItems: "baseline",
+                        gap: "8px",
+                        marginBottom: "4px"
+                      }}>
+                        <span className="message-sender" style={{
+                          fontSize: "0.875rem",
+                          lineHeight: "1.125rem",
+                          fontVariationSettings: '"wght" 540',
+                          color: "hsl(var(--fg-neutral-prominent))"
+                        }}>{isComputer ? "Computer" : "You"}</span>
+                      </div>
+                      <div className="message-bubble" style={{
+                        background: "hsl(var(--bg-layer-01))",
+                        borderRadius: "12px",
+                        padding: "12px 16px",
+                        maxWidth: "90%"
+                      }}>
+                        <div className="message-text" style={{
+                          fontSize: "1rem",
+                          lineHeight: "1.5rem",
+                          color: "hsl(var(--fg-neutral-prominent))"
+                        }}>{msg.text}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+
+            {isComputerTyping && (
+              <div className="message-group" style={{ display: "flex", gap: "16px" }}>
+                <div className="message-avatar" style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  background: "hsl(var(--husk-600))",
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ width: "18px", height: "18px" }}>
+                    <path fill="hsl(var(--day))" d="M8.403 14H5.919l-.495-9.297h3.194L8.405 14zm5.978-9.297h3.195L17.08 14h-2.483l-.214-9.297z"></path>
+                  </svg>
+                </div>
+                <div className="message-content" style={{ flex: 1, minWidth: 0 }}>
+                  <div className="message-header" style={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: "8px",
+                    marginBottom: "4px"
+                  }}>
+                    <span className="message-sender" style={{
+                      fontSize: "0.875rem",
+                      lineHeight: "1.125rem",
+                      fontVariationSettings: '"wght" 540',
+                      color: "hsl(var(--fg-neutral-prominent))"
+                    }}>Computer</span>
+                  </div>
+                  <div className="message-bubble" style={{
+                    background: "hsl(var(--bg-layer-01))",
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    maxWidth: "90%"
+                  }}>
+                    <div className="message-text" style={{
+                      fontSize: "1rem",
+                      lineHeight: "1.5rem",
+                      color: "hsl(var(--fg-neutral-medium))"
+                    }}>
+                      <span className="typing-indicator">●●●</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="input-area" style={{
+            padding: "16px 24px",
+            background: "hsl(var(--bg-layer-01))",
+            borderTop: "1px solid hsl(var(--border-outline-01))"
+          }}>
+            <div className="input-wrapper" style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "12px 16px",
+              background: "hsl(var(--bg-layer-01))",
+              border: "1px solid hsl(var(--border-outline-01))",
+              borderRadius: "24px",
+              transition: "all 150ms"
+            }}>
+              <svg className="input-icon" viewBox="0 0 20 20" fill="none" style={{
+                width: "20px",
+                height: "20px",
                 color: "hsl(var(--fg-neutral-medium))",
-                cursor: "pointer",
-                transition: "all 150ms"
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path fill="currentColor" d="M2 2l16 8-16 8 4-8z"/>
+                cursor: "pointer"
+              }}>
+                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 4v12m-6-6h12"/>
               </svg>
-            </button>
+              <input
+                ref={inputRef}
+                type="text"
+                className="message-input"
+                placeholder="Send a message"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isComputerTyping}
+                style={{
+                  flex: 1,
+                  border: 0,
+                  outline: "none",
+                  background: "transparent",
+                  fontSize: "1rem",
+                  lineHeight: "1.5rem",
+                  color: "hsl(var(--fg-neutral-prominent))",
+                  fontFamily: "inherit"
+                }}
+              />
+              <button
+                className="send-btn"
+                onClick={handleSendMessage}
+                disabled={!inputValue.trim() || isComputerTyping}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "32px",
+                  height: "32px",
+                  border: 0,
+                  borderRadius: "50%",
+                  background: "transparent",
+                  color: "hsl(var(--fg-neutral-medium))",
+                  cursor: "pointer",
+                  transition: "all 150ms"
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path fill="currentColor" d="M2 2l16 8-16 8 4-8z"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
