@@ -8,7 +8,7 @@ export function Canvas({ onClose, onMinimize, sharedFiles: externalFiles }) {
   const [steps] = useState([
     {
       id: "step-1",
-      title: "Generate Sprint 19 HTML changelog with correct Teams board data",
+      title: "Create design system architecture and token structure",
       completed: true,
     },
   ])

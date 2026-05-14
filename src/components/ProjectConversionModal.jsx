@@ -68,7 +68,7 @@ export function ProjectConversionModal({ isOpen, onClose, onConfirm, chatData })
             type="button"
             onClick={onClose}
             disabled={isConverting}
-            className="h-[32px] rounded-[6px] px-[16px] text-[13px] font-[500] text-[hsl(var(--fg-neutral-prominent))] transition-colors hover:bg-[hsl(var(--bg-layer-02))] disabled:opacity-50"
+            className="h-[32px] rounded-[6px] bg-[#E5E5E5] px-[16px] text-[13px] font-[500] text-[#2D2D2D] transition-all hover:bg-[#D4D4D4] disabled:opacity-50"
           >
             Cancel
           </button>
@@ -76,7 +76,7 @@ export function ProjectConversionModal({ isOpen, onClose, onConfirm, chatData })
             type="button"
             onClick={handleConfirm}
             disabled={isConverting}
-            className="h-[32px] rounded-[6px] bg-[hsl(var(--banginapalli-400))] px-[16px] text-[13px] font-[500] text-[hsl(var(--husk-900))] transition-colors hover:bg-[hsl(48_100%_46%)] disabled:opacity-50"
+            className="h-[32px] rounded-[6px] bg-[#2D2D2D] px-[16px] text-[13px] font-[500] text-white transition-all hover:bg-[#1F1F1F] disabled:opacity-50"
           >
             {isConverting ? "Creating..." : "Create Project"}
           </button>

@@ -549,8 +549,8 @@ export function ComputerPage() {
                     padding: "0 12px",
                     border: 0,
                     borderRadius: "6px",
-                    background: "hsl(var(--banginapalli-400))",
-                    color: "hsl(var(--husk-900))",
+                    background: "#2D2D2D",
+                    color: "#FFFFFF",
                     fontSize: "13px",
                     fontWeight: 500,
                     cursor: "pointer",
@@ -559,10 +559,10 @@ export function ComputerPage() {
                     outlineOffset: "-1px"
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "hsl(48 100% 46%)"
+                    e.currentTarget.style.background = "#1F1F1F"
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "hsl(var(--banginapalli-400))"
+                    e.currentTarget.style.background = "#2D2D2D"
                   }}
                   title="Convert this chat to a project"
                 >

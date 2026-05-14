@@ -292,7 +292,7 @@ export function IssuesProvider({ children }) {
   }, [projects])
 
   function normalizeProjectsClient(projectList) {
-    const normalized = projectList.slice(0, 3).map((projectRow) => ({
+    const normalized = projectList.map((projectRow) => ({
       ...projectRow,
       ...normalizeProjectDisplayFields(projectRow),
       healthId: sanitizeProjectHealthId(projectRow.healthId),
