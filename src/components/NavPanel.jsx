@@ -354,11 +354,20 @@ export function NavPanel({
             const isProjectOpen = projectStates[project.id] ?? false
             const isThisProjectChatActive = chatVariant === `project-${project.id}`
             const showChatOpen = chatPanelOpen && isThisProjectChatActive
+
+            // Custom avatar per project
+            const getProjectAvatar = () => {
+              if (project.id === "Project-0001") {
+                return <TeamAvatar color="purple" label="K" />
+              }
+              return <TeamAvatar color="orange" label={project.title?.[0] || "P"} />
+            }
+
             return (
               <CollapsibleTeam
                 key={project.id}
                 name={project.title || project.id}
-                avatar={<TeamAvatar color="orange" label={project.title?.[0] || "P"} />}
+                avatar={getProjectAvatar()}
                 isOpen={isProjectOpen}
                 onToggle={() => setProjectStates(prev => ({ ...prev, [project.id]: !isProjectOpen }))}
               >

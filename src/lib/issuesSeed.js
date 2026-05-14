@@ -366,7 +366,7 @@ export function createInitialProjects() {
     },
     {
       id: "Project-0004",
-      title: "Arcade Design System",
+      title: "Arcade Design",
       description: "Building a comprehensive, accessible design system to unify DevRev's product experience. Includes semantic tokens, reusable components, documentation, and migration tooling for product teams.",
       team: "Design",
       ownerId: "sophia-walker",
