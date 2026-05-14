@@ -578,5 +578,6 @@ export function useChats() {
     loading: ctx.chats === null,
     patchChat: ctx.patchChat,
     setChats: ctx.setChats,
+    convertChatToProject: ctx.convertChatToProject,
   }
 }
