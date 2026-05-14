@@ -4,7 +4,7 @@ import { useState } from "react"
  * Canvas - Right pane for AI Computer mode showing steps, generated files, and workspace files.
  * Matches design from screenshot with Arcade design system.
  */
-export function Canvas({ onClose, onMinimize }) {
+export function Canvas({ onClose, onMinimize, sharedFiles: externalFiles }) {
   const [steps] = useState([
     {
       id: "step-1",
@@ -13,11 +13,18 @@ export function Canvas({ onClose, onMinimize }) {
     },
   ])
 
-  const [sharedFiles] = useState([
-    { id: "1", name: "SKILL.md", icon: "📄" },
-    { id: "2", name: "sprint-changelog-sprint-17.html", icon: "🌐" },
-    { id: "3", name: "sprint-changelog-sprint-19.html", icon: "🌐" },
-  ])
+  // Use externally provided files or default mock data
+  const sharedFiles = externalFiles && externalFiles.length > 0
+    ? externalFiles.map(f => ({
+        id: f.id,
+        name: f.name,
+        icon: f.icon || (f.name.endsWith('.html') ? '🌐' : f.name.endsWith('.md') ? '📄' : f.name.endsWith('.png') || f.name.endsWith('.jpg') ? '🖼️' : '📄')
+      }))
+    : [
+        { id: "1", name: "SKILL.md", icon: "📄" },
+        { id: "2", name: "sprint-changelog-sprint-17.html", icon: "🌐" },
+        { id: "3", name: "sprint-changelog-sprint-19.html", icon: "🌐" },
+      ]
 
   return (
     <aside className="flex h-full w-[360px] shrink-0 flex-col border-l border-[hsl(var(--border-outline-01))] bg-white">

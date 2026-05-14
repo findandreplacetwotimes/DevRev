@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useChats } from "../context/IssuesContext"
 import { callAI } from "../lib/aiClient"
+import { isChatReadyForProject } from "../lib/chatHelpers"
 import { Canvas } from "./Canvas"
+import { ProjectConversionModal } from "./ProjectConversionModal"
+import { AVAILABLE_USERS } from "./InvitePanel"
 
 export function ComputerPage() {
-  const { chats, patchChat, setChats } = useChats()
+  const { chats, patchChat, setChats, convertChatToProject } = useChats()
   const [activeChat, setActiveChat] = useState(null)
   const [inputValue, setInputValue] = useState("")
   const [isComputerTyping, setIsComputerTyping] = useState(false)
-  const [canvasOpen, setCanvasOpen] = useState(true)
+  const [canvasOpen, setCanvasOpen] = useState(false) // Closed by default
+  const [showConversionModal, setShowConversionModal] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const hasGreetedRef = useRef(false)
+  const navigate = useNavigate()
 
   // Find or create a Computer-only chat for this experience
   useEffect(() => {
@@ -167,8 +173,22 @@ export function ComputerPage() {
     }
   }
 
+  const handleConvertToProject = async (chatData) => {
+    const newProjectId = convertChatToProject(chatData.id)
+    if (newProjectId) {
+      setShowConversionModal(false)
+      // Navigate to the new project after a short delay
+      setTimeout(() => {
+        navigate(`/projects/${newProjectId}`)
+      }, 300)
+    }
+  }
+
   // Get all computer chats
   const computerChats = chats?.filter(c => c.participants.includes("computer")) || []
+
+  // Check if current chat is ready for conversion
+  const canConvert = isChatReadyForProject(activeChat)
 
   return (
     <div style={{ display: "flex", width: "100%", height: "100vh", overflow: "hidden" }}>
@@ -453,8 +473,46 @@ export function ComputerPage() {
               }}>{activeChat.title || (activeChat.messages.length > 0 ? activeChat.messages[0].text.substring(0, 40) + "..." : "New Chat")}</div>
             </div>
 
-            {/* Canvas Toggle Button */}
-            <button
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* Convert to Project Button */}
+              {canConvert && (
+                <button
+                  type="button"
+                  onClick={() => setShowConversionModal(true)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    height: "32px",
+                    padding: "0 12px",
+                    border: 0,
+                    borderRadius: "6px",
+                    background: "hsl(var(--shuiguo-500))",
+                    color: "white",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "all 150ms",
+                    outline: "solid 1px transparent",
+                    outlineOffset: "-1px"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "hsl(var(--shuiguo-600))"
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "hsl(var(--shuiguo-500))"
+                  }}
+                  title="Convert this chat to a project"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  Convert to Project
+                </button>
+              )}
+
+              {/* Canvas Toggle Button */}
+              <button
               type="button"
               onClick={() => setCanvasOpen(!canvasOpen)}
               style={{
@@ -491,8 +549,9 @@ export function ComputerPage() {
               </svg>
             </button>
           </div>
+        </div>
 
-          <div className="messages-area" style={{
+        <div className="messages-area" style={{
             flex: 1,
             overflowY: "auto",
             padding: "24px",
@@ -510,6 +569,11 @@ export function ComputerPage() {
             }}>
             {activeChat.messages.map((msg, idx) => {
               const isComputer = msg.senderId === "computer"
+              const isUser = msg.senderId === "user"
+              const sender = AVAILABLE_USERS.find(u => u.id === msg.senderId)
+              const senderName = sender?.name || (isComputer ? "Computer" : isUser ? "You" : "Unknown")
+              const senderInitial = sender ? sender.name[0].toUpperCase() : (isUser ? "Y" : "?")
+
               const showTimestamp = idx === 0 || (msg.timestamp - activeChat.messages[idx - 1].timestamp) > 300000
 
               return (
@@ -552,7 +616,7 @@ export function ComputerPage() {
                           color: "white",
                           fontSize: "13px",
                           fontVariationSettings: '"wght" 540'
-                        }}>Y</span>
+                        }}>{senderInitial}</span>
                       )}
                     </div>
                     <div className="message-content" style={{ flex: 1, minWidth: 0 }}>
@@ -567,7 +631,7 @@ export function ComputerPage() {
                           lineHeight: "1.125rem",
                           fontVariationSettings: '"wght" 540',
                           color: "hsl(var(--fg-neutral-prominent))"
-                        }}>{isComputer ? "Computer" : "You"}</span>
+                        }}>{senderName}</span>
                       </div>
                       <div className="message-bubble" style={{
                         background: "hsl(var(--bg-layer-01))",
@@ -743,9 +807,18 @@ export function ComputerPage() {
           <Canvas
             onClose={() => setCanvasOpen(false)}
             onMinimize={() => setCanvasOpen(false)}
+            sharedFiles={activeChat.files || []}
           />
         )}
       </div>
+
+      {/* Project Conversion Modal */}
+      <ProjectConversionModal
+        isOpen={showConversionModal}
+        onClose={() => setShowConversionModal(false)}
+        onConfirm={handleConvertToProject}
+        chatData={activeChat}
+      />
     </div>
   )
 }

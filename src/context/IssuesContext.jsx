@@ -17,6 +17,7 @@ import {
   mergeSeedIssueProjectLinks,
   mergeSeedMilestonesIntoProjects,
 } from "../lib/issuesSeed"
+import { createEarlyIdeationChat, createArcadeOriginChat } from "../lib/demoConversionSeed"
 import { ISSUES_API_PATH } from "../lib/issuesApi"
 
 const IssuesContext = createContext(null)
@@ -224,52 +225,14 @@ function writeSprintsToLocalStorage(sprints) {
 }
 
 function createInitialChats() {
-  const now = Date.now()
   return [
-    {
-      id: "chat-1",
-      participants: ["computer", "user"],
-      messages: [
-        {
-          id: "msg-1",
-          senderId: "computer",
-          text: "Hi! I'm Computer. How can I help you today?",
-          timestamp: now - 86400000 * 2,
-        },
-      ],
-      files: [],
-      createdAt: now - 86400000 * 2,
-      lastActivity: now - 86400000 * 2,
-      projectId: null,
-      title: "Computer",
-    },
-    {
-      id: "chat-2",
-      participants: ["prithvi", "polina", "user"],
-      messages: [
-        {
-          id: "msg-2",
-          senderId: "prithvi",
-          text: "Let's discuss the design system updates",
-          timestamp: now - 3600000,
-        },
-      ],
-      files: [],
-      createdAt: now - 86400000,
-      lastActivity: now - 3600000,
-      projectId: null,
-      title: "Prithvi, Polina",
-    },
-    {
-      id: "chat-3",
-      participants: ["computer", "prithvi", "tim", "user"],
-      messages: [],
-      files: [],
-      createdAt: now - 86400000 * 3,
-      lastActivity: now - 86400000 * 3,
-      projectId: null,
-      title: "Design System Discussion",
-    },
+    // Demo: Early ideation - just Dejan + Computer creating files
+    // Shows file creation but NO convert button (only 2 participants)
+    createEarlyIdeationChat(),
+
+    // Demo: Collaborative chat - team has joined, ready to convert
+    // Shows convert button (4 participants, files, conversation)
+    createArcadeOriginChat(),
   ]
 }
 
@@ -543,6 +506,47 @@ export function IssuesProvider({ children }) {
     })
   }, [])
 
+  /** @type {(chatId: string) => string | null} */
+  const convertChatToProject = useCallback((chatId) => {
+    const chat = chats?.find(c => c.id === chatId)
+    if (!chat) return null
+
+    // Generate next project ID
+    const existingIds = projects?.map(p => {
+      const match = /^Project-(\d+)$/.exec(p.id)
+      return match ? Number.parseInt(match[1], 10) : 0
+    }) || []
+    const maxId = existingIds.length > 0 ? Math.max(...existingIds) : 0
+    const newProjectId = `Project-${String(maxId + 1).padStart(4, "0")}`
+
+    // Create project from chat
+    const newProject = {
+      id: newProjectId,
+      title: chat.title || "Project from Chat",
+      description: `Project created from chat conversation on ${new Date().toLocaleDateString()}`,
+      team: "Core",
+      ownerId: null,
+      dueDateId: null,
+      sprint: "",
+      stage: "in-progress",
+      healthId: "on-track",
+      milestones: [],
+      isMember: true, // Show in YOUR PROJECTS nav
+      history: [], // Start with empty history
+    }
+
+    // Update chat with projectId link
+    patchChat(chatId, { projectId: newProjectId })
+
+    // Add project to projects array
+    setProjects((prev) => {
+      if (!prev) return [newProject]
+      return [...prev, newProject]
+    })
+
+    return newProjectId
+  }, [chats, projects, patchChat])
+
   const value = useMemo(
     () => ({
       issues,
@@ -554,12 +558,13 @@ export function IssuesProvider({ children }) {
       patchProject,
       patchSprint,
       patchChat,
+      convertChatToProject,
       setIssues,
       setProjects,
       setSprints,
       setChats,
     }),
-    [issues, projects, sprints, chats, patchIssue, patchProject, patchSprint, patchChat]
+    [issues, projects, sprints, chats, patchIssue, patchProject, patchSprint, patchChat, convertChatToProject]
   )
 
   return <IssuesContext.Provider value={value}>{children}</IssuesContext.Provider>
