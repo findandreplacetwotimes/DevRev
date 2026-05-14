@@ -4,23 +4,8 @@
 @import "./styles/typography-spacing.css";
 @import "./styles/arcade-components.css";
 
-/* Computer page sidebar responsive layouts */
-@container (max-width: 200px) {
-  .sidebar-header {
-    flex-direction: column;
-    gap: 8px;
-  }
-  .new-chat-btn {
-    width: 100%;
-  }
-  .sidebar-header-row-2 {
-    display: flex;
-    gap: 8px;
-    width: 100%;
-  }
-}
-
-@container (min-width: 201px) and (max-width: 280px) {
+/* Computer page sidebar responsive button */
+@container (max-width: 280px) {
   .new-chat-btn .new-chat-text {
     display: none;
   }
@@ -69,8 +54,7 @@
 }
 
 .input-wrapper:focus-within {
-  border-color: hsl(var(--shuiguo-400));
-  box-shadow: var(--shadow-interactive-focused);
+  border-color: hsl(var(--border-outline-01));
 }
 
 @font-face {
