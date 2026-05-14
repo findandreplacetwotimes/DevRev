@@ -421,20 +421,9 @@ export function ComputerPage() {
         flex: 1,
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
         background: "hsl(var(--bg-layer-00))",
-        minWidth: 0,
-        overflow: "hidden"
+        minWidth: 0
       }}>
-        {/* Centered Content Container */}
-        <div style={{
-          width: "100%",
-          maxWidth: "800px",
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          overflow: "hidden"
-        }}>
           <div className="chat-header" style={{
             display: "flex",
             alignItems: "center",
@@ -465,8 +454,16 @@ export function ComputerPage() {
             padding: "24px",
             display: "flex",
             flexDirection: "column",
+            alignItems: "center",
             gap: "16px"
           }}>
+            <div style={{
+              width: "100%",
+              maxWidth: "800px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px"
+            }}>
             {activeChat.messages.map((msg, idx) => {
               const isComputer = msg.senderId === "computer"
               const showTimestamp = idx === 0 || (msg.timestamp - activeChat.messages[idx - 1].timestamp) > 300000
@@ -594,13 +591,20 @@ export function ComputerPage() {
               </div>
             )}
             <div ref={messagesEndRef} />
+            </div>
           </div>
 
           <div className="input-area" style={{
             padding: "16px 24px 16px 24px",
             background: "hsl(var(--bg-layer-01))",
-            borderTop: "1px solid hsl(var(--border-outline-01))"
+            borderTop: "1px solid hsl(var(--border-outline-01))",
+            display: "flex",
+            justifyContent: "center"
           }}>
+            <div style={{
+              width: "100%",
+              maxWidth: "800px"
+            }}>
             <div className="input-wrapper" style={{
               display: "flex",
               alignItems: "center",
@@ -678,8 +682,8 @@ export function ComputerPage() {
                 </svg>
               </button>
             </div>
+            </div>
           </div>
-        </div>
       </div>
     </div>
   )
