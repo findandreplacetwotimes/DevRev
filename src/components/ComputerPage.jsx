@@ -470,7 +470,7 @@ export function ComputerPage() {
                 color: "hsl(var(--fg-neutral-prominent))",
                 cursor: "pointer",
                 transition: "all 150ms",
-                outline: canvasOpen ? "solid 1px hsl(var(--border-outline-01))" : "solid 1px transparent",
+                outline: "solid 1px transparent",
                 outlineOffset: "-1px"
               }}
               onMouseEnter={(e) => {
