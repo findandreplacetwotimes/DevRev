@@ -166,7 +166,7 @@ export function NavPanel({
   const [myWorkOpen, setMyWorkOpen] = useState(false)
   const [workspaceOpen, setWorkspaceOpen] = useState(true)
   const [favouritesOpen, setFavouritesOpen] = useState(false)
-  const [buildTeamOpen, setBuildTeamOpen] = useState(true)
+  const [buildTeamOpen, setBuildTeamOpen] = useState(false)
   const [foundationsTeamOpen, setFoundationsTeamOpen] = useState(false)
   const [growthTeamOpen, setGrowthTeamOpen] = useState(false)
   const [supportTeamOpen, setSupportTeamOpen] = useState(false)

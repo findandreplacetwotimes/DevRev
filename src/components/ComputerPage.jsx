@@ -176,11 +176,15 @@ export function ComputerPage() {
   const handleConvertToProject = async (chatData) => {
     const newProjectId = convertChatToProject(chatData.id)
     if (newProjectId) {
+      // Close modal first
       setShowConversionModal(false)
-      // Navigate to the new project after a short delay
+      // Navigate after modal close animation
       setTimeout(() => {
+        console.log('Navigating to:', `/projects/${newProjectId}`)
         navigate(`/projects/${newProjectId}`)
       }, 300)
+    } else {
+      console.error('Failed to convert chat to project')
     }
   }
 
