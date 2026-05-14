@@ -430,7 +430,8 @@ export function ComputerPage() {
             gap: "8px",
             padding: "12px 24px",
             background: "hsl(var(--bg-layer-01))",
-            borderBottom: "1px solid hsl(var(--border-outline-01))"
+            borderBottom: "1px solid hsl(var(--border-outline-01))",
+            flexShrink: 0
           }}>
             <div style={{
               fontSize: "0.875rem",
