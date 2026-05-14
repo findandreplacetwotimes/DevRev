@@ -7,17 +7,23 @@ React + Tailwind project management app with AI-powered chat capabilities. Build
 ## Current Work
 
 ### Active Branch: feat/project-chat-interactions 🚧 IN PROGRESS
-**Status**: Floating chat windows + invite flow complete, ready for project conversion feature
+**Status**: Computer page rebuilt with pixel-accurate design system match
 
-Implementing idea → collaboration → project journey:
+Recent updates:
+- **Computer Page Rebuild** ✅ - Full redesign matching `~/dev/open-design/.od/projects/4d4d97fc-5f48-4b50-b49b-9c305f27edaa` reference
+  - Sidebar: 240px width, DevRev design system tokens (husk neutrals, fg/bg semantic colors)
+  - Message bubbles: hsl(var(--bg-layer-01)) background, 12px border-radius, 12px/16px padding
+  - Computer avatar: husk-600 background with white two-bar icon (matches extracted SVG)
+  - Chat header: 14px text-system-medium, 16px icon, proper spacing
+  - Input area: 24px border-radius, focus ring on shuiguo-400, send button purple when active
+  - Typography: text-body (16px) for messages, text-system (14px) for UI elements
 - **Floating Chat Windows** ✅ - Messenger-style windows with drag, minimize, messaging
 - **Invite Flow** ✅ - Add collaborators to chats with InvitePanel
 - **Arcade Design** ✅ - All components use design system tokens
-- **Convert to Project** ⏳ - Next: modal to convert chat → project
 
-**Files modified**: FloatingChatWindow.jsx, MinimizedChatTabs.jsx, InvitePanel.jsx, AppWorkspaceLayout.jsx, NavPanel.jsx, IssuesContext.jsx, aiClient.js, index.css
+**Files modified**: ComputerPage.jsx (major rebuild), FloatingChatWindow.jsx, MinimizedChatTabs.jsx, InvitePanel.jsx, AppWorkspaceLayout.jsx, NavPanel.jsx, IssuesContext.jsx, aiClient.js, index.css
 
-**Next**: Convert to Project button + modal
+**Next**: Test Computer page in browser, verify design system tokens render correctly
 
 ---
 
@@ -181,6 +187,7 @@ Implementing idea → collaboration → project journey:
 - React Router
 - AI: OpenRouter (free models) - currently using `qwen/qwen3-32b`
 - Storybook for component development
+- **Design System**: DevRev Arcade (see `.claude/design-guidance.md`)
 
 ## Code Conventions
 
@@ -189,6 +196,36 @@ Implementing idea → collaboration → project journey:
 - Add Storybook stories for new UI components
 - Use Tailwind utility classes for styling
 - No TypeScript (pure JS/JSX)
+
+## Design System Usage (CRITICAL)
+
+**When creating new pages or components, you MUST:**
+
+1. **Use Arcade design tokens** - Never hardcode colors
+   - Colors: `hsl(var(--bg-layer-01))`, `hsl(var(--text-color-primary))`, etc.
+   - Spacing: `var(--spacing-global-xs)`, `var(--spacing-global-base)`, etc.
+   - See `src/styles/arcade-tokens.css` for all available tokens
+
+2. **Match existing component patterns** - Look at these for reference:
+   - `FloatingChatWindow.jsx` - Card-style UI, messaging patterns
+   - `MessageBubble.jsx` - Avatar and color usage
+   - `InvitePanel.jsx` - Search and list patterns
+   - `ProjectPage.jsx` - Layout structure
+
+3. **Use correct typography classes**:
+   - Headings: `.text-title-1`, `.text-title-2`, `.text-title-3`
+   - Body: `.text-body`, `.text-body-small`
+   - UI text: `.text-system`, `.text-system-small`
+   - Weights: `.font-normal` (440), `.font-medium` (540), `.font-bold` (660)
+
+4. **Follow Arcade visual style**:
+   - Buttons: Pill-shaped (`rounded-full`)
+   - Cards: Varied radius (10px/12px/16px based on density)
+   - Colors: Fruit-named palette (Jabuticaba purple for AI, Banginapalli yellow for actions, etc.)
+   - Layout: Information-dense, sidebar + main pattern
+
+**Full design spec**: `/Users/prithvi/dev/arcade-prototyper/DESIGN.md`
+**Design guidance**: `.claude/design-guidance.md`
 
 ## Environment
 

@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { useChats } from "../context/IssuesContext"
 import { callAI } from "../lib/aiClient"
-import { InvitePanel } from "./InvitePanel"
 
 export function ComputerPage() {
   const { chats, patchChat, setChats } = useChats()
   const [activeChat, setActiveChat] = useState(null)
   const [inputValue, setInputValue] = useState("")
   const [isComputerTyping, setIsComputerTyping] = useState(false)
-  const [rightPanel, setRightPanel] = useState("canvas") // "canvas" | "invite"
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const hasGreetedRef = useRef(false)
@@ -137,11 +135,6 @@ export function ComputerPage() {
     }
   }
 
-  const handleConvertToProject = () => {
-    // TODO: Implement convert to project
-    console.log("Convert to project clicked")
-  }
-
   if (!activeChat) {
     return (
       <div className="arcade-empty">
@@ -151,116 +144,146 @@ export function ComputerPage() {
     )
   }
 
-  return (
-    <div
-      className="flex h-screen w-full"
-      style={{
-        fontFamily: "var(--font-text)",
-        background: "hsl(var(--bg-layer-00))",
-      }}
-    >
-      {/* Minimal Left Sidebar */}
-      <ComputerSidebar activeChat={activeChat} />
+  const handleSwitchChat = (chatId) => {
+    const chat = chats.find(c => c.id === chatId)
+    if (chat) {
+      setActiveChat(chat)
+    }
+  }
 
-      {/* Middle Panel - Chat */}
-      <div
-        className="flex flex-col"
-        style={{
-          width: "500px",
-          height: "100%",
-          borderRight: "1px solid hsl(var(--border-outline-01))",
-          background: "hsl(var(--bg-layer-01))",
-        }}
-      >
+  const handleNewChat = () => {
+    const newChatId = `chat-computer-${Date.now()}`
+    const newChat = {
+      id: newChatId,
+      participants: ["computer", "user"],
+      messages: [],
+      files: [],
+      createdAt: Date.now(),
+      lastActivity: Date.now(),
+      projectId: null,
+      title: null,
+    }
+    setChats((prev) => {
+      if (!prev) return [newChat]
+      return [newChat, ...prev]
+    })
+    setActiveChat(newChat)
+  }
+
+  return (
+    <div style={{ display: "flex", width: "100%", height: "100vh", overflow: "hidden" }}>
+      {/* Left Sidebar */}
+      <ComputerSidebar
+        activeChat={activeChat}
+        onSwitchChat={handleSwitchChat}
+        onNewChat={handleNewChat}
+      />
+
+      {/* Main Chat Area */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", background: "hsl(var(--bg-layer-00))", minWidth: 0 }}>
         {/* Chat Header */}
-        <div
-          style={{
-            padding: "var(--spacing-global-base) var(--spacing-global-lg)",
-            borderBottom: "1px solid hsl(var(--border-outline-01))",
-            background: "hsl(var(--bg-layer-01))",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "var(--spacing-global-sm)" }}>
-            <ComputerLogo size={36} />
-            <div>
-              <div className="text-body-small-medium" style={{ color: "hsl(var(--text-color-primary))" }}>
-                Computer
-              </div>
-              <div className="text-caption" style={{ color: "hsl(var(--text-color-secondary))" }}>
-                AI assistant
-              </div>
-            </div>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "12px 24px",
+          background: "hsl(var(--bg-layer-01))",
+          borderBottom: "1px solid hsl(var(--border-outline-01))"
+        }}>
+          <svg style={{ width: "16px", height: "16px", color: "hsl(var(--fg-neutral-medium))" }} viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+          <div className="text-system-medium" style={{ color: "hsl(var(--fg-neutral-prominent))" }}>
+            {activeChat.messages.length || 0}
+          </div>
+          <div className="text-system-medium" style={{ color: "hsl(var(--fg-neutral-prominent))" }}>
+            {activeChat.title || "Computer"}
           </div>
         </div>
 
-        {/* Messages */}
-        <div
-          className="flex-1 overflow-y-auto"
-          style={{
-            padding: "var(--spacing-global-xl) var(--spacing-global-lg)",
-            background: "hsl(var(--bg-layer-00))",
-          }}
-        >
+        {/* Messages Area */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "24px", display: "flex", flexDirection: "column", gap: "16px" }}>
           {activeChat.messages.length === 0 ? (
-            <div className="arcade-empty">
-              <div className="arcade-empty__icon">💭</div>
-              <div className="arcade-empty__description">Start a conversation with Computer</div>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "16px" }}>
+              <ComputerLogo size={64} />
+              <div className="text-body" style={{ color: "hsl(var(--fg-neutral-medium))" }}>
+                Start a conversation with Computer
+              </div>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-global-lg)" }}>
+            <>
               {activeChat.messages.map((msg, idx) => {
                 const isUser = msg.senderId === "user"
                 const isComputer = msg.senderId === "computer"
                 const senderName = isUser ? "You" : isComputer ? "Computer" : msg.senderId
-                const showTimestamp = idx === 0 || (activeChat.messages[idx - 1].timestamp - msg.timestamp) > 300000
+                const showTimestamp = idx === 0 || (msg.timestamp - activeChat.messages[idx - 1].timestamp) > 300000
 
                 return (
                   <div key={msg.id}>
                     {showTimestamp && (
-                      <div
-                        className="text-caption"
-                        style={{
-                          color: "hsl(var(--text-color-tertiary))",
-                          textAlign: "center",
-                          marginBottom: "var(--spacing-global-sm)",
-                        }}
-                      >
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                      <div className="text-system-small" style={{
+                        textAlign: "center",
+                        color: "hsl(var(--fg-neutral-medium))",
+                        margin: "8px 0"
+                      }}>
+                        {new Date(msg.timestamp).toLocaleString('en-US', {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true
+                        })}
                       </div>
                     )}
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "var(--spacing-global-xs)",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      {!isUser && (
-                        <div style={{ flexShrink: 0, marginTop: "2px" }}>
-                          {isComputer ? (
-                            <ComputerLogo size={24} />
-                          ) : (
-                            <div className="arcade-avatar arcade-avatar--S" style={{ background: "hsl(var(--husk-500))" }}>
-                              {senderName[0]}
-                            </div>
-                          )}
-                        </div>
-                      )}
+                    <div style={{ display: "flex", gap: "16px" }}>
+                      <div style={{ width: "32px", height: "32px", flexShrink: 0 }}>
+                        {isComputer ? (
+                          <div style={{
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            background: "hsl(var(--husk-600))",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                          }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ width: "18px", height: "18px" }}>
+                              <path fill="hsl(var(--day))" d="M8.403 14H5.919l-.495-9.297h3.194L8.405 14zm5.978-9.297h3.195L17.08 14h-2.483l-.214-9.297z"></path>
+                            </svg>
+                          </div>
+                        ) : (
+                          <div style={{
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "50%",
+                            background: "#F57C00",
+                            color: "white",
+                            fontSize: "13px",
+                            fontVariationSettings: '"wght" 540',
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center"
+                          }}>
+                            {senderName[0]}
+                          </div>
+                        )}
+                      </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="text-caption" style={{ color: "hsl(var(--text-color-secondary))", marginBottom: "var(--spacing-global-5xs)" }}>
-                          {senderName}
+                        <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "4px" }}>
+                          <span className="text-system-medium" style={{ color: "hsl(var(--fg-neutral-prominent))" }}>
+                            {senderName}
+                          </span>
                         </div>
-                        <div
-                          className="text-system"
-                          style={{
-                            padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
-                            borderRadius: "8px",
-                            background: "hsl(var(--husk-200))",
-                            color: "hsl(var(--text-color-primary))",
-                            wordBreak: "break-word",
-                          }}
-                        >
-                          {msg.text}
+                        <div style={{
+                          background: "hsl(var(--bg-layer-01))",
+                          borderRadius: "12px",
+                          padding: "12px 16px",
+                          maxWidth: "90%"
+                        }}>
+                          <div className="text-body" style={{ color: "hsl(var(--fg-neutral-prominent))" }}>
+                            {msg.text}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -268,411 +291,378 @@ export function ComputerPage() {
                 )
               })}
               {isComputerTyping && (
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "var(--spacing-global-xs)",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div style={{ flexShrink: 0, marginTop: "2px" }}>
-                    <ComputerLogo size={24} />
+                <div style={{ display: "flex", gap: "16px" }}>
+                  <div style={{ width: "32px", height: "32px", flexShrink: 0 }}>
+                    <div style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "50%",
+                      background: "hsl(var(--husk-600))",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ width: "18px", height: "18px" }}>
+                        <path fill="hsl(var(--day))" d="M8.403 14H5.919l-.495-9.297h3.194L8.405 14zm5.978-9.297h3.195L17.08 14h-2.483l-.214-9.297z"></path>
+                      </svg>
+                    </div>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="text-caption" style={{ color: "hsl(var(--text-color-secondary))", marginBottom: "var(--spacing-global-5xs)" }}>
-                      Computer
+                    <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "4px" }}>
+                      <span className="text-system-medium" style={{ color: "hsl(var(--fg-neutral-prominent))" }}>
+                        Computer
+                      </span>
                     </div>
-                    <div
-                      className="text-system"
-                      style={{
-                        padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
-                        borderRadius: "8px",
-                        background: "hsl(var(--husk-200))",
-                        color: "hsl(var(--text-color-tertiary))",
-                      }}
-                    >
-                      <span className="typing-indicator">●●●</span>
+                    <div style={{
+                      background: "hsl(var(--bg-layer-01))",
+                      borderRadius: "12px",
+                      padding: "12px 16px",
+                      maxWidth: "90%"
+                    }}>
+                      <div className="text-body" style={{ color: "hsl(var(--fg-neutral-medium))" }}>
+                        <span className="typing-indicator">●●●</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
-            </div>
+            </>
           )}
         </div>
 
-        {/* Input */}
-        <div
-          style={{
-            padding: "var(--spacing-global-base) var(--spacing-global-lg)",
-            borderTop: "1px solid hsl(var(--border-outline-01))",
-            display: "flex",
-            gap: "var(--spacing-global-xs)",
-            alignItems: "center",
-            background: "hsl(var(--bg-layer-01))",
-          }}
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Send a message..."
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isComputerTyping}
-            className="arcade-input"
-            style={{ flex: 1 }}
-          />
-          <button
-            type="button"
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isComputerTyping}
-            className="arcade-btn arcade-btn--primary"
-            style={{
-              width: "36px",
-              height: "36px",
-              minWidth: "36px",
-              padding: "0",
-              fontSize: "18px",
-            }}
-          >
-            ↑
-          </button>
-        </div>
-      </div>
-
-      {/* Right Panel - Canvas or Invite */}
-      <div className="flex-1 flex flex-col" style={{ background: "hsl(var(--bg-layer-01))" }}>
-        {/* Right Panel Header */}
-        <div
-          style={{
-            padding: "var(--spacing-global-base) var(--spacing-global-lg)",
-            borderBottom: "1px solid hsl(var(--border-outline-01))",
+        {/* Input Area */}
+        <div style={{
+          padding: "16px 24px",
+          background: "hsl(var(--bg-layer-01))",
+          borderTop: "1px solid hsl(var(--border-outline-01))"
+        }}>
+          <div style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            gap: "8px",
+            padding: "12px 16px",
             background: "hsl(var(--bg-layer-01))",
-          }}
-        >
-          <div className="arcade-tabs">
+            border: "1px solid hsl(var(--border-outline-01))",
+            borderRadius: "24px",
+            transition: "all 150ms"
+          }}>
+            <svg style={{ width: "20px", height: "20px", color: "hsl(var(--fg-neutral-medium))", cursor: "pointer" }} viewBox="0 0 20 20" fill="none">
+              <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M10 4v12m-6-6h12"/>
+            </svg>
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder="Send a message"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isComputerTyping}
+              className="text-body"
+              style={{
+                flex: 1,
+                border: 0,
+                outline: "none",
+                background: "transparent",
+                color: "hsl(var(--fg-neutral-prominent))",
+                fontFamily: "inherit"
+              }}
+            />
             <button
               type="button"
-              onClick={() => setRightPanel("canvas")}
-              className={`arcade-tab ${rightPanel === "canvas" ? "arcade-tab--active" : ""}`}
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isComputerTyping}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "32px",
+                height: "32px",
+                border: 0,
+                borderRadius: "50%",
+                background: inputValue.trim() && !isComputerTyping ? "hsl(var(--intelligence-400))" : "transparent",
+                color: inputValue.trim() && !isComputerTyping ? "white" : "hsl(var(--fg-neutral-medium))",
+                cursor: "pointer",
+                transition: "all 150ms"
+              }}
             >
-              Canvas
-            </button>
-            <button
-              type="button"
-              onClick={() => setRightPanel("invite")}
-              className={`arcade-tab ${rightPanel === "invite" ? "arcade-tab--active" : ""}`}
-            >
-              Invite
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path fill="currentColor" d="M2 2l16 8-16 8 4-8z"/>
+              </svg>
             </button>
           </div>
-
-          {/* Convert to Project button */}
-          <button
-            type="button"
-            onClick={handleConvertToProject}
-            className="arcade-btn arcade-btn--primary arcade-btn--M"
-          >
-            Convert to Project
-          </button>
-        </div>
-
-        {/* Right Panel Content */}
-        <div className="flex-1 overflow-y-auto" style={{ padding: "var(--spacing-global-lg)" }}>
-          {rightPanel === "canvas" ? (
-            <CanvasPanel chat={activeChat} />
-          ) : (
-            <div style={{ maxWidth: "500px" }}>
-              <InvitePanelFullPage chat={activeChat} />
-            </div>
-          )}
         </div>
       </div>
     </div>
   )
 }
 
-// Computer logo component (two-bar logo)
-function ComputerLogo({ size = 28 }) {
+// Computer logo component (two-bar pause icon in circle) - matches design reference
+function ComputerLogo({ size = 32 }) {
+  const iconSize = size * 0.56
   return (
-    <div
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        background: "hsl(var(--intelligence-400))",
-        borderRadius: "50%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-      }}
-    >
-      <svg
-        width={size * 0.4}
-        height={size * 0.4}
-        viewBox="0 0 10 10"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect x="2" y="1.5" width="1.5" height="7" rx="0.75" fill="white" />
-        <rect x="6.5" y="1.5" width="1.5" height="7" rx="0.75" fill="white" />
+    <div style={{
+      width: `${size}px`,
+      height: `${size}px`,
+      borderRadius: "50%",
+      background: "hsl(var(--husk-600))",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0
+    }}>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" style={{ width: `${iconSize}px`, height: `${iconSize}px` }}>
+        <path fill="hsl(var(--day))" d="M8.403 14H5.919l-.495-9.297h3.194L8.405 14zm5.978-9.297h3.195L17.08 14h-2.483l-.214-9.297z"></path>
       </svg>
     </div>
   )
 }
 
-// Canvas Panel - shows generated files
-function CanvasPanel({ chat }) {
-  const files = chat?.files || []
-
-  if (files.length === 0) {
-    return (
-      <div className="arcade-empty">
-        <div className="arcade-empty__icon">📄</div>
-        <div className="arcade-empty__title">No artifacts yet</div>
-        <div className="arcade-empty__description">
-          Ask Computer to create documents, designs, or other artifacts. They'll appear here.
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-global-sm)" }}>
-      {files.map((file) => (
-        <div key={file.id} className="arcade-card">
-          <div className="text-system-medium" style={{ color: "hsl(var(--text-color-primary))" }}>
-            {file.name}
-          </div>
-          <div className="text-caption" style={{ color: "hsl(var(--text-color-secondary))" }}>
-            {file.type}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// Invite Panel for full-page view (wrapper around InvitePanel)
-function InvitePanelFullPage({ chat }) {
-  return (
-    <div>
-      <div className="text-body-small-medium" style={{ color: "hsl(var(--text-color-primary))", marginBottom: "var(--spacing-global-base)" }}>
-        Invite people to collaborate
-      </div>
-      <InvitePanel chat={chat} isFullPage />
-    </div>
-  )
-}
-
-// Minimal sidebar for Computer page using Arcade design system
-function ComputerSidebar({ activeChat }) {
+// Sidebar matching design reference exactly
+function ComputerSidebar({ activeChat, onSwitchChat, onNewChat }) {
   const { chats } = useChats()
   const [showMore, setShowMore] = useState(false)
 
-  const lobbySections = [
-    { label: "Lobby: Teams & Spaces" },
-    { label: "Lobby: Build" },
+  const conversationItems = [
+    { label: "Lobby PoC", avatars: ["LP"] },
+    { label: "Lobby: Teams & Sp...", avatars: ["LT", "TS", "SP"] },
+    { label: "OpsLevel POC details ..." },
+    { label: "Today's Daily Digest ...", unread: true },
+    { label: "Lobby: Build", avatars: ["PS", "DD", "YA"], active: true },
   ]
 
-  const chatItems = chats?.filter((c) => c.id !== activeChat?.id) || []
-  const visibleChats = showMore ? chatItems : chatItems.slice(0, 5)
+  const dmItems = [
+    { label: "Devanshu Dangi, Prithvi...", count: 2 },
+    { label: "Kunal Mohta, Pol...", count: 2, unread: true },
+    { label: "Yashraj, Kunal Mohta, Priyanka Pal, Akank...", count: 7 },
+    { label: "Pratham Gupta, Akanks...", count: 2 },
+    { label: "Ribhu Chawla", image: true },
+    { label: "Adit Shah", image: true },
+    { label: "Tom Shurrock", image: true, unread: true },
+    { label: "Priyadharshan Ravichan...", count: 2 },
+    { label: "Priyanka Pal", image: true },
+    { label: "Shivam Gupta, Advaith...", count: 3 },
+    { label: "Smrithi Ullal", initials: "SU" },
+    { label: "Manasa, Shivam Gupta,...", count: 4 },
+  ]
 
   return (
-    <div
-      className="arcade-sidebar"
-      style={{
-        width: "220px",
-        background: "hsl(var(--bg-layer-01))",
-        borderRight: "1px solid hsl(var(--border-outline-01))",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
-          borderBottom: "1px solid hsl(var(--border-outline-01))",
-          display: "flex",
+    <div style={{
+      width: "240px",
+      background: "hsl(var(--bg-layer-01))",
+      borderRight: "1px solid hsl(var(--border-outline-01))",
+      display: "flex",
+      flexDirection: "column",
+      padding: "12px",
+      gap: "12px",
+      flexShrink: 0
+    }}>
+      {/* Sidebar Header */}
+      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <button style={{
+          position: "relative",
+          display: "inline-flex",
+          justifyContent: "center",
           alignItems: "center",
-          gap: "var(--spacing-global-4xs)",
-        }}
-      >
-        <button
-          type="button"
-          className="arcade-btn arcade-btn--tertiary arcade-btn--S"
-          title="Collapse sidebar"
-          style={{
-            minWidth: "28px",
-            width: "28px",
-            height: "28px",
-            padding: "0",
-            fontSize: "14px",
-          }}
-        >
-          ☰
+          padding: "9px",
+          border: 0,
+          borderRadius: "4px",
+          background: "transparent",
+          transition: "all 150ms",
+          cursor: "pointer"
+        }} className="fg-neutral-prominent">
+          <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+            <path fill="currentColor" d="M30 7c.05-2.58-2.15-4.91-4.74-4.99L19.14 2H7c-2.58-.05-4.91 2.15-4.99 4.74C2 10.65 2 20.95 2 25c-.05 2.58 2.15 4.91 4.74 4.99 3.91 0 14.21.04 18.26.05 2.6.04 4.93-2.18 5.01-4.78zM4.17 25c.07-5.84.09-12.28-.01-18.15C4.18 5.39 5.5 4.08 7 4.09c1.63-.02 3.3-.04 5-.05v23.91c-1.75-.02-3.47-.04-5.15-.07-1.48-.07-2.72-1.43-2.68-2.88m23.68.15c0 1.47-1.32 2.81-2.85 2.81-3.53.04-7.29.04-11 .01V4.03c3.75-.01 7.56.01 11.15.07 1.5.06 2.75 1.44 2.7 2.9-.09 5.84-.12 12.28 0 18.15M9 12H7v8h2z"/>
+          </svg>
         </button>
-        <button
-          type="button"
-          className="arcade-btn arcade-btn--tertiary arcade-btn--S"
-          title="New Chat"
-          style={{
-            flex: 1,
-            fontSize: "var(--fontSize-caption)",
-            fontWeight: "440",
-          }}
-        >
-          New Chat
+        <button onClick={onNewChat} style={{
+          position: "relative",
+          display: "flex",
+          flex: 1,
+          minWidth: 0,
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "6px",
+          padding: "0 16px",
+          height: "40px",
+          border: 0,
+          borderRadius: "9999px",
+          background: "hsl(var(--bg-neutral-prominent) / 0.08)",
+          transition: "transform 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+          cursor: "pointer"
+        }} className="fg-neutral-prominent text-system-medium">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path fill="currentColor" d="M3.411 14.097c-.263 1.47-1.155 2.655-2.161 3.717H2.5c1.781 0 3.556-.712 4.663-2.137 3.556.506 7.874.58 10.325-2.482 2.38-3.262 1.337-8.775-2.67-10.187-4.024-1.419-11.03-1.363-12.98 3.143C.806 8.764 1.03 12.271 3.4 14.09m12.875-1.781c-2.119 2.781-6.531 2.594-9.706 2.018-.25.413-.525.813-.944 1.15-.326.284-.692.51-1.082.68l-.397-.42c.32-.703.555-1.451.654-2.135l-.119-.093c-.219-.188-.45-.406-.65-.613-.956-1.037-1.219-2.412-1.206-3.825C2.8 7.433 3.356 5.883 4.6 4.926c2.55-1.843 6.825-1.83 9.681-.675 3.088 1.2 3.669 5.582 1.994 8.057"/>
+            <path fill="#211E20" d="M14.375 9.845a69 69 0 0 1-3.425-.155l-.329.33a64 64 0 0 1 .16 3.419H9.22q.035-1.708.155-3.42l-.33-.33c-1.138.08-2.281.134-3.419.156V8.283a64 64 0 0 1 3.418.16l.331-.33A69 69 0 0 1 9.22 4.69h1.562a64 64 0 0 1-.16 3.424l.33.33a64 64 0 0 1 3.424-.16z"/>
+          </svg>
+          <span>New Chat</span>
         </button>
-        <button
-          type="button"
-          className="arcade-btn arcade-btn--tertiary arcade-btn--S"
-          title="Close"
-          style={{
-            minWidth: "28px",
-            width: "28px",
-            height: "28px",
-            padding: "0",
-            fontSize: "16px",
-          }}
-        >
-          ×
+        <button style={{
+          display: "inline-flex",
+          width: "40px",
+          height: "40px",
+          alignItems: "center",
+          justifyContent: "center",
+          border: 0,
+          borderRadius: "20px",
+          background: "hsl(var(--bg-neutral-prominent) / 0.08)",
+          transition: "transform 150ms",
+          flexShrink: 0,
+          cursor: "pointer"
+        }} className="fg-neutral-prominent">
+          <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
+            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="m4 4 8 8m0-8-8 8"/>
+          </svg>
         </button>
       </div>
 
-      {/* Lobby Sections */}
-      <div
-        style={{
-          padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
-          borderBottom: "1px solid hsl(var(--border-outline-01))",
-          display: "flex",
-          flexDirection: "column",
-          gap: "var(--spacing-global-5xs)",
-        }}
-      >
-        {lobbySections.map((section, idx) => (
-          <button
+      {/* Conversation List */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto" }}>
+        {conversationItems.map((item, idx) => (
+          <div
             key={idx}
-            type="button"
-            className="arcade-menu-item text-caption"
             style={{
-              padding: "var(--spacing-global-3xs) var(--spacing-global-xs)",
-              fontWeight: "440",
-              justifyContent: "flex-start",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "6px 8px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "background 150ms",
+              background: item.active ? "hsl(var(--bg-neutral-prominent) / 0.1)" : "transparent"
             }}
+            className="conversation-item"
           >
-            {section.label}
-          </button>
+            <div className="text-system" style={{
+              flex: 1,
+              color: "hsl(var(--fg-neutral-prominent))",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis"
+            }}>
+              {item.label}
+            </div>
+            {item.avatars && (
+              <div style={{ display: "flex", gap: "2px" }}>
+                {item.avatars.map((av, i) => (
+                  <div key={i} style={{
+                    width: "20px",
+                    height: "20px",
+                    borderRadius: "50%",
+                    background: ["#8B4513", "#2196F3", "#FF9800", "#4CAF50"][i % 4],
+                    color: "white",
+                    fontSize: "9px",
+                    fontVariationSettings: '"wght" 540',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0
+                  }}>{av}</div>
+                ))}
+              </div>
+            )}
+            {item.unread && (
+              <div style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "hsl(var(--fg-neutral-prominent))",
+                flexShrink: 0
+              }}/>
+            )}
+          </div>
         ))}
       </div>
 
-      {/* Chat List */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "var(--spacing-global-xs) var(--spacing-global-sm)" }}>
-        <div className="arcade-sidebar__section-title" style={{ padding: "var(--spacing-global-3xs) 0" }}>
-          Chat
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-global-5xs)" }}>
-          {visibleChats.map((chat) => {
-            const participantNames = chat.participants
-              .filter((p) => p !== "computer" && p !== "user")
-              .join(", ")
-            const label = chat.title || (chat.participants.includes("computer") ? "Computer" : participantNames)
-            const lastMsg = chat.messages[chat.messages.length - 1]
-            const isMultiUser = chat.participants.length > 2
-            const participantCount = chat.participants.filter((p) => p !== "user").length
+      {/* Section Header */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "8px 8px 4px",
+        marginTop: "8px"
+      }}>
+        <div className="text-system-small" style={{
+          fontVariationSettings: '"wght" 540',
+          color: "hsl(var(--fg-neutral-medium))",
+          textTransform: "uppercase"
+        }}>CHAT</div>
+        <div style={{
+          fontSize: "0.875rem",
+          color: "hsl(var(--fg-neutral-medium))",
+          cursor: "pointer"
+        }}>⋯ More</div>
+      </div>
 
-            return (
-              <button
-                key={chat.id}
-                type="button"
-                className="arcade-menu-item"
-                style={{
-                  padding: "var(--spacing-global-3xs)",
-                  gap: "var(--spacing-global-xs)",
-                  alignItems: "flex-start",
-                }}
-              >
-                <div style={{ flexShrink: 0, marginTop: "2px" }}>
-                  {chat.participants.includes("computer") && chat.participants.length === 2 ? (
-                    <ComputerLogo size={20} />
-                  ) : (
-                    <div
-                      className="arcade-avatar arcade-avatar--S"
-                      style={{
-                        background: "hsl(var(--husk-500))",
-                        width: "20px",
-                        height: "20px",
-                        fontSize: "9px",
-                      }}
-                    >
-                      {isMultiUser ? participantCount : label[0]}
-                    </div>
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "var(--spacing-global-5xs)" }}>
-                  <div className="text-caption-medium" style={{ width: "100%", textAlign: "left" }}>
-                    {label}
-                  </div>
-                  {lastMsg && (
-                    <div
-                      className="text-caption"
-                      style={{
-                        color: "hsl(var(--text-color-tertiary))",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        width: "100%",
-                        textAlign: "left",
-                      }}
-                    >
-                      {lastMsg.text}
-                    </div>
-                  )}
-                </div>
-              </button>
-            )
-          })}
-        </div>
-        {chatItems.length > 5 && (
-          <button
-            type="button"
-            className="arcade-btn arcade-btn--tertiary arcade-btn--S"
-            onClick={() => setShowMore(!showMore)}
-            style={{
-              width: "100%",
-              marginTop: "var(--spacing-global-4xs)",
-              fontSize: "var(--fontSize-caption)",
-              fontWeight: "440",
-            }}
-          >
-            {showMore ? "Show less" : `... More`}
-          </button>
-        )}
+      {/* DM List */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "4px", overflowY: "auto", flex: 1 }}>
+        {dmItems.slice(0, showMore ? dmItems.length : 8).map((item, idx) => (
+          <div key={idx} style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "6px 8px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "background 150ms"
+          }} className="dm-item">
+            <div style={{
+              width: "28px",
+              height: "28px",
+              borderRadius: "50%",
+              background: item.count ? "#666" : (item.initials ? "#8B3A3A" : "hsl(var(--husk-600))"),
+              color: "white",
+              fontSize: item.count ? "12px" : "11px",
+              fontVariationSettings: '"wght" 540',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0
+            }}>
+              {item.count || item.initials || item.label[0]}
+            </div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+              <div className="text-system" style={{
+                color: "hsl(var(--fg-neutral-prominent))",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+              }}>{item.label}</div>
+            </div>
+            {item.unread && (
+              <div style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "hsl(var(--fg-neutral-prominent))",
+                flexShrink: 0
+              }}/>
+            )}
+          </div>
+        ))}
       </div>
 
       {/* Bottom User Profile */}
-      <div
-        style={{
-          padding: "var(--spacing-global-xs) var(--spacing-global-sm)",
-          borderTop: "1px solid hsl(var(--border-outline-01))",
-          display: "flex",
-          alignItems: "center",
-          gap: "var(--spacing-global-xs)",
-        }}
-      >
-        <div className="arcade-avatar arcade-avatar--M" style={{ background: "hsl(var(--intelligence-400))" }}>
-          P
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div className="text-caption-medium" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            Prithvi Sharma
-          </div>
-          <div className="text-caption" style={{ color: "hsl(var(--text-color-tertiary))" }}>
-            DevRev
-          </div>
+      <div style={{
+        marginTop: "auto",
+        paddingTop: "12px",
+        borderTop: "1px solid hsl(var(--border-outline-01))",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "6px 8px",
+        borderRadius: "6px"
+      }}>
+        <div style={{
+          width: "28px",
+          height: "28px",
+          borderRadius: "50%",
+          background: "#666",
+          flexShrink: 0
+        }}/>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+          <div className="text-system" style={{ color: "hsl(var(--fg-neutral-prominent))" }}>Prithvi Sharma</div>
+          <div className="text-system-small" style={{ color: "hsl(var(--fg-neutral-medium))" }}>DevRev</div>
         </div>
       </div>
     </div>
