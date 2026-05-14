@@ -26,28 +26,6 @@ export function Canvas({ onClose, onMinimize }) {
         <h2 className="text-[14px] font-[540] leading-[20px] text-[hsl(var(--fg-neutral-prominent))]">
           Canvas
         </h2>
-        <div className="flex items-center gap-[8px]">
-          <button
-            type="button"
-            onClick={onMinimize}
-            className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-[hsl(var(--fg-neutral-secondary))] transition-colors hover:bg-[hsl(var(--bg-layer-02))]"
-            aria-label="Minimize canvas"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M13 8H3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-[24px] w-[24px] items-center justify-center rounded-[6px] text-[hsl(var(--fg-neutral-secondary))] transition-colors hover:bg-[hsl(var(--bg-layer-02))]"
-            aria-label="Close canvas"
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
       </div>
 
       {/* Content */}
