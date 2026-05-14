@@ -178,10 +178,11 @@ export function ComputerPage() {
     if (newProjectId) {
       // Close modal first
       setShowConversionModal(false)
-      // Navigate after modal close animation
+      // Navigate to project with chat open after modal close animation
       setTimeout(() => {
-        console.log('Navigating to:', `/projects/${newProjectId}`)
-        navigate(`/projects/${newProjectId}`)
+        console.log('Navigating to project chat:', `/projects/${newProjectId}`)
+        // Navigate to project page - AppWorkspaceLayout will handle opening chat
+        navigate(`/projects/${newProjectId}?openChat=true`)
       }, 300)
     } else {
       console.error('Failed to convert chat to project')

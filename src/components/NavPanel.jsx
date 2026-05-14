@@ -176,6 +176,14 @@ export function NavPanel({
   const { projects } = useProjects()
   const [projectStates, setProjectStates] = useState({})
 
+  // Auto-expand project when viewing it
+  useEffect(() => {
+    if (chatVariant && chatVariant.startsWith('project-')) {
+      const projectId = chatVariant.replace('project-', '')
+      setProjectStates(prev => ({ ...prev, [projectId]: true }))
+    }
+  }, [chatVariant])
+
   // Filter projects with membership
   const memberProjects = useMemo(() => {
     if (!projects) return []

@@ -252,6 +252,7 @@ function readChatsFromLocalStorage() {
       out.push({
         id: row.id,
         participants: Array.isArray(row.participants) ? row.participants : [],
+        participantAvatars: Array.isArray(row.participantAvatars) ? row.participantAvatars : [],
         messages: Array.isArray(row.messages) ? row.messages : [],
         files: Array.isArray(row.files) ? row.files : [],
         createdAt: typeof row.createdAt === "number" ? row.createdAt : Date.now(),

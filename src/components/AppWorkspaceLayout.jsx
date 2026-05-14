@@ -176,6 +176,9 @@ export function AppWorkspaceChrome() {
   }, [chatPanelOpen, recordPanelOpen])
 
   const pathname = location.pathname
+  const searchParams = new URLSearchParams(location.search)
+  const shouldOpenChat = searchParams.get('openChat') === 'true'
+
   const issueFromThreeLevelPath =
     pathname.startsWith("/issues") &&
     typeof location.state?.sourceProjectId === "string" &&
@@ -184,6 +187,16 @@ export function AppWorkspaceChrome() {
   // Extract project ID from URL for project space navigation
   const projectIdMatch = pathname.match(/^\/projects\/([^/]+)/)
   const urlProjectId = projectIdMatch ? projectIdMatch[1] : null
+
+  // Handle openChat query param for post-conversion navigation
+  useEffect(() => {
+    if (shouldOpenChat && urlProjectId) {
+      setChatVariant(`project-${urlProjectId}`)
+      setChatPanelOpen(true)
+      // Clean up query param
+      navigate(pathname, { replace: true })
+    }
+  }, [shouldOpenChat, urlProjectId, pathname, navigate])
 
   const selectedNavItemId = issueFromThreeLevelPath
     ? "projects"
