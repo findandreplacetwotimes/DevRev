@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { useChats } from "../context/IssuesContext"
 import { callAI } from "../lib/aiClient"
+import { Canvas } from "./Canvas"
 
 export function ComputerPage() {
   const { chats, patchChat, setChats } = useChats()
   const [activeChat, setActiveChat] = useState(null)
   const [inputValue, setInputValue] = useState("")
   const [isComputerTyping, setIsComputerTyping] = useState(false)
+  const [canvasOpen, setCanvasOpen] = useState(true)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const hasGreetedRef = useRef(false)
@@ -686,6 +688,14 @@ export function ComputerPage() {
             </div>
           </div>
       </div>
+
+      {/* Canvas Panel */}
+      {canvasOpen && (
+        <Canvas
+          onClose={() => setCanvasOpen(false)}
+          onMinimize={() => setCanvasOpen(false)}
+        />
+      )}
     </div>
   )
 }
