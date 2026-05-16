@@ -173,6 +173,8 @@ function readProjectsFromLocalStorage() {
         healthId: sanitizeProjectHealthId(row.healthId),
         milestones: sanitizeProjectMilestonesArray(row.milestones),
         history: Array.isArray(row.history) ? row.history : [],
+        isMember: typeof row.isMember === "boolean" ? row.isMember : false,
+        createdDate: typeof row.createdDate === "string" ? row.createdDate : null,
       })
     }
     return out.length > 0 ? out : null
