@@ -191,6 +191,7 @@ export function AppWorkspaceChrome() {
   // Handle openChat query param for post-conversion navigation
   useEffect(() => {
     if (shouldOpenChat && urlProjectId) {
+      console.log('Opening chat for project:', urlProjectId)
       setChatVariant(`project-${urlProjectId}`)
       setChatPanelOpen(true)
       // Clean up query param

@@ -189,8 +189,13 @@ export function NavPanel({
 
   // Filter projects with membership
   const memberProjects = useMemo(() => {
-    if (!projects) return []
-    return projects.filter(p => p.isMember)
+    if (!projects) {
+      console.log('NavPanel: No projects loaded yet')
+      return []
+    }
+    const filtered = projects.filter(p => p.isMember)
+    console.log('NavPanel: Member projects:', filtered.map(p => ({ id: p.id, title: p.title, isMember: p.isMember })))
+    return filtered
   }, [projects])
 
   const allItemIds = useMemo(() => {
