@@ -102,7 +102,7 @@ export function createArcadeOriginChat() {
 
   return {
     id: chatId,
-    title: "New Design System",
+    title: "Arcade Design System",
     participants: ["user", "computer", "konstantin-dziuin", "dejan-mesar"],
     participantAvatars: [
       { id: "user", initials: "PS", color: "#4CAF50" },
