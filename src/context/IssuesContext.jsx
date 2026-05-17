@@ -17,6 +17,7 @@ import {
   mergeSeedIssueProjectLinks,
   mergeSeedMilestonesIntoProjects,
 } from "../lib/issuesSeed"
+import { createEarlyIdeationChat, createArcadeOriginChat } from "../lib/demoConversionSeed"
 import { ISSUES_API_PATH } from "../lib/issuesApi"
 
 const IssuesContext = createContext(null)
@@ -172,6 +173,8 @@ function readProjectsFromLocalStorage() {
         healthId: sanitizeProjectHealthId(row.healthId),
         milestones: sanitizeProjectMilestonesArray(row.milestones),
         history: Array.isArray(row.history) ? row.history : [],
+        isMember: typeof row.isMember === "boolean" ? row.isMember : false,
+        createdDate: typeof row.createdDate === "string" ? row.createdDate : null,
       })
     }
     return out.length > 0 ? out : null
@@ -224,52 +227,14 @@ function writeSprintsToLocalStorage(sprints) {
 }
 
 function createInitialChats() {
-  const now = Date.now()
   return [
-    {
-      id: "chat-1",
-      participants: ["computer", "user"],
-      messages: [
-        {
-          id: "msg-1",
-          senderId: "computer",
-          text: "Hi! I'm Computer. How can I help you today?",
-          timestamp: now - 86400000 * 2,
-        },
-      ],
-      files: [],
-      createdAt: now - 86400000 * 2,
-      lastActivity: now - 86400000 * 2,
-      projectId: null,
-      title: "Computer",
-    },
-    {
-      id: "chat-2",
-      participants: ["prithvi", "polina", "user"],
-      messages: [
-        {
-          id: "msg-2",
-          senderId: "prithvi",
-          text: "Let's discuss the design system updates",
-          timestamp: now - 3600000,
-        },
-      ],
-      files: [],
-      createdAt: now - 86400000,
-      lastActivity: now - 3600000,
-      projectId: null,
-      title: "Prithvi, Polina",
-    },
-    {
-      id: "chat-3",
-      participants: ["computer", "prithvi", "tim", "user"],
-      messages: [],
-      files: [],
-      createdAt: now - 86400000 * 3,
-      lastActivity: now - 86400000 * 3,
-      projectId: null,
-      title: "Design System Discussion",
-    },
+    // Demo: Early ideation - just Dejan + Computer creating files
+    // Shows file creation but NO convert button (only 2 participants)
+    createEarlyIdeationChat(),
+
+    // Demo: Collaborative chat - team has joined, ready to convert
+    // Shows convert button (4 participants, files, conversation)
+    createArcadeOriginChat(),
   ]
 }
 
@@ -289,6 +254,7 @@ function readChatsFromLocalStorage() {
       out.push({
         id: row.id,
         participants: Array.isArray(row.participants) ? row.participants : [],
+        participantAvatars: Array.isArray(row.participantAvatars) ? row.participantAvatars : [],
         messages: Array.isArray(row.messages) ? row.messages : [],
         files: Array.isArray(row.files) ? row.files : [],
         createdAt: typeof row.createdAt === "number" ? row.createdAt : Date.now(),
@@ -329,7 +295,7 @@ export function IssuesProvider({ children }) {
   }, [projects])
 
   function normalizeProjectsClient(projectList) {
-    const normalized = projectList.slice(0, 3).map((projectRow) => ({
+    const normalized = projectList.map((projectRow) => ({
       ...projectRow,
       ...normalizeProjectDisplayFields(projectRow),
       healthId: sanitizeProjectHealthId(projectRow.healthId),
@@ -543,6 +509,20 @@ export function IssuesProvider({ children }) {
     })
   }, [])
 
+  /** @type {(chatId: string) => string | null} */
+  const convertChatToProject = useCallback((chatId) => {
+    const chat = chats?.find(c => c.id === chatId)
+    if (!chat) return null
+
+    // For the demo, always navigate to the pre-seeded Arcade Design System project
+    const projectId = "Project-0004"
+
+    // Update chat with projectId link to mark it as converted
+    patchChat(chatId, { projectId })
+
+    return projectId
+  }, [chats, patchChat])
+
   const value = useMemo(
     () => ({
       issues,
@@ -554,12 +534,13 @@ export function IssuesProvider({ children }) {
       patchProject,
       patchSprint,
       patchChat,
+      convertChatToProject,
       setIssues,
       setProjects,
       setSprints,
       setChats,
     }),
-    [issues, projects, sprints, chats, patchIssue, patchProject, patchSprint, patchChat]
+    [issues, projects, sprints, chats, patchIssue, patchProject, patchSprint, patchChat, convertChatToProject]
   )
 
   return <IssuesContext.Provider value={value}>{children}</IssuesContext.Provider>
@@ -600,5 +581,6 @@ export function useChats() {
     loading: ctx.chats === null,
     patchChat: ctx.patchChat,
     setChats: ctx.setChats,
+    convertChatToProject: ctx.convertChatToProject,
   }
 }

@@ -2,184 +2,153 @@
 
 ## Project Overview
 
-React + Tailwind project management app with AI-powered chat capabilities. Building out collaborative project chat features with agent integration.
+React + Tailwind project management app with AI-powered chat capabilities. Building collaborative project chat features with agent integration and hierarchical navigation.
 
-## Current Work
+## Current Work: Conversation-to-Project Conversion (conv-project-creation)
 
-### Active Branch: feat/project-chat-interactions 🚧 IN PROGRESS
-**Status**: Floating chat windows + invite flow complete, ready for project conversion feature
+**Branch**: `conv-project-creation`  
+**Worktree**: `.claude/worktrees/conv-project-creation`  
+**Server**: http://localhost:5174/
 
-Implementing idea → collaboration → project journey:
-- **Floating Chat Windows** ✅ - Messenger-style windows with drag, minimize, messaging
-- **Invite Flow** ✅ - Add collaborators to chats with InvitePanel
-- **Arcade Design** ✅ - All components use design system tokens
-- **Convert to Project** ⏳ - Next: modal to convert chat → project
+### Completed Features (May 14-16, 2026)
 
-**Files modified**: FloatingChatWindow.jsx, MinimizedChatTabs.jsx, InvitePanel.jsx, AppWorkspaceLayout.jsx, NavPanel.jsx, IssuesContext.jsx, aiClient.js, index.css
+#### 1. Conversation-to-Project Conversion Flow ✅
+- **"Convert to Project" button** appears on group chats with 3+ participants, 5+ messages, and files
+- **ProjectConversionModal** shows preview (member count, file count, project title)
+- Pre-seeded **Arcade Design System** project (Project-0004) with 4 milestones and 8 issues
+- Conversion links chat to existing project (safe for repeated demos)
+- Navigation to project page with chat open and project expanded
 
-**Next**: Convert to Project button + modal
+#### 2. Demo Seed Data ✅
+- **Two demo chats** in Computer page:
+  1. **"Design System Architecture"** - 2 people (Dejan + Computer), 6 messages, 5 files, no convert button
+  2. **"New Design System"** - 4 people (adds Konstantin + Dejan Mesar), 12 messages, 9 files, shows convert button
+- Chat pre-linked to Project-0004 via `projectId` field
+- Authentic Arcade Design System origin story with realistic timestamps
 
----
+#### 3. Project Chat Integration ✅
+- Project chat displays converted conversation automatically
+- Participant names mapped from `AVAILABLE_USERS`
+- Dynamic message rendering with proper initials and agent detection
+- Chat shows in Arcade Design project when clicking "Project chat" in nav
 
-## Previous Branch: feat/nav-hierarchy ✅ MERGED
-**PR**: https://github.com/findandreplacetwotimes/DevRev/pull/2
+#### 4. Collapsible Navigation ✅
+- **Minimized mode**: 60px width showing only project icons
+- **Expanded mode**: 220px width showing full nav tree
+- Defaults to collapsed for smooth transition from Computer page
+- Chevron toggle button with smooth 200ms animation
+- Project icons: Purple K (Agentic Kanban), Orange A (Arcade Design)
 
----
+#### 5. Post-Conversion Experience ✅
+- Landing on project page opens chat panel automatically
+- Chat variant set to `project-{projectId}`
+- Project auto-expands in nav when viewing its chat
+- Query param `?openChat=true` handled and cleaned up
+- Nav starts collapsed for minimal visual impact
 
-## Completed Features (feat/project-chat-interactions)
+#### 6. Bug Fixes ✅
+- **Fixed**: `isMember` field preservation in localStorage (projects disappeared on refresh)
+- **Fixed**: `convertChatToProject` export from `useChats()` hook
+- **Fixed**: Project limit removed (was capped at 3, now shows all 4)
+- **Fixed**: projectId passed to ChatWindow for correct chat lookup
+- **Fixed**: Build team collapsed by default
 
-### Completed Features
+### Technical Implementation
 
-#### 1. Internal Chat Room ✅ COMPLETE
-- ✅ **Computer Identity** (Arcade design system)
-  - Two-bar logo from arcade-prototyper
-  - Jabuticaba purple background (intelligence color: hsl(259 94% 44%))
-  - Distinct from human teammates
-  
-- ✅ **@Mention Invocation**
-  - Detects `@computer`, `@Computer`, `@agent`, `@AI`
-  - Computer responds when mentioned
-  - Uses Computer-specific AI prompt
-  
-- ✅ **Weekly Rundown (Proactive)**
-  - Posts once per session, 2s after opening project chat
-  - Mock analytics: completion %, issues closed, blockers, days to milestone
-  - Project-focused (not team velocity)
+**Key Files**:
+- `src/components/ComputerPage.jsx` - Convert button, modal, navigation with `?openChat=true`
+- `src/components/ProjectConversionModal.jsx` - Conversion modal with preview
+- `src/components/ChatWindow.jsx` - Converted chat display with participant mapping
+- `src/components/NavPanel.jsx` - Collapsible nav (60px/220px), project auto-expand
+- `src/components/AppWorkspaceLayout.jsx` - openChat param handling, chat panel opening
+- `src/context/IssuesContext.jsx` - `convertChatToProject()`, `useChats()` hook, localStorage fixes
+- `src/lib/demoConversionSeed.js` - Two demo chats with Arcade DS story
+- `src/lib/issuesSeed.js` - Pre-seeded Project-0004 with 8 issues and 4 milestones
+- `src/lib/chatHelpers.js` - Eligibility criteria for convert button
+- `DEMO_SCRIPT.md` - Full walkthrough of demo flow
 
-#### 3. Send to Timeline ✅ COMPLETE (with full visual feedback)
-- ✅ **Timeline Data Infrastructure**
-  - Added `history: []` field to projects in IssuesContext
-  - Timeline events: `{ id, timestamp, actorInitial, type, attribute, detail }`
-  - Persisted via localStorage + patchProject
-  
-- ✅ **Real Timeline Display**
-  - DocumentHistoryPlaceholder accepts real history data
-  - Groups events by timestamp
-  - Falls back to placeholder when empty
-  
-- ✅ **Message Posting UI**
-  - **Two inline icon buttons** in card-style container on hover
-    - Copy (clipboard icon) - copies message to clipboard
-    - Post to Timeline (arrow-up icon) - posts to history
-  - White card background with subtle shadow
-  - Rounded corners (12px) with hover states per button
-  - Only enabled in project chat with valid projectId
-  - Creates "Discussion" events instantly
-  
-- ✅ **Polished Tooltips**
-  - 400ms hover delay with smooth fade-in + scale animation
-  - Dark background with arrow pointer
-  - Uses `--foreground-primary` from Arcade design system
-  - Labels: "Copy message" and "Post to timeline"
-  
-- ✅ **Success Feedback**
-  - Icon changes to checkmark with bounce animation
-  - Color shifts to jabuticaba purple (intelligence color)
-  - Tooltip updates to "Posted!"
-  - Feedback clears after 1.5s
-  
-- ✅ **Timeline Auto-Switch & Highlight**
-  - Automatically switches to History tab after posting
-  - Highlights posted message with yellow fade animation
-  - Uses arcade-compatible caution yellow (hsl 48 100% 85%)
-  - Smooth scroll to highlighted event
-  - Animation duration: 2.5s fade-out
-  - Auto-clears highlight after 3s
+**Data Model**:
+```js
+// Chat with conversion link
+{
+  id: "chat-arcade-origin",
+  title: "New Design System",
+  participants: ["user", "computer", "konstantin-dziuin", "dejan-mesar"],
+  messages: [...],
+  files: [...],
+  projectId: "Project-0004", // Pre-linked for demo
+  createdAt: timestamp,
+  lastActivity: timestamp
+}
 
-**Phase 1 Implementation - COMPLETE ✅**
-- Two-icon hover pattern in card container
-- Polished tooltips with animations
-- Success feedback (checkmark, bounce, color change)
-- Direct posting (no preview dialog)
-- Hardcoded actor initial ("M" for MVP)
-- Full visual feedback: tab switch + yellow highlight + smooth scroll
+// Pre-seeded project
+{
+  id: "Project-0004",
+  title: "Arcade Design",
+  isMember: true,
+  milestones: [
+    { id: "Project-0004:m1", title: "Foundation & Tokens", ... },
+    { id: "Project-0004:m2", title: "Core Components", ... },
+    { id: "Project-0004:m3", title: "Documentation & Tooling", ... },
+    { id: "Project-0004:m4", title: "Rollout & Migration", ... }
+  ],
+  history: [...]
+}
+```
 
-**Future Phases (marked for later):**
-- **Phase 2**: AI summarization before posting + preview dialog with editable summary
-- **Phase 3**: Multi-message selection + batch posting with combined summary
+**Conversion Eligibility**:
+```js
+function isChatReadyForProject(chat) {
+  return (
+    chat.files && chat.files.length > 0 &&
+    chat.participants && chat.participants.length >= 3 &&
+    chat.messages && chat.messages.length >= 5
+  )
+}
+```
 
-#### 4. Floating Chat Windows ✅ COMPLETE
-- ✅ **Messenger-Style UI**
-  - White cards with Arcade design system
-  - Floating bottom-right position
-  - Draggable by header
-  - Multiple windows stack horizontally
-  
-- ✅ **Window Controls**
-  - Invite button (👤+) - opens InvitePanel
-  - Minimize (−) - becomes tab at bottom
-  - Close (×) - fully closes window
-  - Custom inline buttons with hover states
-  
-- ✅ **Message Sending**
-  - Text input with Arcade styling
-  - Send button (↑) - purple when active
-  - Enter key to send
-  - Auto-scroll to latest message
-  
-- ✅ **AI Integration**
-  - Computer responds via OpenRouter/OpenAI API
-  - Typing indicator (●●●) with animation
-  - Mock mode when no API key
-  - Human participants send mock responses
-  
-- ✅ **Minimized Tabs**
-  - White cards at bottom-right
-  - Show last message preview
-  - Click to restore window
-  - Close button on tab
+### Demo Flow
 
-#### 5. Invite Flow ✅ COMPLETE
-- ✅ **InvitePanel Component**
-  - Full Arcade design system integration
-  - Search users with TextInput
-  - Add users to "pending" list
-  - Batch invite with confirmation
-  
-- ✅ **User Management**
-  - Mock user database (8 users)
-  - Filter by name/email search
-  - Show pending invites with remove option
-  - System messages when users added
-  
-- ✅ **Chat State Updates**
-  - Participants array updated in real-time
-  - System messages logged to chat
-  - Chat title updates with new participants
-  - Persists via localStorage
+1. Navigate to http://localhost:5174/computer
+2. See two chats in left sidebar:
+   - "Design System Architecture" (2 people) - no convert button
+   - "New Design System" (4 people) - shows convert button
+3. Open "New Design System" chat
+4. Click "Convert to Project" button in header
+5. Modal appears with preview:
+   - Title: "New Design System"
+   - 4 members, 9 files
+6. Click "Create Project"
+7. Navigates to `/projects/Project-0004?openChat=true`
+8. Landing state:
+   - Nav collapsed (60px) showing project icons
+   - Chat panel open showing converted conversation
+   - Project page displayed
+9. Expand nav with chevron to see full project tree
+10. Click "Project chat" in nav to access conversation anytime
 
-### 2. Branch Out Topic (SKIPPED)
-- Create focused sub-threads from main chat
-- Context preservation
-- Status: Feature skipped for now
+### Known Issues & Future Work
 
-## Arcade Design System Integration (SHELVED)
+**For Next Session (Bug Fixes)**:
+- [ ] Test edge cases (refresh, back button, direct URL navigation)
+- [ ] Polish modal animations
+- [ ] Add loading states during conversion
+- [ ] Test with multiple concurrent conversions
+- [ ] Verify localStorage cleanup on edge cases
 
-**Branch**: `worktree-design-system-polish` (2 commits, not merged to main)
-
-**What was done:**
-- Replaced 88+ hardcoded colors with Arcade tokens (`hsl(var(--husk-*))`, `hsl(var(--bg-layer-*))`)
-- Replaced 161+ arbitrary spacing with phi-ratio scale (`var(--spacing-global-*)`)
-- Copied Arcade CSS files (61KB) into `src/styles/arcade/`
-- 63 files modified across entire codebase
-
-**Why shelved:**
-- **Zero visible difference** in light mode - original hardcoded colors already matched Arcade
-- Adds complexity (61KB CSS, token maintenance) with no visual payoff
-- Main value would be dark mode support (not currently needed)
-
-**Key learning:**
-- CSS @import with absolute file paths doesn't work in Vite - must copy files into project or use npm package
-- Design system tokens are valuable for maintainability but not worth it if visual output is identical
-
-**Decision**: Keep branch for future dark mode work, don't merge to main
+**Future Enhancements**:
+- [ ] AI summarization of chat before conversion (Phase 2)
+- [ ] Multi-select messages for batch posting (Phase 3)
+- [ ] Branch Out Topic interaction for creating sub-projects
+- [ ] Timeline integration showing chat history as project events
+- [ ] Canvas panel accessible after conversion
 
 ## Tech Stack
 
 - React 19 + Vite
 - Tailwind CSS v4
 - React Router
-- AI: OpenRouter (free models) - currently using `qwen/qwen3-32b`
+- Claude API (Sonnet 4.6) via OpenRouter
 - Storybook for component development
 
 ## Code Conventions
@@ -189,83 +158,44 @@ Implementing idea → collaboration → project journey:
 - Add Storybook stories for new UI components
 - Use Tailwind utility classes for styling
 - No TypeScript (pure JS/JSX)
+- Agent avatars use brand colors: Computer (#6366F1), Claude (#CC785C)
 
 ## Environment
 
-- Dev server: `npm run dev` (http://localhost:5174)
+- Dev server: `npm run dev -- --port 5174` (http://localhost:5174)
 - Storybook: `npm run storybook`
-- AI: OpenRouter API with free model tier
-- Key in `.env.local`: `VITE_OPENAI_API_KEY`
+- AI calls currently client-side (prototype; move to backend for production)
+- **Important**: Always clear localStorage after pulling changes: `localStorage.clear(); location.reload();`
 
-## Key Files Modified
+## Git Commits (May 14-16, 2026)
 
-**Computer Agent (Part 1):**
-- `src/components/MessageBubble.jsx` - Computer avatar with two-bar logo
-- `src/components/ChatWindow.jsx` - Weekly rundown, @mention handling
-- `src/lib/mentionDetection.js` - @mention pattern detection
-- `src/lib/aiClient.js` - OpenRouter integration with headers
+```
+2b63a84 Fix: Preserve isMember field when reading projects from localStorage
+565bf29 Add debug logging to track project disappearance issue
+b1f20e5 Default nav to collapsed state
+0a9de4a Add collapsible nav sidebar with icon-only mode
+674b05b Open chat and expand project after conversion
+d714791 Fix: Export convertChatToProject from useChats hook
+0378772 Pass projectId to ChatWindow and add debug logging
+1d2de57 Pre-link 'New Design System' chat to Arcade project
+9276339 Show converted chat in project chat window and fix modal buttons
+2c381a7 Fix navigation and collapse Build team by default
+0a16dc1 Shorten Arcade title and add purple K icon for Agentic Kanban
+5e3c683 Fix: Remove project limit to show all 4 projects
+753a9a3 Make Arcade project pre-seeded for safe demo flow
+6e81678 Add conversation-to-project conversion flow with Arcade DS demo
+```
 
-**Send to Timeline (Part 3):**
-- `src/context/IssuesContext.jsx` - Added history field to projects
-- `src/components/DocumentHistoryPlaceholder.jsx` - Real history rendering + highlight animation + scroll-to-view
-- `src/components/MessageBubble.jsx` - Two-icon hover UI (copy + post) with tooltips and success feedback
-- `src/components/ChatWindow.jsx` - Post to timeline handler with onTimelinePosted callback
-- `src/components/ProjectPage.jsx` - Tab switching + highlight state management + handler registration
-- `src/components/AppWorkspaceLayout.jsx` - Coordinate timeline posting between ChatWindow and ProjectPage via refs
-- `src/lib/timelineHelpers.js` - Timestamp formatting, event creation
-- `src/index.css` - Multiple animations: highlight-fade, tooltip-in, post-success
+## Previous Work (Consolidated)
 
-## Plans & Documentation
+### From feat/project-chat-interactions (merged):
+- Projects as Spaces Navigation Architecture
+- Computer Agent Weekly Rundown
+- Agent Owners with Visual Identity
+- Computer Page Rebuild
+- Floating Chat Windows
+- Send to Timeline
+- Arcade Design System Integration
+- Canvas Component
 
-- **Implementation plan**: `.claude/plans/send-to-timeline.md`
-- **Session tracking**: Project plans now stored in `.claude/plans/` (project-local)
-
-## Testing Checklist
-
-**Part 1 - Computer Agent:**
-- [x] Computer appears with purple avatar in project chat
-- [x] Weekly rundown posts after 2s
-- [x] @computer triggers AI response
-- [x] Messages render properly
-
-**Part 3 - Send to Timeline:**
-- [x] Hover reveals 2 icons (copy + post) on chat messages
-- [x] Tooltips appear on icon hover with 400ms delay
-- [x] Copy icon copies message to clipboard
-- [x] Post icon posts to timeline with success feedback
-- [x] Success animation: checkmark + purple + bounce + "Posted!" tooltip
-- [x] Auto-switch to History tab after posting
-- [x] Highlight posted message with yellow fade
-- [x] Smooth scroll to highlighted event
-- [x] Timeline persists across refresh
-- [x] Timestamps format correctly
-- [x] Icon container styling: card with shadow, hover states, proper spacing
-
-## Next Steps
-
-### Ready for PR
-Feature is complete and polished. Consider creating PR for `feat/project-chat-interactions` branch.
-
-### Future Work (Marked for Later)
-- **Phase 2 - AI Summarization**: SummarizeDialog with editable AI-generated summary
-- **Phase 3 - Multi-Select**: Checkbox selection + batch posting with combined summary
-- **Branch Out Topic**: Sub-threading feature (currently skipped)
-
-## Recent Work
-
-**Session 1 (May 8, 2026 - Evening):**
-- Replaced single + button with two-icon pattern (Copy + Post)
-- Added professional tooltips with Arcade design system integration
-- Implemented success feedback (checkmark, color change, bounce animation)
-- Added auto-switch to History tab when posting
-- Implemented yellow highlight animation on posted messages
-- Added smooth scroll to highlighted events
-- Polished icon container with card-style background and shadows
-- Coordinated state between ChatWindow, AppWorkspaceLayout, ProjectPage, DocumentHistoryPlaceholder
-
-## Commits
-
-- `009211f` - Add Computer agent to project chat with weekly rundown
-- `3634001` - Implement Send to Timeline feature (Phase 1 MVP)
-- `a5889f3` - Polish Send to Timeline with hover icons, tooltips, and visual feedback
-- `6ef0a69` - Polish Send to Timeline hover icons with card-style container
+**See main branch CLAUDE.md for full historical context.**

@@ -5,8 +5,10 @@ import { TextInput } from "./TextInput"
 import { ChatAvatar } from "./ChatAvatar"
 
 // Mock user database
-const AVAILABLE_USERS = [
+export const AVAILABLE_USERS = [
   { id: "prithvi", name: "Prithvi Sharma", email: "prithvi@devrev.ai" },
+  { id: "konstantin-dziuin", name: "Konstantin Dziuin", email: "konstantin@devrev.ai" },
+  { id: "dejan-mesar", name: "Dejan Mesar", email: "dejan@devrev.ai" },
   { id: "polina", name: "Polina Khokhonova", email: "polina@devrev.ai" },
   { id: "tim", name: "Tim Cherny", email: "tim@devrev.ai" },
   { id: "kunal", name: "Kunal Mohta", email: "kunal@devrev.ai" },
