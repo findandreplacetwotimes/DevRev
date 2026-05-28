@@ -2,36 +2,15 @@ import { createPortal } from "react-dom"
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useAnchoredPopoverPosition } from "../hooks/useAnchoredPopoverPosition"
 import { useProjects } from "../context/IssuesContext"
-import { ChatAvatar } from "./ChatAvatar"
 import { ChatToggleIcon } from "./ChatToggleIcon"
 import { Control } from "./Control"
-import { MenuItem } from "./MenuItem"
 import { NavItem } from "./NavItem"
 
 const modalShadow =
   "0px 6px 13px rgba(0,0,0,0.10), 0px 23px 23px rgba(0,0,0,0.09), 0px 52px 31px rgba(0,0,0,0.05), 0px 92px 37px rgba(0,0,0,0.01), 0px 144px 40px rgba(0,0,0,0)"
 const MENU_WIDTH_PX = 202
 const EDGE_GUTTER_PX = 8
-
-function MeAvatar({ selected = false }) {
-  return (
-    <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden">
-      <span
-        className={`absolute left-[5px] top-[5px] size-[18px] rounded-[999px] border border-transparent transition-colors duration-150 ${
-          selected
-            ? "border border-white bg-white"
-            : "bg-[var(--background-primary-subtle)] group-hover:border-white group-hover:bg-white"
-        }`}
-      />
-      <span
-        className="relative z-[1] inline-flex h-[11px] w-[18px] items-center justify-center text-center text-[9.9px] text-[#737072]"
-        style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 520' }}
-      >
-        M
-      </span>
-    </span>
-  )
-}
+const CHIP_FONT = '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif'
 
 function TeamAvatar({ color = "orange", label = "B" }) {
   const bgColors = {
@@ -45,12 +24,34 @@ function TeamAvatar({ color = "orange", label = "B" }) {
       className="inline-flex size-[20px] shrink-0 items-center justify-center rounded-[4px] text-[10px] font-medium text-white"
       style={{
         background: bgColors[color] || bgColors.orange,
-        fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+        fontFamily: CHIP_FONT,
         fontVariationSettings: '"wght" 540'
       }}
     >
       {label}
     </span>
+  )
+}
+
+function SectionLabel({ title, showPlus = false, onPlus }) {
+  return (
+    <div className="flex h-[24px] items-center px-[6px]">
+      <span
+        className="flex-1 text-[11px] uppercase tracking-[0.05em] text-[#737072]"
+        style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 540' }}
+      >
+        {title}
+      </span>
+      {showPlus && (
+        <button
+          type="button"
+          onClick={onPlus}
+          className="text-[14px] text-[#737072] hover:text-[#898789] leading-none"
+        >
+          +
+        </button>
+      )}
+    </div>
   )
 }
 
@@ -60,17 +61,11 @@ function CollapsibleSection({ title, isOpen, onToggle, children, showPlus = fals
       <button
         type="button"
         onClick={onToggle}
-        className="flex h-[28px] w-full items-center gap-[4px] px-[6px] text-left transition-colors duration-150 hover:bg-[var(--background-primary-subtle)] rounded-[2px]"
+        className="flex h-[24px] w-full items-center gap-[4px] px-[6px] text-left"
       >
-        <img
-          src="/icons/chevron-down.svg"
-          alt=""
-          className="size-[12px] transition-transform duration-200"
-          style={{ transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)" }}
-        />
         <span
           className="flex-1 text-[11px] uppercase tracking-[0.05em] text-[#737072]"
-          style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
+          style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 540' }}
         >
           {title}
         </span>
@@ -106,7 +101,7 @@ function CollapsibleTeam({ name, avatar, isOpen, onToggle, children, selected = 
         {avatar}
         <span
           className="flex-1 text-[14px] text-[#0f0e0f]"
-          style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 440' }}
+          style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 440' }}
         >
           {name}
         </span>
@@ -120,9 +115,17 @@ function CollapsibleTeam({ name, avatar, isOpen, onToggle, children, selected = 
   )
 }
 
-const WORKSPACE_ITEMS = [
-  { id: "projects", label: "Projects", iconName: "page" },
-  { id: "views", label: "Views", iconName: "page", disabled: true },
+// Custom free-form sections the user has created
+const CUSTOM_SECTIONS = [
+  {
+    id: "support-views",
+    title: "Support Views",
+    items: [
+      { id: "all-open-tickets", label: "All open tickets", iconName: "page" },
+      { id: "escalated", label: "Escalated", iconName: "page" },
+      { id: "high-priority", label: "High priority", iconName: "page" },
+    ],
+  },
 ]
 
 const BUILD_TEAM_ITEMS = [
@@ -139,12 +142,6 @@ const OTHER_TEAM_ITEMS = [
   { id: "sprints", label: "Sprints", iconName: "page", disabled: true },
 ]
 
-const SECONDARY_ITEMS = [
-  { id: "inbox", label: "Inbox", iconName: "inbox" },
-  { id: "discover", label: "Discover", iconName: "discover" },
-  { id: "agent-studio", label: "Agent studio", iconName: "agent" },
-  { id: "me", label: "Me", leading: <MeAvatar /> },
-]
 
 export function NavPanel({
   className = "",
@@ -152,6 +149,7 @@ export function NavPanel({
   defaultSelectedItemId = "projects",
   onSelectItem,
   onComputerClick,
+  onSearchClick,
   chatPanelOpen = true,
   chatVariant = "build-team",
   recordPanelOpen = true,
@@ -162,16 +160,16 @@ export function NavPanel({
   const isControlledSelection = selectedItemId !== undefined
   const currentSelectedItemId = isControlledSelection ? selectedItemId : uncontrolledSelectedItemId
 
-  // Section state
-  const [myWorkOpen, setMyWorkOpen] = useState(false)
-  const [workspaceOpen, setWorkspaceOpen] = useState(true)
-  const [favouritesOpen, setFavouritesOpen] = useState(false)
+  // Section collapse state
+  const [teamsOpen, setTeamsOpen] = useState(true)
+  const [projectsSectionOpen, setProjectsSectionOpen] = useState(true)
   const [buildTeamOpen, setBuildTeamOpen] = useState(true)
   const [foundationsTeamOpen, setFoundationsTeamOpen] = useState(false)
   const [growthTeamOpen, setGrowthTeamOpen] = useState(false)
   const [supportTeamOpen, setSupportTeamOpen] = useState(false)
-  const [chatsOpen, setChatsOpen] = useState(false)
-
+  const [customSectionStates, setCustomSectionStates] = useState(() =>
+    Object.fromEntries(CUSTOM_SECTIONS.map((s) => [s.id, true]))
+  )
   // Project spaces state
   const { projects } = useProjects()
   const [projectStates, setProjectStates] = useState({})
@@ -183,23 +181,22 @@ export function NavPanel({
   }, [projects])
 
   const allItemIds = useMemo(() => {
-    const baseIds = [...WORKSPACE_ITEMS, ...BUILD_TEAM_ITEMS, ...SECONDARY_ITEMS].map((item) => item.id)
+    const baseIds = BUILD_TEAM_ITEMS.map((item) => item.id)
     const projectIds = memberProjects.flatMap(p => [
       `project-${p.id}`,
       `project-${p.id}-chat`,
     ])
-    return [...baseIds, ...projectIds]
+    const customIds = CUSTOM_SECTIONS.flatMap(s => s.items.map(i => i.id))
+    return ["inbox", "discover", ...baseIds, ...projectIds, ...customIds]
   }, [memberProjects])
 
-  const hasPanelToggles =
-    typeof onToggleChatPanel === "function" || typeof onToggleRecordPanel === "function"
-
-  const meMenuId = useId()
-  const meTriggerRef = useRef(null)
-  const meMenuRef = useRef(null)
-  const [meMenuOpen, setMeMenuOpen] = useState(false)
-  const mePopoverPos = useAnchoredPopoverPosition(meTriggerRef, meMenuOpen, 2)
-  const [meMenuStyle, setMeMenuStyle] = useState({ top: 0, left: 0 })
+  // Profile dropdown (avatar button in top bar)
+  const profileMenuId = useId()
+  const profileTriggerRef = useRef(null)
+  const profileMenuRef = useRef(null)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const profilePopoverPos = useAnchoredPopoverPosition(profileTriggerRef, profileMenuOpen, 2)
+  const [profileMenuStyle, setProfileMenuStyle] = useState({ top: 0, left: 0 })
 
   const handleSelectItem = (itemId) => {
     if (!allItemIds.includes(itemId)) return
@@ -209,207 +206,156 @@ export function NavPanel({
     onSelectItem?.(itemId)
   }
 
-  const handleMeClick = () => {
-    handleSelectItem("me")
-    setMeMenuOpen((prev) => !prev)
-  }
-
+  // Profile menu positioning
   useEffect(() => {
-    if (!meMenuOpen) return undefined
-    const onDocumentPointerDown = (event) => {
-      const t = event.target
-      if (meTriggerRef.current?.contains(t) || meMenuRef.current?.contains(t)) return
-      setMeMenuOpen(false)
+    if (!profileMenuOpen) return undefined
+    const onDown = (e) => {
+      if (profileTriggerRef.current?.contains(e.target) || profileMenuRef.current?.contains(e.target)) return
+      setProfileMenuOpen(false)
     }
-    document.addEventListener("pointerdown", onDocumentPointerDown)
-    return () => document.removeEventListener("pointerdown", onDocumentPointerDown)
-  }, [meMenuOpen])
+    document.addEventListener("pointerdown", onDown)
+    return () => document.removeEventListener("pointerdown", onDown)
+  }, [profileMenuOpen])
 
   useLayoutEffect(() => {
-    if (!meMenuOpen) return undefined
-
-    const positionMenu = () => {
-      const triggerRect = meTriggerRef.current?.getBoundingClientRect()
-      if (!triggerRect) return
-      const menuHeight = meMenuRef.current?.offsetHeight ?? 120
-      const viewportW = window.innerWidth
-      const viewportH = window.innerHeight
-
-      // Prefer below; flip above when close to bottom edge.
-      let top = Math.round(triggerRect.bottom + 2)
-      const bottomOverflow = top + menuHeight - viewportH + EDGE_GUTTER_PX
-      if (bottomOverflow > 0) {
-        top = Math.round(triggerRect.top - menuHeight - 2)
-      }
-      // Clamp inside viewport in extreme short-height cases.
-      top = Math.max(EDGE_GUTTER_PX, Math.min(top, viewportH - menuHeight - EDGE_GUTTER_PX))
-
-      // Keep menu within left/right viewport edges.
-      let left = Math.round(triggerRect.left)
-      left = Math.max(EDGE_GUTTER_PX, Math.min(left, viewportW - MENU_WIDTH_PX - EDGE_GUTTER_PX))
-
-      setMeMenuStyle({ top, left })
+    if (!profileMenuOpen) return undefined
+    const position = () => {
+      const r = profileTriggerRef.current?.getBoundingClientRect()
+      if (!r) return
+      const menuH = profileMenuRef.current?.offsetHeight ?? 300
+      const vH = window.innerHeight
+      let top = Math.round(r.bottom + 4)
+      if (top + menuH > vH - EDGE_GUTTER_PX) top = Math.round(r.top - menuH - 4)
+      top = Math.max(EDGE_GUTTER_PX, top)
+      setProfileMenuStyle({ top, left: Math.round(r.left) })
     }
-
-    positionMenu()
-    const id = window.requestAnimationFrame(positionMenu)
-    window.addEventListener("scroll", positionMenu, true)
-    window.addEventListener("resize", positionMenu)
-    return () => {
-      window.cancelAnimationFrame(id)
-      window.removeEventListener("scroll", positionMenu, true)
-      window.removeEventListener("resize", positionMenu)
-    }
-  }, [meMenuOpen, mePopoverPos])
+    position()
+    const id = window.requestAnimationFrame(position)
+    window.addEventListener("resize", position)
+    return () => { window.cancelAnimationFrame(id); window.removeEventListener("resize", position) }
+  }, [profileMenuOpen, profilePopoverPos])
 
   useEffect(() => {
-    if (!meMenuOpen) return undefined
-    const onKey = (event) => {
-      if (event.key === "Escape") setMeMenuOpen(false)
-    }
+    if (!profileMenuOpen) return undefined
+    const onKey = (e) => { if (e.key === "Escape") setProfileMenuOpen(false) }
     document.addEventListener("keydown", onKey)
     return () => document.removeEventListener("keydown", onKey)
-  }, [meMenuOpen])
+  }, [profileMenuOpen])
 
   return (
     <aside
-      className={`flex h-full min-h-0 w-[220px] shrink-0 flex-col items-start overflow-hidden border-r border-[#ececec] bg-white px-[12px] py-[14px] ${className}`}
+      className={`flex h-full min-h-0 w-[220px] shrink-0 flex-col items-start overflow-y-auto overflow-x-hidden border-r border-[#ececec] bg-white px-[12px] py-[14px] ${className}`}
     >
-      <div className="flex w-full items-center gap-[4px]">
+      {/* Top bar */}
+      <div className="flex w-full items-center gap-[4px] mb-[8px]">
+        {/* User profile avatar */}
+        <button
+          ref={profileTriggerRef}
+          type="button"
+          id={`${profileMenuId}-trigger`}
+          aria-haspopup="menu"
+          aria-expanded={profileMenuOpen}
+          onClick={() => setProfileMenuOpen((p) => !p)}
+          className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full overflow-hidden transition-opacity duration-150 hover:opacity-80"
+          aria-label="Profile"
+        >
+          <span
+            className="inline-flex size-[28px] items-center justify-center rounded-full bg-[#d0cfd0] text-[11px] text-[#555]"
+            style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 540' }}
+          >
+            M
+          </span>
+        </button>
+
+        {/* Settings */}
         <button
           type="button"
-          onClick={onComputerClick}
-          className="flex h-[29px] min-w-0 flex-1 items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+          className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] transition-colors duration-150 hover:bg-[var(--background-primary-subtle)]"
+          aria-label="Settings"
         >
-          <img src="/icons/computer-wordmark.svg" alt="computer" className="h-[14px] w-[80px]" draggable={false} />
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="#737072" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M11.3 8.6a.9.9 0 0 0 .18 1l.06.06a1.1 1.1 0 0 1-1.56 1.56l-.06-.06a.9.9 0 0 0-1-.18.9.9 0 0 0-.55.82v.17a1.1 1.1 0 0 1-2.2 0V11.9a.9.9 0 0 0-.59-.82.9.9 0 0 0-1 .18l-.06.06a1.1 1.1 0 0 1-1.56-1.56l.06-.06a.9.9 0 0 0 .18-1 .9.9 0 0 0-.82-.55H2.1a1.1 1.1 0 0 1 0-2.2h.08a.9.9 0 0 0 .82-.59.9.9 0 0 0-.18-1l-.06-.06a1.1 1.1 0 0 1 1.56-1.56l.06.06a.9.9 0 0 0 1 .18h.04a.9.9 0 0 0 .55-.82V2.1a1.1 1.1 0 0 1 2.2 0v.08a.9.9 0 0 0 .55.82.9.9 0 0 0 1-.18l.06-.06a1.1 1.1 0 0 1 1.56 1.56l-.06.06a.9.9 0 0 0-.18 1v.04a.9.9 0 0 0 .82.55h.17a1.1 1.1 0 0 1 0 2.2H11.9a.9.9 0 0 0-.82.55 0 0Z" stroke="#737072" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
         </button>
-        <Control type="iconOnly" leadingIcon="clock" label="" />
-      </div>
 
-      <div className="h-[20px] w-[192px] shrink-0 bg-white" />
-
-      {/* MY WORK */}
-      <div className="w-[194px]">
-        <CollapsibleSection
-          title="My Work"
-          isOpen={myWorkOpen}
-          onToggle={() => setMyWorkOpen(!myWorkOpen)}
+        {/* Layout toggle (sidebar) */}
+        <button
+          type="button"
+          className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] transition-colors duration-150 hover:bg-[var(--background-primary-subtle)]"
+          aria-label="Toggle layout"
         >
-          {/* Empty for now */}
-        </CollapsibleSection>
-      </div>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="1" width="12" height="12" rx="2" stroke="#737072" strokeWidth="1.2"/>
+            <line x1="4.5" y1="1" x2="4.5" y2="13" stroke="#737072" strokeWidth="1.2"/>
+          </svg>
+        </button>
 
-      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+        <div className="flex-1" />
 
-      {/* WORKSPACE */}
-      <div className="w-[194px]">
-        <CollapsibleSection
-          title="Workspace"
-          isOpen={workspaceOpen}
-          onToggle={() => setWorkspaceOpen(!workspaceOpen)}
-          showPlus
+        {/* + New */}
+        <button
+          type="button"
+          className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-[4px] bg-[#0f0e0f] transition-colors duration-150 hover:bg-[#2a282a]"
+          aria-label="New"
         >
-          {WORKSPACE_ITEMS.map((item) => {
-            // Special case: Chats uses same icon as Lobby
-            if (item.id === "chats") {
-              return (
-                <NavItem
-                  key={item.id}
-                  label={item.label}
-                  leading={<ChatToggleIcon isOpen={false} />}
-                  selected={currentSelectedItemId === item.id}
-                  className={`w-full ${item.disabled ? "cursor-not-allowed" : ""}`}
-                  onClick={() => !item.disabled && handleSelectItem(item.id)}
-                />
-              )
-            }
-            return (
-              <NavItem
-                key={item.id}
-                label={item.label}
-                iconName={item.iconName}
-                selected={currentSelectedItemId === item.id}
-                className={`w-full ${item.disabled ? "cursor-not-allowed" : ""}`}
-                onClick={() => !item.disabled && handleSelectItem(item.id)}
-              />
-            )
-          })}
-        </CollapsibleSection>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 1v10M1 6h10" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
       </div>
 
-      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+      {/* Computer button */}
+      <button
+        type="button"
+        onClick={onComputerClick}
+        className="flex h-[29px] w-full items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] mb-[8px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+      >
+        <img src="/icons/computer-wordmark.svg" alt="computer" className="h-[14px] w-[80px]" draggable={false} />
+      </button>
 
-      {/* YOUR PROJECTS */}
-      {memberProjects.length > 0 && (
-        <div className="w-[194px] flex flex-col gap-[4px]">
-          <div className="flex h-[24px] items-center px-[6px]">
-            <span
-              className="text-[11px] uppercase tracking-[0.05em] text-[#737072]"
-              style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
-            >
-              Your Projects
-            </span>
-          </div>
-          {memberProjects.map((project) => {
-            const isProjectOpen = projectStates[project.id] ?? false
-            const isThisProjectChatActive = chatVariant === `project-${project.id}`
-            const showChatOpen = chatPanelOpen && isThisProjectChatActive
-            return (
-              <CollapsibleTeam
-                key={project.id}
-                name={project.title || project.id}
-                avatar={<TeamAvatar color="orange" label={project.title?.[0] || "P"} />}
-                isOpen={isProjectOpen}
-                onToggle={() => setProjectStates(prev => ({ ...prev, [project.id]: !isProjectOpen }))}
-              >
-                <NavItem
-                  label="Project chat"
-                  leading={<ChatToggleIcon isOpen={showChatOpen} />}
-                  selected={false}
-                  className="w-full h-[24px] text-[13px] px-[6px]"
-                  onClick={() => handleSelectItem(`project-${project.id}-chat`)}
-                />
-                <NavItem
-                  label="Scope"
-                  iconName="page"
-                  selected={currentSelectedItemId === `project-${project.id}`}
-                  className="w-full h-[24px] text-[13px] px-[6px]"
-                  onClick={() => handleSelectItem(`project-${project.id}`)}
-                />
-                <NavItem
-                  label="Execution Timeline"
-                  iconName="page"
-                  selected={false}
-                  className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
-                  onClick={() => {}}
-                />
-                <NavItem
-                  label="Release Phases"
-                  iconName="page"
-                  selected={false}
-                  className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
-                  onClick={() => {}}
-                />
-              </CollapsibleTeam>
-            )
-          })}
-        </div>
-      )}
+      {/* Search / Cmd+K */}
+      <button
+        type="button"
+        onClick={onSearchClick}
+        className="flex h-[30px] w-full items-center gap-[8px] rounded-[4px] border border-[#e5e3e5] bg-white px-[8px] transition-colors duration-150 hover:border-[#d0ced0] hover:bg-[var(--background-primary-subtle)] mb-[12px]"
+      >
+        <img src="/icons/search.svg" alt="" className="h-[13px] w-[13px] opacity-35" draggable={false} />
+        <span
+          className="flex-1 text-left text-[13px] text-[#b0aeb0]"
+          style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 400' }}
+        >
+          Search
+        </span>
+        <kbd
+          className="rounded-[3px] border border-[#e0dfe0] px-[4px] py-[1px] text-[10px] text-[#c0bec0]"
+          style={{ fontFamily: CHIP_FONT }}
+        >
+          ⌘K
+        </kbd>
+      </button>
 
-      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+      {/* Top-level nav: Updates, Explore */}
+      <div className="flex w-full flex-col gap-[2px] mb-[12px]">
+        <NavItem
+          label="Updates"
+          iconName="inbox"
+          selected={currentSelectedItemId === "inbox"}
+          className="w-full"
+          onClick={() => handleSelectItem("inbox")}
+        />
+        <NavItem
+          label="Explore"
+          iconName="discover"
+          selected={currentSelectedItemId === "discover"}
+          className="w-full"
+          onClick={() => handleSelectItem("discover")}
+        />
+      </div>
 
       {/* YOUR TEAMS */}
-      <div className="w-[194px] flex flex-col gap-[4px]">
-        <div className="flex h-[24px] items-center px-[6px]">
-          <span
-            className="text-[11px] uppercase tracking-[0.05em] text-[#737072]"
-            style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}
-          >
-            Your Teams
-          </span>
-        </div>
-
-        {/* Build Team */}
+      <div className="w-full mb-[12px]">
+        <CollapsibleSection title="Your Teams" isOpen={teamsOpen} onToggle={() => setTeamsOpen(!teamsOpen)}>
         <CollapsibleTeam
           name="Build"
           avatar={<TeamAvatar color="orange" label="B" />}
@@ -417,7 +363,6 @@ export function NavPanel({
           onToggle={() => setBuildTeamOpen(!buildTeamOpen)}
         >
           {BUILD_TEAM_ITEMS.map((item) => {
-            // Special handling for Build chat
             if (item.id === "build-chat") {
               const isBuildChatActive = chatVariant === "build-team"
               const showChatOpen = chatPanelOpen && isBuildChatActive
@@ -445,7 +390,6 @@ export function NavPanel({
           })}
         </CollapsibleTeam>
 
-        {/* Other Teams - collapsed */}
         <CollapsibleTeam
           name="Foundations"
           avatar={<TeamAvatar color="orange" label="F" />}
@@ -499,116 +443,189 @@ export function NavPanel({
             />
           ))}
         </CollapsibleTeam>
-      </div>
-
-      <div className="min-h-0 w-[192px] flex-1 bg-white" />
-
-      {/* CHATS */}
-      <div className="w-[194px]">
-        <CollapsibleSection
-          title="Chats"
-          isOpen={chatsOpen}
-          onToggle={() => setChatsOpen(!chatsOpen)}
-        >
-          <NavItem
-            label="12 Macros failing with inval..."
-            leading={<span className="inline-flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-[var(--foreground-error)] text-[10px] font-medium text-white" style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}>12</span>}
-            selected={false}
-            className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
-            onClick={() => {}}
-          />
-          <NavItem
-            label="Kavinash"
-            leading={<ChatAvatar initial="K" />}
-            selected={false}
-            className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
-            onClick={() => {}}
-          />
-          <NavItem
-            label="13 Crash when importing la..."
-            leading={<span className="inline-flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-[var(--foreground-error)] text-[10px] font-medium text-white" style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}>13</span>}
-            selected={false}
-            className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
-            onClick={() => {}}
-          />
-          <NavItem
-            label="Lina"
-            leading={<ChatAvatar initial="L" />}
-            selected={false}
-            className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
-            onClick={() => {}}
-          />
         </CollapsibleSection>
       </div>
 
-      <div className="h-[12px] w-[192px] shrink-0 bg-white" />
+      {/* YOUR PROJECTS */}
+      {memberProjects.length > 0 && (
+        <div className="w-full mb-[12px]">
+          <CollapsibleSection title="Your Projects" isOpen={projectsSectionOpen} onToggle={() => setProjectsSectionOpen(!projectsSectionOpen)}>
+          {memberProjects.map((project) => {
+            const isProjectOpen = projectStates[project.id] ?? false
+            const isThisProjectChatActive = chatVariant === `project-${project.id}`
+            const showChatOpen = chatPanelOpen && isThisProjectChatActive
+            return (
+              <CollapsibleTeam
+                key={project.id}
+                name={project.title || project.id}
+                avatar={<TeamAvatar color="orange" label={project.title?.[0] || "P"} />}
+                isOpen={isProjectOpen}
+                onToggle={() => setProjectStates(prev => ({ ...prev, [project.id]: !isProjectOpen }))}
+              >
+                <NavItem
+                  label="Project chat"
+                  leading={<ChatToggleIcon isOpen={showChatOpen} />}
+                  selected={false}
+                  className="w-full h-[24px] text-[13px] px-[6px]"
+                  onClick={() => handleSelectItem(`project-${project.id}-chat`)}
+                />
+                <NavItem
+                  label="Scope"
+                  iconName="page"
+                  selected={currentSelectedItemId === `project-${project.id}`}
+                  className="w-full h-[24px] text-[13px] px-[6px]"
+                  onClick={() => handleSelectItem(`project-${project.id}`)}
+                />
+                <NavItem
+                  label="Execution Timeline"
+                  iconName="page"
+                  selected={false}
+                  className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+                  onClick={() => {}}
+                />
+                <NavItem
+                  label="Release Phases"
+                  iconName="page"
+                  selected={false}
+                  className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
+                  onClick={() => {}}
+                />
+              </CollapsibleTeam>
+            )
+          })}
+          </CollapsibleSection>
+        </div>
+      )}
 
-      {/* Bottom items */}
-      <div className="flex w-full flex-col gap-[4px]">
-        {SECONDARY_ITEMS.slice(0, 3).map((item) => (
-          <NavItem
-            key={item.id}
-            label={item.label}
-            iconName={item.iconName}
-            selected={currentSelectedItemId === item.id}
-            className="w-full"
-            onClick={() => handleSelectItem(item.id)}
-          />
-        ))}
-        <div className="h-[12px] w-full shrink-0 bg-white" />
-        <NavItem
-          ref={meTriggerRef}
-          label="Me"
-          className="w-full"
-          id={`${meMenuId}-trigger`}
-          leading={<MeAvatar selected={currentSelectedItemId === "me" || meMenuOpen} />}
-          selected={currentSelectedItemId === "me" || meMenuOpen}
-          onClick={handleMeClick}
-          aria-haspopup="menu"
-          aria-expanded={meMenuOpen}
-          aria-controls={meMenuOpen ? `${meMenuId}-menu` : undefined}
-        />
+      {/* CUSTOM FREE-FORM SECTIONS */}
+      {CUSTOM_SECTIONS.map((section) => (
+        <div key={section.id} className="w-full mb-[12px]">
+          <CollapsibleSection
+            title={section.title}
+            isOpen={customSectionStates[section.id] ?? true}
+            onToggle={() =>
+              setCustomSectionStates((prev) => ({ ...prev, [section.id]: !(prev[section.id] ?? true) }))
+            }
+          >
+            {section.items.map((item) => (
+              <NavItem
+                key={item.id}
+                label={item.label}
+                iconName={item.iconName}
+                selected={currentSelectedItemId === item.id}
+                className="w-full cursor-not-allowed"
+                onClick={() => {}}
+              />
+            ))}
+          </CollapsibleSection>
+        </div>
+      ))}
+
+      <div className="min-h-0 w-full flex-1" />
+
+      {/* Bottom: customer support chat button */}
+      <div className="flex w-full items-center justify-start pb-[4px]">
+        <button
+          type="button"
+          className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-[#6366F1] shadow-md transition-opacity duration-150 hover:opacity-90"
+          aria-label="Customer support"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 2C5.13 2 2 4.91 2 8.5c0 1.74.72 3.32 1.9 4.48L3 15l2.18-.88C6.27 14.68 7.6 15 9 15c3.87 0 7-2.91 7-6.5S12.87 2 9 2Z" fill="white"/>
+          </svg>
+        </button>
       </div>
 
-      {meMenuOpen && typeof document !== "undefined"
+      {profileMenuOpen && typeof document !== "undefined"
         ? createPortal(
             <div
-              ref={meMenuRef}
-              id={`${meMenuId}-menu`}
+              ref={profileMenuRef}
+              id={`${profileMenuId}-menu`}
               role="menu"
-              aria-label="Panels"
-              className="fixed z-[2147483646] inline-flex w-[202px] flex-col items-start gap-[4px] rounded-[2px] bg-white p-[6px]"
-              style={{
-                boxShadow: modalShadow,
-                top: `${meMenuStyle.top}px`,
-                left: `${meMenuStyle.left}px`,
-              }}
+              className="fixed z-[2147483646] w-[240px] flex-col rounded-[6px] bg-white overflow-hidden"
+              style={{ boxShadow: modalShadow, top: `${profileMenuStyle.top}px`, left: `${profileMenuStyle.left}px` }}
             >
-              <MenuItem type="label" label="Panels" fullWidth />
-              {hasPanelToggles ? (
-                <>
-                  {typeof onToggleChatPanel === "function" ? (
-                    <NavItem
-                      label={chatPanelOpen ? "Hide Chat" : "Show Chat"}
-                      leading={<></>}
-                      className="w-full max-w-none pr-[6px]"
-                      onClick={() => onToggleChatPanel()}
-                    />
-                  ) : null}
-                  {typeof onToggleRecordPanel === "function" ? (
-                    <NavItem
-                      label={recordPanelOpen ? "Hide Panel" : "Show Panel"}
-                      leading={<></>}
-                      className="w-full max-w-none pr-[6px]"
-                      onClick={() => onToggleRecordPanel()}
-                    />
-                  ) : null}
-                </>
-              ) : null}
+              {/* Header */}
+              <div className="flex items-center gap-[10px] px-[14px] py-[12px] border-b border-[#f0eef0]">
+                <span
+                  className="inline-flex size-[36px] shrink-0 items-center justify-center rounded-full text-[13px] font-medium text-white"
+                  style={{ background: "hsl(259 94% 44%)", fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 600' }}
+                >
+                  KM
+                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[13px] text-[#0f0e0f] truncate" style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 500' }}>
+                    kunal-mohta
+                  </span>
+                  <span className="text-[11px] text-[#737072] truncate" style={{ fontFamily: CHIP_FONT }}>
+                    kunal@devrev.ai
+                  </span>
+                </div>
+                <span className="ml-auto size-[8px] rounded-full bg-[#22c55e] shrink-0" />
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col py-[6px] border-b border-[#f0eef0]">
+                {[
+                  { label: "Pause notifications" },
+                  { label: "Set yourself as away" },
+                  { label: "Invite members" },
+                  { label: "Settings" },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    className="flex h-[30px] w-full items-center px-[14px] text-left text-[13px] text-[#0f0e0f] hover:bg-[var(--background-primary-subtle)] transition-colors duration-100"
+                    style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 420' }}
+                    onClick={() => setProfileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Orgs */}
+              <div className="flex flex-col py-[6px] border-b border-[#f0eef0]">
+                <div className="flex items-center px-[14px] h-[24px]">
+                  <span className="flex-1 text-[11px] text-[#737072] uppercase tracking-[0.05em]" style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 540' }}>Orgs</span>
+                  <span className="text-[14px] text-[#737072]">+</span>
+                </div>
+                {[
+                  { label: "kunal-aps-0502", active: true },
+                  { label: "DevRev", active: false },
+                ].map((org) => (
+                  <button
+                    key={org.label}
+                    type="button"
+                    className="flex h-[30px] w-full items-center gap-[8px] px-[14px] text-left text-[13px] text-[#0f0e0f] hover:bg-[var(--background-primary-subtle)] transition-colors duration-100"
+                    style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 420' }}
+                  >
+                    <span className="flex-1 truncate">{org.label}</span>
+                    {org.active && (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="#0f0e0f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Log out */}
+              <div className="flex flex-col py-[6px]">
+                <button
+                  type="button"
+                  className="flex h-[30px] w-full items-center px-[14px] text-left text-[13px] text-[#0f0e0f] hover:bg-[var(--background-primary-subtle)] transition-colors duration-100"
+                  style={{ fontFamily: CHIP_FONT, fontVariationSettings: '"wght" 420' }}
+                  onClick={() => setProfileMenuOpen(false)}
+                >
+                  Log out
+                </button>
+              </div>
             </div>,
             document.body
           )
         : null}
+
     </aside>
   )
 }
