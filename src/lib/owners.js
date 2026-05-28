@@ -9,6 +9,8 @@ export const OWNERS = [
   { id: "lucas-rodriguez", name: "Lucas Rodriguez" },
   { id: "sophia-walker", name: "Sophia Walker" },
   { id: "jackson-lee", name: "Jackson Lee" },
+  { id: "computer", name: "Computer", isAgent: true },
+  { id: "claude", name: "Claude", isAgent: true },
 ]
 
 export function getOwnerById(ownerId) {

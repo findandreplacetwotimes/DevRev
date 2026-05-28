@@ -158,6 +158,7 @@ function readProjectsFromLocalStorage() {
         stage: sanitizeStage(row.stage),
         healthId: sanitizeProjectHealthId(row.healthId),
         milestones: sanitizeProjectMilestonesArray(row.milestones),
+        isMember: typeof row.isMember === "boolean" ? row.isMember : false,
       })
     }
     return out.length > 0 ? out : null

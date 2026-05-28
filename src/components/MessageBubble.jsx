@@ -10,7 +10,27 @@ const TEXT_STYLE = {
 }
 
 /** Figma `6003:6841` — 18×18 chip for group-chat inbound rows (`6003:6852`). */
-function GroupMessageAvatar({ initial = "M" }) {
+function GroupMessageAvatar({ initial = "M", isAgent = false }) {
+  if (isAgent) {
+    // Computer agent - uses Arcade intelligence color (jabuticaba purple)
+    // Logo: two vertical bars representing Computer
+    return (
+      <span
+        className="relative inline-flex size-[18px] shrink-0 items-center justify-center overflow-hidden rounded-full"
+        style={{
+          background: 'hsl(259 94% 44%)', // jabuticaba-400 from Arcade theme
+        }}
+        aria-hidden
+        title="Computer"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+          <path d="M2.5 1.5C3.05 1.5 3.5 1.9 3.5 2.5v5c0 .6-.45 1-1 1S1.5 8.1 1.5 7.5v-5c0-.6.45-1 1-1z"/>
+          <path d="M7.5 1.5c.55 0 1 .4 1 .9v5c0 .6-.45 1-1 1s-1-.4-1-1v-5c0-.5.45-.9 1-.9z"/>
+        </svg>
+      </span>
+    )
+  }
+
   const letter = (initial?.trim?.()?.[0] ?? "M").toUpperCase()
   return (
     <span
@@ -36,6 +56,8 @@ export function MessageBubble({
   state = "default",
   /** Initial letter for `type="groupPerson"` (Figma User Avatar `6003:6841`). */
   senderInitial = "M",
+  /** Set to true for agent messages in group chat */
+  isAgent = false,
 }) {
   const textRef = useRef(null)
   const [isManyLines, setIsManyLines] = useState(false)
@@ -103,7 +125,7 @@ export function MessageBubble({
     <div className={`flex w-full ${isInbound ? "justify-start" : "justify-end pr-[10px]"}`}>
       {isGroupPerson ? (
         <div className="flex max-w-[80%] items-end gap-[14px]">
-          <GroupMessageAvatar initial={senderInitial} />
+          <GroupMessageAvatar initial={senderInitial} isAgent={isAgent} />
           {bubble}
         </div>
       ) : (
