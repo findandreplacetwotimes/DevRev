@@ -10,7 +10,18 @@ const meta = {
   argTypes: {
     defaultSelectedItemId: {
       control: "select",
-      options: ["build-team", "issues", "sprints", "inbox", "discover", "agent-studio", "me"],
+      options: [
+        "build-team",
+        "issues",
+        "sprints",
+        "dev-team",
+        "dev-issues",
+        "dev-sprints",
+        "inbox",
+        "discover",
+        "agent-studio",
+        "me",
+      ],
     },
   },
   args: {

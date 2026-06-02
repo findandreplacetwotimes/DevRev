@@ -16,6 +16,7 @@ import {
   mergeMissingSeedIssues,
   mergeSeedIssueProjectLinks,
   mergeSeedMilestonesIntoProjects,
+  stripLegacyRemovedProjects,
 } from "../lib/issuesSeed"
 import { ISSUES_API_PATH } from "../lib/issuesApi"
 
@@ -274,14 +275,21 @@ export function IssuesProvider({ children }) {
         const projectList = payload?.projects
         const sprintList = payload?.sprints
         if (!cancelled && Array.isArray(issueList) && issueList.length > 0) {
-          const normalizedProjects =
+          let normalizedProjects =
             Array.isArray(projectList) && projectList.length > 0
               ? normalizeProjectsClient(projectList)
               : normalizeProjectsClient(createInitialProjects())
-          const reconciledIssues = reconcileIssueProjectFields(
+          let reconciledIssues = reconcileIssueProjectFields(
             mergeSeedIssueProjectLinks(mergeMissingSeedIssues(normalizeIssuesClient(issueList))),
             normalizedProjects
           )
+          const stripped = stripLegacyRemovedProjects(normalizedProjects, reconciledIssues)
+          normalizedProjects = stripped.projects
+          reconciledIssues = stripped.issues
+          if (normalizedProjects.length === 0) {
+            normalizedProjects = normalizeProjectsClient(createInitialProjects())
+            reconciledIssues = reconcileIssueProjectFields(reconciledIssues, normalizedProjects)
+          }
           const normalizedSprints =
             Array.isArray(sprintList) && sprintList.length > 0
               ? normalizeSprintsClient(sprintList)
@@ -305,7 +313,7 @@ export function IssuesProvider({ children }) {
         const fallbackSprints = !cancelled
           ? normalizeSprintsClient(storedSprints ?? createInitialSprints())
           : null
-        const fallbackIssues = !cancelled
+        let fallbackIssues = !cancelled
           ? reconcileIssueProjectFields(
               mergeSeedIssueProjectLinks(
                 mergeMissingSeedIssues(normalizeIssuesClient(storedIssues ?? createInitialIssues()))
@@ -314,8 +322,15 @@ export function IssuesProvider({ children }) {
             )
           : null
         if (fallbackIssues && fallbackProjects && fallbackSprints) {
-          setProjects(fallbackProjects)
-          setIssues(fallbackIssues)
+          const strippedFb = stripLegacyRemovedProjects(fallbackProjects, fallbackIssues)
+          let nextProjects = strippedFb.projects
+          let nextIssues = strippedFb.issues
+          if (nextProjects.length === 0) {
+            nextProjects = normalizeProjectsClient(createInitialProjects())
+            nextIssues = reconcileIssueProjectFields(nextIssues, nextProjects)
+          }
+          setProjects(nextProjects)
+          setIssues(nextIssues)
           setSprints(fallbackSprints)
         }
       }

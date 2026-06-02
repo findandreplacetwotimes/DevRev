@@ -31,7 +31,8 @@ export function MessageInput({ mode = "ai", initialValue = "", onSendMessage }) 
     return () => window.clearInterval(timer)
   }, [loading, hasInlineSlash])
 
-  const outerClass = mode === "message" && showActions ? "bg-[#f2f2f2]" : ""
+  /** Figma `5910:39559` — message composer strip is always `#f2f2f2` (not only when actions show). */
+  const outerClass = mode === "message" ? "bg-[#f2f2f2]" : ""
   const handleSubmit = async (currentValue) => {
     if (typeof onSendMessage === "function") {
       const nextText = currentValue.trim()

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { Icon } from "./Icon"
+import { MENTION_COLOR_INPUT, MENTION_COLOR_ON_DARK, parseMentionSegments } from "../lib/mentionUtils"
 
 const TEXT_STYLE = {
   fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -7,6 +8,19 @@ const TEXT_STYLE = {
   lineHeight: "20px",
   fontVariationSettings: '"wght" 460',
   fontFeatureSettings: "'lnum' 1, 'tnum' 1",
+}
+
+function MentionRichText({ text, mentionColor }) {
+  const segs = parseMentionSegments(text)
+  return segs.map((seg, i) =>
+    seg.type === "mention" ? (
+      <span key={i} style={{ color: mentionColor }}>
+        {seg.text}
+      </span>
+    ) : (
+      <Fragment key={i}>{seg.text}</Fragment>
+    )
+  )
 }
 
 /** Figma `6003:6841` — 18×18 chip for group-chat inbound rows (`6003:6852`). */
@@ -82,7 +96,10 @@ export function MessageBubble({
           className={`whitespace-pre-wrap break-words ${isInbound ? "text-[var(--foreground-primary)]" : "text-white"}`}
           style={TEXT_STYLE}
         >
-          {text}
+          <MentionRichText
+            text={text}
+            mentionColor={isInbound ? MENTION_COLOR_INPUT : MENTION_COLOR_ON_DARK}
+          />
         </span>
       )}
       <span
@@ -100,7 +117,15 @@ export function MessageBubble({
   )
 
   return (
-    <div className={`flex w-full ${isInbound ? "justify-start" : "justify-end pr-[10px]"}`}>
+    <div
+      className={`flex w-full ${
+        isInbound
+          ? isGroupPerson
+            ? "justify-start pl-0"
+            : "justify-start pl-[10px]"
+          : "justify-end pr-[10px]"
+      }`}
+    >
       {isGroupPerson ? (
         <div className="flex max-w-[80%] items-end gap-[14px]">
           <GroupMessageAvatar initial={senderInitial} />

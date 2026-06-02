@@ -26,3 +26,10 @@ export const Filled = {
     initialValue: "adcasascfasdfsfadsfdasfasfasfa\ncddscdsc",
   },
 }
+
+/** Type `@` to open the mention menu — Figma `5893:38435`, menu `6077:38175`. */
+export const WithAtMentionInText = {
+  args: {
+    initialValue: "@Computer please review",
+  },
+}

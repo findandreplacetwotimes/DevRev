@@ -1,4 +1,5 @@
-import { OWNERS } from "../lib/owners"
+import { getOwnerById, OWNERS } from "../lib/owners"
+import { getDueDateById } from "../lib/dueDates"
 import { DueDateSelector } from "./DueDateSelector"
 import { OwnerSelector } from "./OwnerSelector"
 import { Selector } from "./Selector"
@@ -23,6 +24,71 @@ const TITLE_STYLE = {
   letterSpacing: "-0.13px",
   fontVariationSettings: '"wght" 460',
   fontFeatureSettings: '"lnum" 1, "tnum" 1',
+}
+
+/** Inline (no chip) static control label — matches `OwnerSelector` / `DueDateSelector` inline labelStyle. */
+const INLINE_CONTROL_LABEL_STYLE = {
+  fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
+  fontSize: "13px",
+  lineHeight: "16px",
+  letterSpacing: "-0.13px",
+  fontVariationSettings: '"wght" 460',
+}
+
+/** Static (non-interactive) avatar matching `OwnerSelector` inline rest state. */
+function StaticOwnerAvatar({ name }) {
+  const initial = (name?.trim?.()?.[0] ?? "M").toUpperCase()
+  return (
+    <span className="relative inline-flex size-[28px] shrink-0 items-center justify-center overflow-hidden" aria-hidden>
+      <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[999px] bg-[var(--background-primary-subtle)]" />
+      <span
+        className="relative z-[1] inline-flex h-[11px] w-[18px] items-center justify-center text-center text-[9.9px] text-[#737072]"
+        style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 560' }}
+      >
+        {initial}
+      </span>
+    </span>
+  )
+}
+
+/**
+ * Static, read-only owner + due-date cluster used on link rows (Figma `6086:8096` — Inline state).
+ * Mirrors the visual layout of `OwnerSelector` / `DueDateSelector` `appearance="inline"` but with no buttons,
+ * no popovers, and no hover affordance.
+ */
+function StaticInlineControls({ owners, ownerId, dueDateId }) {
+  const owner = ownerId ? getOwnerById(ownerId) ?? owners?.find((o) => o.id === ownerId) ?? null : null
+  const due = dueDateId ? getDueDateById(dueDateId) : null
+  return (
+    <div className="flex h-[48px] shrink-0 items-center gap-[4px] py-[8px]" aria-hidden>
+      <span className="inline-flex min-h-[28px] items-center gap-0">
+        {owner ? (
+          <StaticOwnerAvatar name={owner.name} />
+        ) : (
+          <span className="inline-flex size-[28px] shrink-0 items-center justify-center">
+            <img src="/icons/person.svg" alt="" className="block size-[16px]" draggable={false} />
+          </span>
+        )}
+        <span
+          className="min-w-0 whitespace-nowrap text-[var(--foreground-primary)]"
+          style={INLINE_CONTROL_LABEL_STYLE}
+        >
+          {owner ? owner.name : "Owner"}
+        </span>
+      </span>
+      <span className="inline-flex min-h-[28px] items-center gap-0">
+        <span className="inline-flex size-[28px] shrink-0 items-center justify-center">
+          <img src="/icons/calendar.svg" alt="" className="block size-[16px]" draggable={false} />
+        </span>
+        <span
+          className="min-w-0 whitespace-nowrap text-[var(--foreground-primary)]"
+          style={INLINE_CONTROL_LABEL_STYLE}
+        >
+          {due ? due.controlLabel : "Due date"}
+        </span>
+      </span>
+    </div>
+  )
 }
 
 /**
@@ -111,6 +177,8 @@ export function ListItemRow({
   text = "",
   titleIsPlaceholder = false,
   showControls = true,
+  /** When false, render owner + due date as static inline labels (Figma `6086:8096`) instead of chip selectors. */
+  controlsInteractive = true,
   showMore = false,
   showMoreIcon = true,
   showSelectorColumn = true,
@@ -132,8 +200,6 @@ export function ListItemRow({
   return (
     <div
       className={`group/row flex w-full min-w-0 items-stretch overflow-visible ${
-        onRowClick ? "cursor-pointer" : "cursor-default"
-      } ${
         highlighted ? "bg-[var(--control-bg-rest)]" : "hover:bg-[var(--control-bg-rest)]"
       } ${className}`.trim()}
       onClick={onRowClick ? goRow : undefined}
@@ -159,17 +225,21 @@ export function ListItemRow({
         />
       </div>
       {showControls ? (
-        <div
-          className="flex h-[48px] shrink-0 items-center gap-[4px]"
-          data-list-item-no-nav
-        >
-          <OwnerSelector
-            owners={owners}
-            selectedOwnerId={ownerId}
-            onChange={onOwnerChange ?? (() => {})}
-          />
-          <DueDateSelector value={dueDateId} onChange={onDueDateChange ?? (() => {})} />
-        </div>
+        controlsInteractive ? (
+          <div
+            className="flex h-[48px] shrink-0 items-center gap-[4px]"
+            data-list-item-no-nav
+          >
+            <OwnerSelector
+              owners={owners}
+              selectedOwnerId={ownerId}
+              onChange={onOwnerChange ?? (() => {})}
+            />
+            <DueDateSelector value={dueDateId} onChange={onDueDateChange ?? (() => {})} />
+          </div>
+        ) : (
+          <StaticInlineControls owners={owners} ownerId={ownerId} dueDateId={dueDateId} />
+        )
       ) : null}
       {showMore ? (
         <div data-list-item-no-nav>

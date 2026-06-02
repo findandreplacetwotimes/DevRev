@@ -8,14 +8,30 @@ import {
   SLASH_TEXT_STYLE,
 } from "../lib/slashCommandConfig"
 import { useSlashCommandWorkflow } from "../hooks/useSlashCommandWorkflow"
-import { getTextareaLineBottomOffset } from "../lib/measureTextareaLineBottom"
+import { getTextareaCaretLineMetrics } from "../lib/measureTextareaLineBottom"
 import { trimTrailingEmptyLines } from "../lib/trimTrailingEmptyLines"
 import { NakeAiStrip } from "./NakeAiStrip"
 
 const STRIP_HEIGHT_PX = 40
-const STRIP_GAP_PX = 8
+/** Gap (px) between the bottom of the caret / selection line and the top of the Computer strip. */
+const COMPUTER_STRIP_GAP_BELOW_LINE_PX = 4
+
+/** Char index whose line determines strip Y: caret, or last character of a non-empty selection. */
+function getComputerAnchorCharIndex(selStart, selEnd, valueLength) {
+  if (selStart === selEnd) return selStart
+  const hi = Math.max(selStart, selEnd)
+  const lo = Math.min(selStart, selEnd)
+  return Math.max(lo, Math.min(hi - 1, valueLength - 1))
+}
+
+function stripTopBelowLineBottom(lineBottomPx) {
+  return Math.max(0, lineBottomPx + COMPUTER_STRIP_GAP_BELOW_LINE_PX)
+}
 
 const HELPER_COPY = "Press Tab for Computer"
+
+/** Mirror-only fake selection while Computer strip is focused (native highlight hides on blur). */
+const COMPUTER_PINNED_SELECTION_BG = "rgba(71, 127, 209, 0.35)"
 
 function getCaretLineIndex(value, caret) {
   const c = Math.min(Math.max(0, caret), value.length)
@@ -56,9 +72,8 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
   const textareaRef = useRef(null)
   const computerPanelRef = useRef(null)
   const computerInputRef = useRef(null)
-  const skipAutofocusComputerRef = useRef(false)
-  const selectionRestoreRef = useRef(null)
-  const computerPlacementIndexRef = useRef(0)
+  /** Editor range pinned when Computer opens (caret or selection); overlay + strip anchor while strip is focused. */
+  const [computerPinnedSelection, setComputerPinnedSelection] = useState(null)
   const [computerOpen, setComputerOpen] = useState(false)
   const [computerDraft, setComputerDraft] = useState("")
   const [computerStripTop, setComputerStripTop] = useState(null)
@@ -93,21 +108,18 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
       if (ta) {
         const s = ta.selectionStart
         const e = ta.selectionEnd
-        const tail = Math.max(s, e)
-        computerPlacementIndexRef.current = tail
-        if (s !== e) {
-          skipAutofocusComputerRef.current = true
-          selectionRestoreRef.current = { start: s, end: e }
-        } else {
-          selectionRestoreRef.current = null
-        }
-        const { lineBottom } = getTextareaLineBottomOffset(ta, tail)
-        const top = lineBottom + STRIP_GAP_PX
+        const lo = Math.min(s, e)
+        const hi = Math.max(s, e)
+        setComputerPinnedSelection({ start: lo, end: hi })
+        const anchor = getComputerAnchorCharIndex(s, e, ta.value.length)
+        const { lineBottom } = getTextareaCaretLineMetrics(ta, anchor)
+        const top = stripTopBelowLineBottom(lineBottom)
         setComputerStripTop(top)
-        setComputerStripSpacer(Math.max(0, top + STRIP_HEIGHT_PX - ta.scrollHeight))
+        setComputerStripSpacer(Math.max(0, top + STRIP_HEIGHT_PX - ta.offsetHeight))
       } else {
-        setComputerStripTop(STRIP_GAP_PX)
+        setComputerStripTop(0)
         setComputerStripSpacer(0)
+        setComputerPinnedSelection(null)
       }
       setComputerOpen(true)
       return
@@ -125,14 +137,16 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
 
   const handleBlur = (event) => {
     setIsFocused(false)
-    const next = trimTrailingEmptyLines(workflowValue)
-    if (next !== workflowValue) setValue(next)
+    const rt = event.relatedTarget
+    const focusToComputerPanel = computerPanelRef.current?.contains(rt) ?? false
 
-    if (computerOpen) {
-      const rt = event.relatedTarget
-      if (!computerPanelRef.current?.contains(rt)) {
-        closeComputerPanel()
-      }
+    if (!focusToComputerPanel) {
+      const next = trimTrailingEmptyLines(workflowValue)
+      if (next !== workflowValue) setValue(next)
+    }
+
+    if (computerOpen && !focusToComputerPanel) {
+      closeComputerPanel()
     }
   }
 
@@ -141,14 +155,11 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
     setComputerDraft("")
     setComputerStripTop(null)
     setComputerStripSpacer(0)
+    setComputerPinnedSelection(null)
   }
 
   useEffect(() => {
     if (!computerOpen) return
-    if (skipAutofocusComputerRef.current) {
-      skipAutofocusComputerRef.current = false
-      return
-    }
     const id = window.requestAnimationFrame(() => {
       computerInputRef.current?.focus()
     })
@@ -162,21 +173,17 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
       return
     }
     const ta = textareaRef.current
-    if (!ta) return
-    const snap = selectionRestoreRef.current
-    if (snap) {
-      selectionRestoreRef.current = null
-      ta.focus()
-      ta.setSelectionRange(snap.start, snap.end)
-      setSelection({ start: snap.start, end: snap.end })
-    }
-    const idx =
-      computerPlacementIndexRef.current ?? Math.max(ta.selectionStart, ta.selectionEnd)
-    const { lineBottom } = getTextareaLineBottomOffset(ta, idx)
-    const top = lineBottom + STRIP_GAP_PX
+    if (!ta || !computerPinnedSelection) return
+    const idx = getComputerAnchorCharIndex(
+      computerPinnedSelection.start,
+      computerPinnedSelection.end,
+      ta.value.length
+    )
+    const { lineBottom } = getTextareaCaretLineMetrics(ta, idx)
+    const top = stripTopBelowLineBottom(lineBottom)
     setComputerStripTop(top)
-    setComputerStripSpacer(Math.max(0, top + STRIP_HEIGHT_PX - ta.scrollHeight))
-  }, [computerOpen, workflowValue])
+    setComputerStripSpacer(Math.max(0, top + STRIP_HEIGHT_PX - ta.offsetHeight))
+  }, [computerOpen, workflowValue, computerPinnedSelection])
 
   useEffect(() => {
     if (!computerOpen) return undefined
@@ -193,15 +200,37 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
 
   useEffect(() => {
     if (!computerOpen) return undefined
+    const onPointerDownCapture = (event) => {
+      const ta = textareaRef.current
+      const panel = computerPanelRef.current
+      const target = event.target
+      if (ta && (target === ta || ta.contains(target))) return
+      if (panel && (target === panel || panel.contains(target))) return
+      closeComputerPanel()
+    }
+    document.addEventListener("pointerdown", onPointerDownCapture, true)
+    return () => document.removeEventListener("pointerdown", onPointerDownCapture, true)
+  }, [computerOpen])
+
+  useEffect(() => {
+    if (!computerOpen) return undefined
     const onKeyDown = (event) => {
       if (event.key !== "Escape") return
       event.preventDefault()
+      const pinned = computerPinnedSelection
       closeComputerPanel()
-      textareaRef.current?.focus()
+      const ta = textareaRef.current
+      if (ta && pinned) {
+        ta.focus()
+        ta.setSelectionRange(pinned.start, pinned.end)
+        setSelection({ start: pinned.start, end: pinned.end })
+      } else {
+        textareaRef.current?.focus()
+      }
     }
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [computerOpen])
+  }, [computerOpen, computerPinnedSelection])
 
   useEffect(() => {
     if (!pendingFocusMainRef.current) return
@@ -225,16 +254,17 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
       if (!computerOpen) return
       const ta = textareaRef.current
       if (!ta) return
-      const idx =
-        computerPlacementIndexRef.current ?? Math.max(ta.selectionStart, ta.selectionEnd)
-      const { lineBottom } = getTextareaLineBottomOffset(ta, idx)
-      const top = lineBottom + STRIP_GAP_PX
+      const pinned = computerPinnedSelection
+      if (!pinned) return
+      const idx = getComputerAnchorCharIndex(pinned.start, pinned.end, ta.value.length)
+      const { lineBottom } = getTextareaCaretLineMetrics(ta, idx)
+      const top = stripTopBelowLineBottom(lineBottom)
       setComputerStripTop(top)
-      setComputerStripSpacer(Math.max(0, top + STRIP_HEIGHT_PX - ta.scrollHeight))
+      setComputerStripSpacer(Math.max(0, top + STRIP_HEIGHT_PX - ta.offsetHeight))
     }
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
-  }, [computerOpen])
+  }, [computerOpen, workflowValue, computerPinnedSelection])
 
   useEffect(() => {
     if (!loading || !hasInlineSlash) return undefined
@@ -249,6 +279,12 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
   const shouldPadMirror = workflowValue.endsWith("\n")
 
   const mirrorLines = useMemo(() => workflowValue.split("\n"), [workflowValue])
+  const pin = computerPinnedSelection
+  const showComputerPinnedHighlight =
+    computerOpen &&
+    pin != null &&
+    pin.start < pin.end &&
+    !hasInlineSlash
   const caretLineIndex = useMemo(() => {
     if (selection.start !== selection.end) return -1
     return getCaretLineIndex(workflowValue, selection.start)
@@ -263,7 +299,7 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
     (mirrorLines[caretLineIndex] ?? "").trim() === ""
 
   const onComputerSubmit = async (trimmed) => {
-    const ok = await runComputerCommand(trimmed)
+    const ok = await runComputerCommand(trimmed, computerPinnedSelection)
     if (ok) {
       closeComputerPanel()
     }
@@ -288,6 +324,14 @@ export function TextEdit({ initialValue, value, onChange, onSlashCommand, onAiCo
               {beforeSlash}
               <span style={{ color: SLASH_ACTIVE_COLOR }}>{slashSegment}</span>
               {shouldPadMirror && "\n"}
+            </>
+          ) : showComputerPinnedHighlight ? (
+            <>
+              {workflowValue.slice(0, pin.start)}
+              <span style={{ backgroundColor: COMPUTER_PINNED_SELECTION_BG }}>
+                {workflowValue.slice(pin.start, pin.end)}
+              </span>
+              {workflowValue.slice(pin.end)}
             </>
           ) : (
             mirrorLines.map((line, lineIndex) => {

@@ -1,6 +1,6 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { HistoryDetailItem, HistoryItem, HistoryTimelineGroup } from "./HistoryItem"
-import { Timestamp } from "./Timestamp"
+import { MicroControl } from "./MicroControl"
 
 function stableHash(str) {
   let h = 0
@@ -203,29 +203,64 @@ export function DocumentHistoryPlaceholder({ recordKind = "issue", recordId }) {
     return PRESETS[h % PRESETS.length]
   }, [recordKind, recordId])
 
+  /** Local hide-set for the placeholder; resets when the underlying record/preset changes. */
+  const [removedKeys, setRemovedKeys] = useState(() => new Set())
+  useEffect(() => {
+    setRemovedKeys(new Set())
+  }, [preset])
+
+  const visibleGroups = preset.groups
+    .map((group, gi) => ({
+      group,
+      gi,
+      items: group.items
+        .map((item, ii) => ({ item, key: `${gi}:${ii}` }))
+        .filter(({ key }) => !removedKeys.has(key)),
+    }))
+    .filter(({ items }) => items.length > 0)
+
+  if (visibleGroups.length === 0) return null
+
   return (
     <section className="w-full" aria-label="Placeholder activity timeline (preview only)" role="presentation">
-      {preset.groups.map((group, gi) => (
-        <div key={gi} className={gi > 0 ? "mt-[24px]" : ""}>
-          <HistoryTimelineGroup timestamp={<Timestamp datePart={group.timestamp.datePart} timePart={group.timestamp.timePart} />}>
-            {group.items.map((item, ii) =>
-              item.type === "transition" ? (
+      {visibleGroups.map(({ group, gi, items }, vi) => (
+        <div key={gi} className={vi > 0 ? "mt-[24px]" : ""}>
+          <HistoryTimelineGroup
+            timestamp={
+              <MicroControl
+                type="tag"
+                layout="timestamp"
+                datePart={group.timestamp.datePart}
+                timePart={group.timestamp.timePart}
+              />
+            }
+          >
+            {items.map(({ item, key }) => {
+              const onDelete = () =>
+                setRemovedKeys((prev) => {
+                  const next = new Set(prev)
+                  next.add(key)
+                  return next
+                })
+              return item.type === "transition" ? (
                 <HistoryItem
-                  key={ii}
+                  key={key}
                   actorInitial={item.actorInitial}
                   attribute={item.attribute}
                   fromValue={item.fromValue}
                   toValue={item.toValue}
+                  onDelete={onDelete}
                 />
               ) : (
                 <HistoryDetailItem
-                  key={ii}
+                  key={key}
                   actorInitial={item.actorInitial}
                   attribute={item.attribute}
                   detail={item.detail}
+                  onDelete={onDelete}
                 />
               )
-            )}
+            })}
           </HistoryTimelineGroup>
         </div>
       ))}

@@ -58,7 +58,7 @@ function renderSegment(segment, index, total) {
   const isLast = index === total - 1
   const useRouterLink = segment.href != null && isInternalAppPath(segment.href)
   const showLeadingIcon = index === 0 && segment.showIcon !== false
-  const className = `${rootClusterClass}${segment.href ? " cursor-pointer" : ""}`
+  const className = rootClusterClass
 
   if (!isLast && useRouterLink) {
     return (

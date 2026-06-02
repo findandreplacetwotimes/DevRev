@@ -1,6 +1,25 @@
 /** UI copy when `title` is empty. */
 export const EMPTY_PROJECT_TITLE_PLACEHOLDER = "No title"
 
+/** Visible project name — matches projects table / listings (same string when title is edited). */
+export function projectDisplayTitle(project) {
+  if (!project || typeof project !== "object") return ""
+  const trimmed = typeof project.title === "string" ? project.title.trim() : ""
+  return trimmed.length > 0 ? trimmed : EMPTY_PROJECT_TITLE_PLACEHOLDER
+}
+
+/**
+ * Which project drives the workspace project-chat lane (nav label, header, message thread).
+ * With a single row use it; with legacy multi-project storage prefer `Project-0001`, else first id lexically.
+ */
+export function resolveProjectForWorkspaceChat(projects) {
+  if (!Array.isArray(projects) || projects.length === 0) return null
+  if (projects.length === 1) return projects[0]
+  const preferred = projects.find((p) => p && p.id === "Project-0001")
+  if (preferred) return preferred
+  return [...projects].sort((a, b) => String(a.id).localeCompare(String(b.id)))[0]
+}
+
 /** @typedef {import("./issuesApi").Issue} Issue */
 /** @typedef {import("./issuesApi").Project} Project */
 

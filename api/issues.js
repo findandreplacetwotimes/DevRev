@@ -18,6 +18,7 @@ import {
   createInitialSprints,
   mergeSeedIssueProjectLinks,
   mergeSeedMilestonesIntoProjects,
+  stripLegacyRemovedProjects,
 } from "../src/lib/issuesSeed.js"
 
 const STORAGE_KEY = "devrev:issues:v1"
@@ -257,6 +258,34 @@ export default async function handler(req, res) {
         mutated = true
       }
 
+      {
+        const projectCountBefore = projects.length
+        const stripped = stripLegacyRemovedProjects(projects, issues)
+        projects = stripped.projects
+        issues = stripped.issues
+        if (projectCountBefore !== projects.length) mutated = true
+        if (projects.length === 0) {
+          projects = createInitialProjects()
+            .map((p) =>
+              sanitizeProject({
+                id: p.id,
+                team: p.team,
+                title: typeof p.title === "string" ? p.title : "",
+                description: typeof p.description === "string" ? p.description : "",
+                ownerId: p.ownerId ?? null,
+                dueDateId: p.dueDateId ?? null,
+                sprint: p.sprint,
+                stage: p.stage,
+                healthId: p.healthId,
+                milestones: p.milestones,
+              })
+            )
+            .filter(Boolean)
+          issues = reconcileIssueProjectFields(issues, projects)
+          mutated = true
+        }
+      }
+
       if (sprints.length === 0) {
         sprints = createInitialSprints().map((row) => sanitizeSprintEntity(row)).filter(Boolean)
         mutated = true
@@ -331,7 +360,28 @@ export default async function handler(req, res) {
         sprints = kept.length > 0 ? kept : createInitialSprints().map((row) => sanitizeSprintEntity(row)).filter(Boolean)
       }
 
-      const reconciledIssues = reconcileIssueProjectFields(issues, projects)
+      let { projects: projsPut, issues: issPut } = stripLegacyRemovedProjects(projects, issues)
+      if (projsPut.length === 0) {
+        projsPut = createInitialProjects()
+          .map((p) =>
+            sanitizeProject({
+              id: p.id,
+              team: p.team,
+              title: typeof p.title === "string" ? p.title : "",
+              description: typeof p.description === "string" ? p.description : "",
+              ownerId: p.ownerId ?? null,
+              dueDateId: p.dueDateId ?? null,
+              sprint: p.sprint,
+              stage: p.stage,
+              healthId: p.healthId,
+              milestones: p.milestones,
+            })
+          )
+          .filter(Boolean)
+        projsPut = applySequentialMilestoneTitles(mergeSeedMilestonesIntoProjects(projsPut))
+      }
+      projects = projsPut
+      const reconciledIssues = reconcileIssueProjectFields(issPut, projects)
 
       const record = {
         issues: reconciledIssues,

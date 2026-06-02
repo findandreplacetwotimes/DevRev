@@ -141,12 +141,22 @@ ${textToFix}`
     }
   }
 
-  const runCommand = async (inputOverride) => {
-    const input = inputOverride !== undefined && inputOverride !== null ? inputOverride : value
+  const runCommand = async (inputOverride, parsedOverride) => {
     setLoading(true)
     setErrorMessage("")
     try {
-      const { sourceText, command, replaceWithResult, valueWithoutCommand } = parseSlashCommand(input)
+      const {
+        sourceText,
+        command,
+        replaceWithResult,
+        valueWithoutCommand,
+        /** Full page sent with Computer-strip selection so the model has document context. */
+        fullPageContextForPrompt,
+      } =
+        parsedOverride ??
+        parseSlashCommand(
+          inputOverride !== undefined && inputOverride !== null ? inputOverride : value
+        )
       const grammarMode = isGrammarCheckCommand(command)
 
       if (typeof executeLocalSlashCommand === "function") {
@@ -188,8 +198,28 @@ ${sourceText}`
         return true
       }
 
-      const prompt = sourceText
-        ? `Rewrite the provided text by applying the command.
+      const prompt =
+        fullPageContextForPrompt && sourceText
+          ? `The user selected a portion of a document. Use the full page for context (tone, facts, structure). Apply the command only to the selected text. The app will replace ONLY that selection—the JSON "text" field must be the replacement segment alone, not the full document.
+
+Full document (context):
+${fullPageContextForPrompt}
+
+Selected text (rewrite only this; returned "text" replaces this range only):
+${sourceText}
+
+Command:
+${command}
+
+Return ONLY valid JSON:
+{"text":"<replacement for the selection only>","signals":[{"type":"set_due_date","value":"<natural date text>"}]}
+Rules:
+- "text" must replace only the selected range—never return the full document.
+- Use "signals" only when the command implies a record attribute change (like due date).
+- If no signals apply, return "signals": [].
+- No markdown, no prose, no code fences.`
+          : sourceText
+            ? `Rewrite the provided text by applying the command.
 Return ONLY valid JSON:
 {"text":"<final text>","signals":[{"type":"set_due_date","value":"<natural date text>"}]}
 Rules:
@@ -203,7 +233,7 @@ ${sourceText}
 
 Command:
 ${command}`
-        : `Write text from this command.
+            : `Write text from this command.
 Return ONLY valid JSON:
 {"text":"<final text>","signals":[{"type":"set_due_date","value":"<natural date text>"}]}
 Rules:
@@ -258,10 +288,43 @@ ${command}`
     }
   }
 
-  /** Computer strip: run AI as a whole-page command without inserting `/…` into the main editor. */
-  const runComputerCommand = async (commandText) => {
+  /**
+   * Computer strip: run AI without inserting `/…` into the editor.
+   * - Collapsed caret (no range): same as whole-page slash command — send full document, replace whole page.
+   * - Non-empty selection: send full page + selected range to the model; prompt says only the selection is replaced.
+   */
+  const runComputerCommand = async (commandText, pinnedSelection) => {
     const cmd = commandText.trim().replace(/^\//, "")
     if (!cmd) return false
+
+    const pin =
+      pinnedSelection &&
+      typeof pinnedSelection.start === "number" &&
+      typeof pinnedSelection.end === "number"
+        ? {
+            start: Math.min(pinnedSelection.start, pinnedSelection.end),
+            end: Math.max(pinnedSelection.start, pinnedSelection.end),
+          }
+        : null
+
+    if (pin && pin.start < pin.end) {
+      const lo = pin.start
+      const hi = pin.end
+      const sourceText = value.slice(lo, hi)
+      const valueWithoutCommand = value
+      const replaceWithResult = (nextText) => {
+        const t = typeof nextText === "string" ? nextText.trim() : String(nextText ?? "")
+        return `${value.slice(0, lo)}${t}${value.slice(hi)}`
+      }
+      return runCommand(null, {
+        command: cmd,
+        sourceText,
+        replaceWithResult,
+        valueWithoutCommand,
+        fullPageContextForPrompt: value,
+      })
+    }
+
     const base = value.trimEnd()
     const synthetic = base === "" ? `/${cmd}` : `${base}\n/${cmd}`
     return runCommand(synthetic)

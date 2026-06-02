@@ -16,6 +16,8 @@ const meta = {
       options: [
         "team",
         "chat",
+        "chatBubbles",
+        "mp",
         "calendar",
         "search",
         "check",
@@ -30,6 +32,7 @@ const meta = {
         "plus",
         "arrowUp",
         "arrowRight",
+        "arrowRightSmall",
         "reply",
         "page",
         "project",
@@ -51,6 +54,20 @@ const meta = {
 export default meta
 
 export const Team = {}
+
+/** Figma `5517:35117` — Icons/Chat.bubbles. */
+export const ChatBubbles = {
+  args: {
+    name: "chatBubbles",
+  },
+}
+
+/** Figma `5991:7650` — MP icon variant, using the message/chat bubble glyph. */
+export const Mp = {
+  args: {
+    name: "mp",
+  },
+}
 
 export const Calendar = {
   args: {
@@ -130,6 +147,13 @@ export const ReplyMicro = {
 export const ArrowRight = {
   args: {
     name: "arrowRight",
+  },
+}
+
+/** Figma `6089:9419` — `Icons/Arrow.right` Small (thin stroked), 28×28. */
+export const ArrowRightSmall = {
+  args: {
+    name: "arrowRightSmall",
   },
 }
 

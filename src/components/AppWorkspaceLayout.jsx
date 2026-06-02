@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { useIssues } from "../context/IssuesContext"
+import { projectDisplayTitle, resolveProjectForWorkspaceChat } from "../lib/projectsApi"
 import { ChatWindow } from "./ChatWindow"
 import { NavPanel } from "./NavPanel"
 
@@ -71,6 +73,14 @@ export function AppWorkspaceLayout() {
 export function AppWorkspaceChrome() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { projects } = useIssues()
+
+  /** Nav + chat header follow `projectDisplayTitle` for the resolved project (works with multiple rows in storage). */
+  const linkedProjectChat = useMemo(() => {
+    const p = resolveProjectForWorkspaceChat(projects)
+    if (!p || typeof p.id !== "string") return null
+    return { projectId: p.id, title: projectDisplayTitle(p) }
+  }, [projects])
 
   const panelsInitRef = useRef(null)
   if (panelsInitRef.current === null) {
@@ -126,7 +136,6 @@ export function AppWorkspaceChrome() {
     dragStateRef.current = null
     window.removeEventListener("pointermove", handleResizeMove)
     window.removeEventListener("pointerup", stopResize)
-    document.body.style.cursor = ""
     document.body.style.userSelect = ""
   }
 
@@ -143,7 +152,6 @@ export function AppWorkspaceChrome() {
     dragStateRef.current = { startX: event.clientX, startWidth: chatWidth }
     window.addEventListener("pointermove", handleResizeMove)
     window.addEventListener("pointerup", stopResize)
-    document.body.style.cursor = "col-resize"
     document.body.style.userSelect = "none"
   }
 
@@ -295,7 +303,7 @@ export function AppWorkspaceChrome() {
   /** Build team → chat lane only (person). Does not navigate or change record panel — same as Computer for “chat-only”. */
   const handleNavSelectItem = (itemId) => {
     setSelectedNavItemId(itemId)
-    if (itemId === "build-team") {
+    if (itemId === "build-team" || itemId === "dev-team") {
       setChatVariant("build-team")
       ensureChatPanelOpenPersist()
       return
@@ -305,22 +313,22 @@ export function AppWorkspaceChrome() {
       ensureChatPanelOpenPersist()
       return
     }
-    if (itemId === "issues") {
+    if (itemId === "issues" || itemId === "dev-issues") {
       ensureRecordPanelOpen()
       navigate("/issues")
       return
     }
-    if (itemId === "projects") {
+    if (itemId === "projects" || itemId === "dev-projects") {
       ensureRecordPanelOpen()
       navigate("/projects")
       return
     }
-    if (itemId === "sprints") {
+    if (itemId === "sprints" || itemId === "dev-sprints") {
       ensureRecordPanelOpen()
       navigate("/sprints")
       return
     }
-    if (itemId === "about") {
+    if (itemId === "about" || itemId === "dev-about") {
       ensureRecordPanelOpen()
       navigate("/about")
       return
@@ -358,10 +366,16 @@ export function AppWorkspaceChrome() {
           recordPanelOpen={recordPanelOpen}
           onToggleChatPanel={toggleChatPanel}
           onToggleRecordPanel={toggleRecordPanel}
+          projectChatNavLabel={linkedProjectChat?.title}
         />
 
         {chatPanelOpen ? (
-          <ChatWindow width={chatWidth} variant={chatVariant} flexFill={chatFillsRemainder} />
+          <ChatWindow
+            width={chatWidth}
+            variant={chatVariant}
+            flexFill={chatFillsRemainder}
+            linkedProjectChat={linkedProjectChat}
+          />
         ) : null}
 
         {showSplitHandle ? (
@@ -375,7 +389,7 @@ export function AppWorkspaceChrome() {
               type="button"
               aria-label="Resize chat panel"
               onPointerDown={startResize}
-              className="absolute left-1/2 top-0 h-full w-[12px] -translate-x-1/2 cursor-col-resize bg-transparent"
+              className="absolute left-1/2 top-0 h-full w-[12px] -translate-x-1/2 bg-transparent"
             />
           </div>
         ) : null}

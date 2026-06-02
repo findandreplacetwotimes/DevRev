@@ -1,3 +1,4 @@
+import { MemoryRouter } from "react-router-dom"
 import { ChatWindow } from "./ChatWindow"
 
 const meta = {
@@ -6,6 +7,13 @@ const meta = {
   parameters: {
     layout: "padded",
   },
+  decorators: [
+    (Story) => (
+      <MemoryRouter>
+        <Story />
+      </MemoryRouter>
+    ),
+  ],
 }
 
 export default meta

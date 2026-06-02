@@ -1,9 +1,9 @@
 /**
- * Approximate bottom edge (px from top of content box) of the line containing
+ * Approximate top/bottom (px from top of mirror content box) of the line containing
  * `charIndex` in a textarea, using an off-DOM mirror with matching width + typography.
  * Handles wrapping; charIndex is clamped to [0, value.length].
  */
-export function getTextareaLineBottomOffset(textarea, charIndex) {
+export function getTextareaCaretLineMetrics(textarea, charIndex) {
   const value = textarea.value
   const idx = Math.min(Math.max(0, charIndex), value.length)
 
@@ -37,7 +37,9 @@ export function getTextareaLineBottomOffset(textarea, charIndex) {
     marker.textContent = "\u200b"
     mirror.append(marker)
 
-    return { lineBottom: marker.offsetTop + marker.offsetHeight }
+    const top = marker.offsetTop
+    const h = marker.offsetHeight
+    return { lineTop: top, lineBottom: top + h }
   } finally {
     document.body.removeChild(mirror)
   }

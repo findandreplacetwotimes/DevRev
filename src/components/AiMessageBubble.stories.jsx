@@ -16,7 +16,7 @@ export default meta
 
 export const Thinking = {}
 
-export const Thoughts = {
+export const Complete = {
   args: {
     loading: false,
   },

@@ -1,3 +1,5 @@
+import { reconcileIssueProjectFields } from "./issueProjectLinks"
+
 /** Issue → [projectId, milestoneId] for demo scope (see `createInitialProjects` milestone ids). */
 const ISSUE_PROJECT_MILESTONE = {
   /** Project-0001: 3 issues per milestone (`m1`, `m2`). */
@@ -13,10 +15,10 @@ const ISSUE_PROJECT_MILESTONE = {
   "Issue-0014": ["Project-0001", "Project-0001:m2"],
   "Issue-0015": ["Project-0001", "Project-0001:m2"],
   "Issue-0016": ["Project-0001", "Project-0001:m2"],
-  "Issue-0006": ["Project-0002", "Project-0002:m1"],
-  "Issue-0007": ["Project-0002", "Project-0002:m2"],
-  "Issue-0009": ["Project-0002", "Project-0002:m1"],
-  "Issue-0010": ["Project-0003", "Project-0003:m1"],
+  "Issue-0006": ["Project-0001", "Project-0001:m1"],
+  "Issue-0007": ["Project-0001", "Project-0001:m2"],
+  "Issue-0009": ["Project-0001", "Project-0001:m1"],
+  "Issue-0010": ["Project-0001", "Project-0001:m1"],
 }
 
 function seedCreatedDateByIssueId(issueId) {
@@ -243,32 +245,16 @@ export function mergeSeedIssueProjectLinks(issues) {
 }
 
 export function createInitialProjects() {
-  const healthRotation = ["on-track", "at-risk", "off-track"]
-  const base = createInitialIssueRowsWithoutProjectLink().slice(0, 3)
+  const base = createInitialIssueRowsWithoutProjectLink()[0]
   return [
     {
-      ...base[0],
+      ...base,
       id: "Project-0001",
-      healthId: healthRotation[0],
+      healthId: "on-track",
       milestones: [
         { id: "Project-0001:m1", title: "Milestone 1", dueDateId: "endOfWeek", healthId: "on-track" },
         { id: "Project-0001:m2", title: "Milestone 2", dueDateId: "endOfNextWeek", healthId: "at-risk" },
       ],
-    },
-    {
-      ...base[1],
-      id: "Project-0002",
-      healthId: healthRotation[1],
-      milestones: [
-        { id: "Project-0002:m1", title: "Milestone 1", dueDateId: null, healthId: "on-track" },
-        { id: "Project-0002:m2", title: "Milestone 2", dueDateId: "tomorrow", healthId: "off-track" },
-      ],
-    },
-    {
-      ...base[2],
-      id: "Project-0003",
-      healthId: healthRotation[2],
-      milestones: [{ id: "Project-0003:m1", title: "Milestone 1", dueDateId: "today", healthId: "at-risk" }],
     },
   ]
 }
@@ -287,6 +273,22 @@ export function mergeSeedMilestonesIntoProjects(projects) {
     if (cur.length > 0 || !seedP?.milestones?.length) return p
     return { ...p, milestones: seedP.milestones }
   })
+}
+
+/** Removed demo projects — stripped from persisted payloads on load (KV + localStorage). */
+export const LEGACY_REMOVED_PROJECT_IDS = new Set(["Project-0002", "Project-0003"])
+
+/**
+ * Drops Project-0002 / Project-0003 and re-reconciles issue links (orphan → cleared milestones).
+ * @param {import("./issuesApi").Project[]} projects
+ * @param {import("./issuesApi").Issue[]} issues
+ */
+export function stripLegacyRemovedProjects(projects, issues) {
+  const projs = Array.isArray(projects) ? projects : []
+  const iss = Array.isArray(issues) ? issues : []
+  const nextProjects = projs.filter((p) => p && !LEGACY_REMOVED_PROJECT_IDS.has(p.id))
+  const nextIssues = reconcileIssueProjectFields(iss, nextProjects)
+  return { projects: nextProjects, issues: nextIssues }
 }
 
 export function createInitialSprints() {

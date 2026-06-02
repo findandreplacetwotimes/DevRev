@@ -65,7 +65,7 @@ export function TableHeaderCell({
           type="button"
           aria-label={`Resize column after ${hasLabel ? trimmedLabel : "column"}`}
           onPointerDown={onResizePointerDown}
-          className="absolute right-[-6px] top-0 z-[20] h-full w-[12px] cursor-col-resize bg-transparent"
+          className="absolute right-[-6px] top-0 z-[20] h-full w-[12px] bg-transparent"
         />
       )}
       {canResize && leadingResize && (
@@ -73,7 +73,7 @@ export function TableHeaderCell({
           type="button"
           aria-label={`Resize column before ${hasLabel ? trimmedLabel : "column"}`}
           onPointerDown={onResizePointerDown}
-          className="absolute left-[-6px] top-0 z-[20] h-full w-[12px] cursor-col-resize bg-transparent"
+          className="absolute left-[-6px] top-0 z-[20] h-full w-[12px] bg-transparent"
         />
       )}
     </div>

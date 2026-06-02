@@ -153,7 +153,6 @@ export function Table({ className = "", rows = null, issueNavState = null }) {
     dragStateRef.current = null
     window.removeEventListener("pointermove", handleResizeMove)
     window.removeEventListener("pointerup", stopResize)
-    document.body.style.cursor = ""
     document.body.style.userSelect = ""
     window.setTimeout(() => {
       persistColumnWidths(columnWidthsRef.current)
@@ -200,7 +199,6 @@ export function Table({ className = "", rows = null, issueNavState = null }) {
     }
     window.addEventListener("pointermove", handleResizeMove)
     window.addEventListener("pointerup", stopResize)
-    document.body.style.cursor = "col-resize"
     document.body.style.userSelect = "none"
   }
 
@@ -332,7 +330,7 @@ export function Table({ className = "", rows = null, issueNavState = null }) {
             <div
               key={issue.id}
               role="row"
-              className={`group/row flex w-full max-w-full cursor-pointer items-stretch overflow-visible ${isRowHovered || isRowChecked ? "bg-[#f2f2f3]" : ""}`}
+              className={`group/row flex w-full max-w-full items-stretch overflow-visible ${isRowHovered || isRowChecked ? "bg-[#f2f2f3]" : ""}`}
               onMouseEnter={() => setHoveredRowId(issue.id)}
               onMouseLeave={() => setHoveredRowId((current) => (current === issue.id ? null : current))}
               onClick={goToIssue}

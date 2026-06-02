@@ -19,7 +19,7 @@
  */
 
 /**
- * Mirrors Issue attributes; ids are `Project-0001`, `Project-0002`, … (four digits).
+ * Mirrors Issue attributes; ids are `Project-0001`, … (four digits).
  * Projects carry `healthId`; **scope** is issues with `projectId` here, grouped by `milestones`.
  * @typedef {object} Project
  * @property {string} id

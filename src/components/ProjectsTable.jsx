@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useProjects } from "../context/IssuesContext"
-import { EMPTY_PROJECT_TITLE_PLACEHOLDER, ticketChipFromProjectId } from "../lib/projectsApi"
+import { projectDisplayTitle, ticketChipFromProjectId } from "../lib/projectsApi"
 import { OWNERS } from "../lib/owners"
 import { Selector } from "./Selector"
 import { TableCell } from "./TableCell"
@@ -147,7 +147,6 @@ export function ProjectsTable({ className = "" }) {
     dragStateRef.current = null
     window.removeEventListener("pointermove", handleResizeMove)
     window.removeEventListener("pointerup", stopResize)
-    document.body.style.cursor = ""
     document.body.style.userSelect = ""
     window.setTimeout(() => {
       persistColumnWidths(columnWidthsRef.current)
@@ -183,7 +182,6 @@ export function ProjectsTable({ className = "" }) {
     }
     window.addEventListener("pointermove", handleResizeMove)
     window.addEventListener("pointerup", stopResize)
-    document.body.style.cursor = "col-resize"
     document.body.style.userSelect = "none"
   }
 
@@ -287,7 +285,7 @@ export function ProjectsTable({ className = "" }) {
         {projectRows.map((project) => {
           const chip = ticketChipFromProjectId(project.id)
           const trimmedTitle = typeof project.title === "string" ? project.title.trim() : ""
-          const displayTitle = trimmedTitle.length ? trimmedTitle : EMPTY_PROJECT_TITLE_PLACEHOLDER
+          const displayTitle = projectDisplayTitle(project)
           const isRowHovered = hoveredRowId === project.id
           const isRowChecked = selectedIds.has(project.id)
           const showSelectControl = hasAnyRowSelected || isRowHovered
@@ -305,7 +303,7 @@ export function ProjectsTable({ className = "" }) {
             <div
               key={project.id}
               role="row"
-              className={`group/row flex w-full max-w-full cursor-pointer items-stretch overflow-visible ${isRowHovered || isRowChecked ? "bg-[#f2f2f3]" : ""}`}
+              className={`group/row flex w-full max-w-full items-stretch overflow-visible ${isRowHovered || isRowChecked ? "bg-[#f2f2f3]" : ""}`}
               onMouseEnter={() => setHoveredRowId(project.id)}
               onMouseLeave={() => setHoveredRowId((current) => (current === project.id ? null : current))}
               onClick={goToProject}

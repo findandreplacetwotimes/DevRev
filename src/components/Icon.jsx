@@ -14,11 +14,16 @@ const ICON_MAP = {
   discover: "/icons/discover.svg",
   filter: "/icons/filter.svg",
   clock: "/icons/clock.svg",
+  chatBubbles: "/icons/chat-bubbles.svg",
+  /** Figma `5991:7650` — Property 1=MP, Size=Default. */
+  mp: "/icons/chat-bubbles.svg",
   computer: "/icons/computer-chat.svg",
   messageBubble: "/icons/message-bubble-tail.svg",
   close: "/icons/close.svg",
   arrowUp: "/icons/arrow-up.svg",
   arrowUpLarge: "/icons/arrow-up-large.svg",
+  /** Figma `6089:9419` — Icons/Arrow.right Small, 16×16 stroked glyph. */
+  arrowRightSmall: "/icons/arrow-right-small.svg",
   plusSmall: "/icons/plus-small.svg",
   plus: "/icons/plus.svg",
   chevronDown: "/icons/chevron-down.svg",
@@ -31,10 +36,10 @@ const ICON_MAP = {
 export function Icon({ name = "team", className = "", size = "default" }) {
   const isLarge = size === "large"
   const isMicro = size === "micro"
-  const wrap = `relative inline-flex ${isMicro ? "size-[22px]" : isLarge ? "size-[40px]" : "size-[28px]"} shrink-0 overflow-hidden ${className}`
+  const wrap = `relative inline-flex ${isMicro ? "size-[18px]" : isLarge ? "size-[40px]" : "size-[28px]"} shrink-0 overflow-hidden ${className}`
 
-  /** Centered glyph: 14×14 in micro (22 rail), 20×20 in large, 16×16 default — Figma Arcade icon grid. */
-  const centeredGlyph = isLarge ? "size-[20px]" : isMicro ? "size-[14px]" : "size-[16px]"
+  /** Centered glyph: 16×16 in micro (18 rail — Figma `6070:7937`), 20×20 in large, 16×16 default. */
+  const centeredGlyph = isLarge ? "size-[20px]" : "size-[16px]"
 
   if (name === "project") {
     const imgCls = isMicro
@@ -213,6 +218,21 @@ export function Icon({ name = "team", className = "", size = "default" }) {
               draggable={false}
             />
           </span>
+        </span>
+      </span>
+    )
+  }
+
+  if (name === "arrowRightSmall") {
+    return (
+      <span className={wrap}>
+        <span className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${centeredGlyph}`}>
+          <img
+            src={ICON_MAP.arrowRightSmall}
+            alt=""
+            className="absolute inset-0 block size-full max-w-none select-none"
+            draggable={false}
+          />
         </span>
       </span>
     )

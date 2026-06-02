@@ -209,10 +209,10 @@ export function IssuePage() {
                     text={parentProject.title}
                     owners={OWNERS}
                     ownerId={parentProject.ownerId}
-                    onOwnerChange={() => {}}
                     dueDateId={parentProject.dueDateId}
-                    onDueDateChange={() => {}}
-                    showMore={false}
+                    controlsInteractive={false}
+                    showMore
+                    showMoreIcon={false}
                     onRowClick={() => navigate(`/projects/${encodeURIComponent(parentProject.id)}`)}
                   />
                 </div>

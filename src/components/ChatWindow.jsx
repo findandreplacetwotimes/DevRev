@@ -1,12 +1,21 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { AiMessageBubble } from "./AiMessageBubble"
 import { ChatHeader } from "./ChatHeader"
 import { MessageBubble } from "./MessageBubble"
 import { MessageInput } from "./MessageInput"
 import { getAiResponse } from "../lib/aiClient"
+import { messageTagsComputer } from "../lib/mentionUtils"
+import { appendProjectActivity } from "../lib/projectActivityStore"
 
 const PERSON_REPLY_PROMPT_PREFIX =
   "You are a real teammate in a direct chat. Reply naturally, concise, and conversational in 1-3 sentences."
+
+const COMPUTER_PROJECT_REPLY_PREFIX =
+  "You are Computer, the AI assistant in this project chat. Reply helpfully and concisely for an engineering team (usually 2–5 sentences). Reference project context when relevant."
+
+/** Matches `chat-project:${projectId}` in message state — seeded thread for the demo project. */
+const PROJECT_CHAT_THREAD_KEY = "chat-project:Project-0001"
 
 const CHAT_META = {
   "build-team": { title: "Build chat", iconName: "chat", avatarInitial: null },
@@ -19,7 +28,13 @@ const CHAT_META = {
 }
 
 /** Chat column: fixed `width`, or `flexFill` to grow when the record panel is hidden. */
-export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
+export function ChatWindow({
+  width = 377,
+  variant = "ai",
+  flexFill = false,
+  linkedProjectChat = null,
+}) {
+  const navigate = useNavigate()
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
     ai: [],
     "build-team": [
@@ -46,28 +61,28 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
         text: "On it - I'll post a release checklist in this thread and tag owners.",
       },
     ],
-    "chat-project": [
+    [PROJECT_CHAT_THREAD_KEY]: [
       {
-        id: "seed-project-1",
+        id: "seed-proj-chat-1",
         role: "user",
-        text: "Quick update: Project 17 is at 80%. Remaining work is docs polish and onboarding copy.",
+        text: "Can we lock milestone dates for the scope tab before we invite design review?",
       },
       {
-        id: "seed-project-2",
+        id: "seed-proj-chat-2",
         role: "person",
         senderInitial: "M",
-        text: "Nice progress. I can take onboarding copy today and push a draft by EOD.",
+        text: "Yes — I'll sync Health + due dates today so the table tells one story.",
       },
       {
-        id: "seed-project-3",
+        id: "seed-proj-chat-3",
         role: "user",
-        text: "Perfect. If that lands today, we can start external pilot invites tomorrow.",
+        text: "Perfect. I'll thread linked issues under each milestone once labels are stable.",
       },
       {
-        id: "seed-project-4",
+        id: "seed-proj-chat-4",
         role: "person",
         senderInitial: "L",
-        text: "Sounds good - I'll also prep a short FAQ for support so rollout is smooth.",
+        text: "Sounds good. Ping me when Overview copy is final and I'll skim Brief for tone.",
       },
     ],
     "chat-arjun": [
@@ -261,25 +276,39 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
   })
   const scrollContainerRef = useRef(null)
   const isPersonChat = variant !== "ai"
-  const activeVariant = variant
-  const chatMessages = chatMessagesByVariant[activeVariant] ?? []
-  const meta = CHAT_META[activeVariant] ?? CHAT_META.ai
-  const isGroupChat = activeVariant === "build-team" || activeVariant === "chat-project"
+  /** One thread per linked project; generic `chat-project` only when nav chosen before linking. */
+  const messageVariantKey =
+    variant === "chat-project" && linkedProjectChat?.projectId
+      ? `chat-project:${linkedProjectChat.projectId}`
+      : variant
+  const chatMessages = chatMessagesByVariant[messageVariantKey] ?? []
+  const meta = useMemo(() => {
+    if (variant === "chat-project" && linkedProjectChat?.projectId) {
+      const base = CHAT_META["chat-project"]
+      return { ...base, title: linkedProjectChat.title }
+    }
+    return CHAT_META[variant] ?? CHAT_META.ai
+  }, [variant, linkedProjectChat?.projectId, linkedProjectChat?.title])
+  const isGroupChat = variant === "build-team" || variant === "chat-project"
 
   const handleSendMessage = async (text) => {
     const userId = `user-${Date.now()}`
     const replyId = `reply-${Date.now()}`
+    const isProjectChat =
+      variant === "chat-project" ||
+      (typeof messageVariantKey === "string" && messageVariantKey.startsWith("chat-project:"))
+    const replyAsComputer = isProjectChat && messageTagsComputer(text)
     const replyInitial =
-      isGroupChat && ["A", "R", "S", "M", "L"][Math.floor(Math.random() * 5)]
+      !replyAsComputer && isGroupChat && ["A", "R", "S", "M", "L"][Math.floor(Math.random() * 5)]
 
     setChatMessagesByVariant((prev) => ({
       ...prev,
-      [activeVariant]: [
-        ...(prev[activeVariant] ?? []),
+      [messageVariantKey]: [
+        ...(prev[messageVariantKey] ?? []),
         { id: userId, role: "user", text },
         {
           id: replyId,
-          role: isPersonChat ? "person" : "ai",
+          role: replyAsComputer ? "ai" : isPersonChat ? "person" : "ai",
           text: "...",
           loading: true,
           ...(replyInitial != null ? { senderInitial: replyInitial } : {}),
@@ -288,12 +317,15 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
     }))
 
     try {
-      const response = await getAiResponse(
-        isPersonChat ? `${PERSON_REPLY_PROMPT_PREFIX}\n\nUser: ${text}` : text
-      )
+      const prompt = replyAsComputer
+        ? `${COMPUTER_PROJECT_REPLY_PREFIX}\n\n${text}`
+        : isPersonChat
+          ? `${PERSON_REPLY_PROMPT_PREFIX}\n\nUser: ${text}`
+          : text
+      const response = await getAiResponse(prompt)
       setChatMessagesByVariant((prev) => ({
         ...prev,
-        [activeVariant]: (prev[activeVariant] ?? []).map((message) =>
+        [messageVariantKey]: (prev[messageVariantKey] ?? []).map((message) =>
           message.id === replyId ? { ...message, text: response.trim(), loading: false } : message
         ),
       }))
@@ -301,7 +333,7 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
       const fallback = error?.message || "AI request failed. Check API key and network."
       setChatMessagesByVariant((prev) => ({
         ...prev,
-        [activeVariant]: (prev[activeVariant] ?? []).map((message) =>
+        [messageVariantKey]: (prev[messageVariantKey] ?? []).map((message) =>
           message.id === replyId ? { ...message, text: fallback, loading: false } : message
         ),
       }))
@@ -312,7 +344,7 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
     const container = scrollContainerRef.current
     if (!container) return
     container.scrollTop = container.scrollHeight
-  }, [chatMessages, activeVariant])
+  }, [chatMessages, messageVariantKey])
 
   return (
     <aside
@@ -322,7 +354,7 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
       <ChatHeader title={meta.title} iconName={meta.iconName} avatarInitial={meta.avatarInitial} />
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto pl-[20px] pr-[10px]">
+        <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto px-[20px] pt-[10px]">
           {chatMessages.map((message, index) => {
             const previous = index > 0 ? chatMessages[index - 1] : null
             const sameRole = previous != null && message.role === previous.role
@@ -332,7 +364,13 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
               previous.role === "person" &&
               (message.senderInitial ?? "") === (previous.senderInitial ?? "")
             const isConsecutiveSameSender = sameRole && (!isGroupChat || message.role !== "person" || sameGroupPersonSender)
-            const spacingClass = isConsecutiveSameSender ? "pt-[4px]" : isPersonChat ? "pt-[14px]" : "pt-[20px]"
+            /** Figma `5910:39547` — `h-[14px]` strips between groups; first row uses container `pt-[10px]` only. */
+            const spacingClass =
+              index === 0
+                ? ""
+                : isConsecutiveSameSender
+                  ? "pt-[4px]"
+                  : "pt-[14px]"
 
             const personBubbleType = isGroupChat ? "groupPerson" : "person"
 
@@ -348,7 +386,19 @@ export function ChatWindow({ width = 377, variant = "ai", flexFill = false }) {
                     senderInitial={message.senderInitial}
                   />
                 ) : (
-                  <AiMessageBubble text={message.text} loading={Boolean(message.loading)} />
+                  <AiMessageBubble
+                    text={message.text}
+                    loading={Boolean(message.loading)}
+                    onMenuAction={(actionId) => {
+                      if (actionId !== "postInProject") return
+                      const pid = linkedProjectChat?.projectId
+                      if (!pid || message.loading) return
+                      const t = String(message.text ?? "").trim()
+                      if (!t) return
+                      appendProjectActivity(pid, t)
+                      navigate(`/projects/${encodeURIComponent(pid)}?tab=Activity`)
+                    }}
+                  />
                 )}
               </div>
             )

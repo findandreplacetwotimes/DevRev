@@ -74,6 +74,7 @@ const preview = {
             "MessageInput",
             "MessageBubble",
             "AiMessageBubble",
+            "MicroControl",
             "Breadcrumbs",
             "Icon",
           ],

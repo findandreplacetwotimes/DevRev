@@ -4,6 +4,7 @@ import { useAnchoredPopoverPosition } from "../hooks/useAnchoredPopoverPosition"
 import { ChatAvatar } from "./ChatAvatar"
 import { Control } from "./Control"
 import { MenuItem } from "./MenuItem"
+import { NavGroup } from "./NavGroup"
 import { NavItem } from "./NavItem"
 
 const modalShadow =
@@ -38,8 +39,20 @@ const PRIMARY_ITEMS = [
   { id: "about", label: "About", iconName: "page" },
 ]
 
+const BUILD_TEAM_ITEMS = [
+  { id: "build-team", label: "Chat", iconName: "mp" },
+  ...PRIMARY_ITEMS,
+]
+
+const DEV_TEAM_ITEMS = [
+  { id: "dev-team", label: "Chat", iconName: "mp" },
+  { id: "dev-issues", label: "Issues", iconName: "page" },
+  { id: "dev-sprints", label: "Sprints", iconName: "page" },
+  { id: "dev-projects", label: "Projects", iconName: "page" },
+  { id: "dev-about", label: "About", iconName: "page" },
+]
+
 const CHAT_ITEMS = [
-  { id: "build-team", label: "Build team", iconName: "chat" },
   { id: "chat-project", label: "Project chat", iconName: "project" },
   { id: "chat-arjun", label: "Arjun Patel", initial: "A" },
   { id: "chat-sneha", label: "Sneha Sharma", initial: "S" },
@@ -64,12 +77,14 @@ export function NavPanel({
   recordPanelOpen = true,
   onToggleChatPanel,
   onToggleRecordPanel,
+  /** Overrides "Project chat" when a project is linked (e.g. `Design refresh chat`). */
+  projectChatNavLabel,
 }) {
   const [uncontrolledSelectedItemId, setUncontrolledSelectedItemId] = useState(defaultSelectedItemId)
   const isControlledSelection = selectedItemId !== undefined
   const currentSelectedItemId = isControlledSelection ? selectedItemId : uncontrolledSelectedItemId
   const allItemIds = useMemo(
-    () => [...PRIMARY_ITEMS, ...CHAT_ITEMS, ...SECONDARY_ITEMS].map((item) => item.id),
+    () => [...BUILD_TEAM_ITEMS, ...DEV_TEAM_ITEMS, ...CHAT_ITEMS, ...SECONDARY_ITEMS].map((item) => item.id),
     []
   )
 
@@ -170,10 +185,8 @@ export function NavPanel({
 
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
-      <div className="flex w-[194px] flex-col gap-[4px]">
-        <MenuItem type="label" label="Build Team" fullWidth />
-
-        {PRIMARY_ITEMS.map((item) => (
+      <NavGroup label="Build team" iconName="team">
+        {BUILD_TEAM_ITEMS.map((item) => (
           <NavItem
             key={item.id}
             label={item.label}
@@ -183,7 +196,22 @@ export function NavPanel({
             onClick={() => handleSelectItem(item.id)}
           />
         ))}
-      </div>
+      </NavGroup>
+
+      <div className="h-[20px] w-[192px] shrink-0 bg-white" />
+
+      <NavGroup label="Dev team" iconName="team" defaultExpanded={false}>
+        {DEV_TEAM_ITEMS.map((item) => (
+          <NavItem
+            key={item.id}
+            label={item.label}
+            iconName={item.iconName}
+            selected={currentSelectedItemId === item.id}
+            className="w-full"
+            onClick={() => handleSelectItem(item.id)}
+          />
+        ))}
+      </NavGroup>
 
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
@@ -192,7 +220,11 @@ export function NavPanel({
         {CHAT_ITEMS.map((item) => (
           <NavItem
             key={item.id}
-            label={item.label}
+            label={
+              item.id === "chat-project" && typeof projectChatNavLabel === "string" && projectChatNavLabel.trim()
+                ? projectChatNavLabel.trim()
+                : item.label
+            }
             iconName={item.iconName ?? "page"}
             leading={typeof item.iconName === "string" ? undefined : <ChatAvatar initial={item.initial} />}
             selected={currentSelectedItemId === item.id}
