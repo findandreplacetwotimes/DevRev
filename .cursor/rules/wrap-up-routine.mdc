@@ -1,0 +1,16 @@
+---
+description: End-of-day wrap-up routine
+alwaysApply: true
+---
+
+# Wrap-Up Routine
+
+When the user asks to "wrap up", "wrap up for today", or says they are ready to close the app, make the workspace safe to close without losing work.
+
+Follow this checklist:
+- Verify git status and summarize any uncommitted, untracked, or unpushed work.
+- Save necessary project state by committing/pushing only when the user requested it or an existing workflow rule requires it.
+- If a deploy was performed, follow the deploy workflow rule and push the deployed committed code to `main`.
+- Stop local dev servers and long-running watchers for this project, including Vite, Storybook, and related preview/studio processes.
+- Leave unrelated user changes untouched; do not discard or reset anything.
+- Report final status clearly: deploy URLs if relevant, commit/push status, stopped servers, remaining risks or manual follow-ups.
