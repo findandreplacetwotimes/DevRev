@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { ChatWindow } from "./ChatWindow"
+import { CmdKPalette } from "./CmdKPalette"
 import { NavPanel } from "./NavPanel"
 
 const INITIAL_CHAT_WIDTH = 377
@@ -73,6 +74,7 @@ export function AppWorkspaceChrome() {
   const [chatWidth, setChatWidth] = useState(loadChatWidth)
   const [chatPanelOpen, setChatPanelOpen] = useState(panelsInitial.chat)
   const [recordPanelOpen, setRecordPanelOpen] = useState(panelsInitial.record)
+  const [cmdKOpen, setCmdKOpen] = useState(false)
 
   /** `person` chats use LLM as teammate; `ai` uses computer mode. */
   const [chatVariant, setChatVariant] = useState("build-team")
@@ -314,7 +316,18 @@ export function AppWorkspaceChrome() {
     [toggleProjectChat, openBuildTeamChat, chatPanelOpen]
   )
 
-  /** Handle nav item selection with new hierarchy */
+  // Global Cmd+K shortcut
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault()
+        setCmdKOpen((prev) => !prev)
+      }
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [])
+
   /** Handle nav item selection with new hierarchy */
   const handleNavSelectItem = (itemId) => {
     // Build chat (under Build team) → toggle chat panel
@@ -441,11 +454,17 @@ export function AppWorkspaceChrome() {
           selectedItemId={selectedNavItemId}
           onSelectItem={handleNavSelectItem}
           onComputerClick={handleComputerClick}
+          onSearchClick={() => setCmdKOpen(true)}
           chatPanelOpen={chatPanelOpen}
           chatVariant={chatVariant}
           recordPanelOpen={recordPanelOpen}
           onToggleChatPanel={toggleChatPanel}
           onToggleRecordPanel={toggleRecordPanel}
+        />
+        <CmdKPalette
+          isOpen={cmdKOpen}
+          onClose={() => setCmdKOpen(false)}
+          onSelect={handleNavSelectItem}
         />
 
         {chatPanelOpen ? (
