@@ -26,3 +26,18 @@ export const Selected = {
     selected: true,
   },
 }
+
+export const ID = {
+  args: {
+    idLabel: "ISS-0001",
+    label: "Long name as",
+    iconName: "page",
+  },
+}
+
+export const IDSelected = {
+  args: {
+    ...ID.args,
+    selected: true,
+  },
+}

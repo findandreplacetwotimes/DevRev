@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { Outlet, useNavigate } from "react-router-dom"
 import { useIssues } from "../context/IssuesContext"
+import { getChatRelatedLinks } from "../lib/chatRelatedLinks"
 import { projectDisplayTitle, resolveProjectForWorkspaceChat } from "../lib/projectsApi"
+import { ChatRelatedLinksPanel } from "./ChatRelatedLinksMenu"
 import { ChatWindow } from "./ChatWindow"
 import { NavPanel } from "./NavPanel"
 
@@ -15,13 +17,6 @@ const LS_CHAT_WIDTH = "devrev.workspace.chatWidth.v1"
 const LS_CHAT_OPEN = "devrev.workspace.chatPanelOpen.v1"
 const LS_RECORD_OPEN = "devrev.workspace.recordPanelOpen.v1"
 
-function navItemFromPathname(pathname) {
-  if (pathname.startsWith("/issues")) return "issues"
-  if (pathname.startsWith("/projects")) return "projects"
-  if (pathname.startsWith("/sprints")) return "sprints"
-  if (pathname.startsWith("/about") || pathname.startsWith("/team-members")) return "about"
-  return null
-}
 
 function loadBool(key, defaultVal) {
   if (typeof window === "undefined") return defaultVal
@@ -71,7 +66,6 @@ export function AppWorkspaceLayout() {
 }
 
 export function AppWorkspaceChrome() {
-  const location = useLocation()
   const navigate = useNavigate()
   const { projects } = useIssues()
 
@@ -82,23 +76,18 @@ export function AppWorkspaceChrome() {
     return { projectId: p.id, title: projectDisplayTitle(p) }
   }, [projects])
 
-  const panelsInitRef = useRef(null)
-  if (panelsInitRef.current === null) {
-    panelsInitRef.current = loadInitialPanelOpen()
-  }
-  const panelsInitial = panelsInitRef.current
+  const [panelsInitial] = useState(loadInitialPanelOpen)
 
   const [chatWidth, setChatWidth] = useState(loadChatWidth)
   const [chatPanelOpen, setChatPanelOpen] = useState(panelsInitial.chat)
   const [recordPanelOpen, setRecordPanelOpen] = useState(panelsInitial.record)
-  const [selectedNavItemId, setSelectedNavItemId] = useState(
-    () => navItemFromPathname(location.pathname) ?? "build-team"
-  )
+  const [selectedNavItemId, setSelectedNavItemId] = useState("build-team")
 
   /** `person` chats use LLM as teammate; `ai` uses computer mode. */
   const [chatVariant, setChatVariant] = useState("build-team")
   const layoutRef = useRef(null)
   const dragStateRef = useRef(null)
+  const stopResizeRef = useRef(null)
 
   const chatPanelOpenRef = useRef(chatPanelOpen)
   const recordPanelOpenRef = useRef(recordPanelOpen)
@@ -132,19 +121,25 @@ export function AppWorkspaceChrome() {
     [recordPanelOpen]
   )
 
-  const stopResize = () => {
-    dragStateRef.current = null
-    window.removeEventListener("pointermove", handleResizeMove)
-    window.removeEventListener("pointerup", stopResize)
-    document.body.style.userSelect = ""
-  }
-
-  function handleResizeMove(event) {
+  const handleResizeMove = useCallback((event) => {
     if (!dragStateRef.current) return
     const deltaX = event.clientX - dragStateRef.current.startX
     const nextWidth = dragStateRef.current.startWidth + deltaX
     setChatWidth(clampChatWidth(nextWidth))
-  }
+  }, [clampChatWidth])
+
+  const stopResize = useCallback(() => {
+    dragStateRef.current = null
+    window.removeEventListener("pointermove", handleResizeMove)
+    if (stopResizeRef.current) {
+      window.removeEventListener("pointerup", stopResizeRef.current)
+    }
+    document.body.style.userSelect = ""
+  }, [handleResizeMove])
+
+  useEffect(() => {
+    stopResizeRef.current = stopResize
+  }, [stopResize])
 
   const startResize = (event) => {
     if (!chatPanelOpen || !recordPanelOpen) return
@@ -164,10 +159,13 @@ export function AppWorkspaceChrome() {
       window.removeEventListener("resize", updateBounds)
       stopResize()
     }
-  }, [clampChatWidth])
+  }, [clampChatWidth, stopResize])
 
   useEffect(() => {
-    setChatWidth((current) => clampChatWidth(current))
+    const id = window.requestAnimationFrame(() => {
+      setChatWidth((current) => clampChatWidth(current))
+    })
+    return () => window.cancelAnimationFrame(id)
   }, [recordPanelOpen, chatPanelOpen, clampChatWidth])
 
   useEffect(() => {
@@ -183,23 +181,21 @@ export function AppWorkspaceChrome() {
 
   useEffect(() => {
     if (!chatPanelOpen && !recordPanelOpen) {
-      setChatPanelOpen(true)
-      setRecordPanelOpen(true)
-      try {
-        window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        window.localStorage.setItem(LS_RECORD_OPEN, "true")
-      } catch {
-        /* ignore */
-      }
+      const id = window.requestAnimationFrame(() => {
+        setChatPanelOpen(true)
+        setRecordPanelOpen(true)
+        try {
+          window.localStorage.setItem(LS_CHAT_OPEN, "true")
+          window.localStorage.setItem(LS_RECORD_OPEN, "true")
+        } catch {
+          /* ignore */
+        }
+      })
+      return () => window.cancelAnimationFrame(id)
     }
+    return undefined
   }, [chatPanelOpen, recordPanelOpen])
 
-  useEffect(() => {
-    const routeNavItem = navItemFromPathname(location.pathname)
-    if (routeNavItem) {
-      setSelectedNavItemId(routeNavItem)
-    }
-  }, [location.pathname])
 
   const toggleChatPanel = () => {
     setChatPanelOpen((prev) => {
@@ -245,19 +241,6 @@ export function AppWorkspaceChrome() {
     })
   }
 
-  const ensureRecordPanelOpen = () => {
-    setRecordPanelOpen((prev) => {
-      if (!prev) {
-        try {
-          window.localStorage.setItem(LS_RECORD_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        return true
-      }
-      return prev
-    })
-  }
 
   const ensureChatPanelOpenPersist = () => {
     setChatPanelOpen((prev) => {
@@ -272,6 +255,36 @@ export function AppWorkspaceChrome() {
       return prev
     })
   }
+
+  const ensureRecordPanelOpenPersist = useCallback(() => {
+    setRecordPanelOpen((prev) => {
+      if (!prev) {
+        try {
+          window.localStorage.setItem(LS_RECORD_OPEN, "true")
+        } catch {
+          /* ignore */
+        }
+        return true
+      }
+      return prev
+    })
+  }, [])
+
+  const closeRecordPanelPersist = useCallback(() => {
+    setRecordPanelOpen((prev) => {
+      if (!prev) return prev
+      try {
+        window.localStorage.setItem(LS_RECORD_OPEN, "false")
+        if (!chatPanelOpenRef.current) {
+          window.localStorage.setItem(LS_CHAT_OPEN, "true")
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!chatPanelOpenRef.current) setChatPanelOpen(true)
+      return false
+    })
+  }, [])
 
   const openProjectChat = useCallback(() => {
     setChatVariant("chat-project")
@@ -296,8 +309,8 @@ export function AppWorkspaceChrome() {
   }, [])
 
   const workspaceOutletContext = useMemo(
-    () => ({ openProjectChat, openBuildTeamChat }),
-    [openProjectChat, openBuildTeamChat]
+    () => ({ openProjectChat, openBuildTeamChat, closeRecordPanel: closeRecordPanelPersist }),
+    [openProjectChat, openBuildTeamChat, closeRecordPanelPersist]
   )
 
   /** Build team → chat lane only (person). Does not navigate or change record panel — same as Computer for “chat-only”. */
@@ -313,28 +326,6 @@ export function AppWorkspaceChrome() {
       ensureChatPanelOpenPersist()
       return
     }
-    if (itemId === "issues" || itemId === "dev-issues") {
-      ensureRecordPanelOpen()
-      navigate("/issues")
-      return
-    }
-    if (itemId === "projects" || itemId === "dev-projects") {
-      ensureRecordPanelOpen()
-      navigate("/projects")
-      return
-    }
-    if (itemId === "sprints" || itemId === "dev-sprints") {
-      ensureRecordPanelOpen()
-      navigate("/sprints")
-      return
-    }
-    if (itemId === "about" || itemId === "dev-about") {
-      ensureRecordPanelOpen()
-      navigate("/about")
-      return
-    }
-    /* Secondary nav (no route yet): show record canvas; leave chat lane as-is */
-    ensureRecordPanelOpen()
   }
 
   /** Computer chip → AI chat lane (does not change record route). */
@@ -354,6 +345,14 @@ export function AppWorkspaceChrome() {
 
   const showSplitHandle = chatPanelOpen && recordPanelOpen
   const chatFillsRemainder = chatPanelOpen && !recordPanelOpen
+  const relatedLinks = getChatRelatedLinks({ variant: chatVariant, linkedProjectChat })
+  const showRelatedLinksPanel = !recordPanelOpen && relatedLinks.length > 0
+
+  const handleSelectRelatedLink = (link) => {
+    if (!link?.href) return
+    ensureRecordPanelOpenPersist()
+    navigate(link.href, link.state ? { state: link.state } : undefined)
+  }
 
   return (
     <main className="flex h-screen items-stretch justify-center bg-white">
@@ -375,6 +374,8 @@ export function AppWorkspaceChrome() {
             variant={chatVariant}
             flexFill={chatFillsRemainder}
             linkedProjectChat={linkedProjectChat}
+            onOpenRecordPanel={ensureRecordPanelOpenPersist}
+            hideRelatedLinksControl={!recordPanelOpen}
           />
         ) : null}
 
@@ -395,8 +396,13 @@ export function AppWorkspaceChrome() {
         ) : null}
 
         {recordPanelOpen ? (
-          <div className="min-h-0 min-w-0 flex-1">
+          <div className="right-panel-enter min-h-0 min-w-0 flex-1">
             <Outlet context={workspaceOutletContext} />
+          </div>
+        ) : showRelatedLinksPanel ? (
+          <div className="right-panel-enter flex h-full shrink-0">
+            {chatPanelOpen ? <div aria-hidden className="h-full w-px shrink-0 bg-[#ececec]" /> : null}
+            <ChatRelatedLinksPanel links={relatedLinks} onSelect={handleSelectRelatedLink} />
           </div>
         ) : null}
       </div>

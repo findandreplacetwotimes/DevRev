@@ -292,6 +292,7 @@ export function ProjectPage() {
           rootHref="/projects"
           item="Project"
           itemSuffix={projectBreadcrumbProjectSuffix(project.id)}
+          projectId={project.id}
         />
       }
       pagePills={

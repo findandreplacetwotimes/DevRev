@@ -1,0 +1,14 @@
+---
+description: Push current code to main after deploys
+alwaysApply: true
+---
+
+# Deploy Workflow
+
+When a deployment completes successfully in this project, push the current code to the `main` branch as the follow-up deploy step.
+
+Before pushing, perform the normal git safety checks:
+- Verify the current branch and working tree state.
+- Ensure intended changes are committed.
+- Do not discard or overwrite user changes.
+- If pushing to `main` would require a force push or resolving unrelated conflicts, stop and ask before proceeding.

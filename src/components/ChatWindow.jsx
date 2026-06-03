@@ -4,7 +4,10 @@ import { AiMessageBubble } from "./AiMessageBubble"
 import { ChatHeader } from "./ChatHeader"
 import { MessageBubble } from "./MessageBubble"
 import { MessageInput } from "./MessageInput"
+import { useIssues } from "../context/IssuesContext"
 import { getAiResponse } from "../lib/aiClient"
+import { resolveChatNavigationIntent } from "../lib/chatNavigationIntent"
+import { getChatRelatedLinks } from "../lib/chatRelatedLinks"
 import { messageTagsComputer } from "../lib/mentionUtils"
 import { appendProjectActivity } from "../lib/projectActivityStore"
 
@@ -18,7 +21,7 @@ const COMPUTER_PROJECT_REPLY_PREFIX =
 const PROJECT_CHAT_THREAD_KEY = "chat-project:Project-0001"
 
 const CHAT_META = {
-  "build-team": { title: "Build chat", iconName: "chat", avatarInitial: null },
+  "build-team": { title: "Build team chat", iconName: "chat", avatarInitial: null },
   "chat-project": { title: "Project chat", iconName: "project", avatarInitial: null },
   "chat-arjun": { title: "Arjun Patel", avatarInitial: "A" },
   "chat-sneha": { title: "Sneha Sharma", avatarInitial: "S" },
@@ -33,8 +36,11 @@ export function ChatWindow({
   variant = "ai",
   flexFill = false,
   linkedProjectChat = null,
+  onOpenRecordPanel,
+  hideRelatedLinksControl = false,
 }) {
   const navigate = useNavigate()
+  const { issues, projects } = useIssues()
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
     ai: [],
     "build-team": [
@@ -281,15 +287,22 @@ export function ChatWindow({
     variant === "chat-project" && linkedProjectChat?.projectId
       ? `chat-project:${linkedProjectChat.projectId}`
       : variant
-  const chatMessages = chatMessagesByVariant[messageVariantKey] ?? []
-  const meta = useMemo(() => {
-    if (variant === "chat-project" && linkedProjectChat?.projectId) {
-      const base = CHAT_META["chat-project"]
-      return { ...base, title: linkedProjectChat.title }
-    }
-    return CHAT_META[variant] ?? CHAT_META.ai
-  }, [variant, linkedProjectChat?.projectId, linkedProjectChat?.title])
+  const chatMessages = useMemo(
+    () => chatMessagesByVariant[messageVariantKey] ?? [],
+    [chatMessagesByVariant, messageVariantKey]
+  )
+  const meta =
+    variant === "chat-project" && linkedProjectChat?.projectId
+      ? { ...CHAT_META["chat-project"], title: linkedProjectChat.title }
+      : CHAT_META[variant] ?? CHAT_META.ai
   const isGroupChat = variant === "build-team" || variant === "chat-project"
+  const relatedLinks = getChatRelatedLinks({ variant, linkedProjectChat })
+
+  const handleSelectRelatedLink = (link) => {
+    if (!link?.href) return
+    onOpenRecordPanel?.()
+    navigate(link.href, link.state ? { state: link.state } : undefined)
+  }
 
   const handleSendMessage = async (text) => {
     const userId = `user-${Date.now()}`
@@ -317,6 +330,35 @@ export function ChatWindow({
     }))
 
     try {
+      let navigationIntent = null
+      try {
+        navigationIntent = await resolveChatNavigationIntent({
+          text,
+          context: {
+            variant,
+            projectId: linkedProjectChat?.projectId,
+            issues,
+            projects,
+          },
+        })
+      } catch {
+        navigationIntent = null
+      }
+
+      if (navigationIntent?.action === "navigate") {
+        onOpenRecordPanel?.()
+        navigate(navigationIntent.href, navigationIntent.state ? { state: navigationIntent.state } : undefined)
+        setChatMessagesByVariant((prev) => ({
+          ...prev,
+          [messageVariantKey]: (prev[messageVariantKey] ?? []).map((message) =>
+            message.id === replyId
+              ? { ...message, text: `Opening ${navigationIntent.label}.`, loading: false }
+              : message
+          ),
+        }))
+        return
+      }
+
       const prompt = replyAsComputer
         ? `${COMPUTER_PROJECT_REPLY_PREFIX}\n\n${text}`
         : isPersonChat
@@ -351,7 +393,14 @@ export function ChatWindow({
       className={`flex h-full min-h-0 flex-col bg-white ${flexFill ? "min-w-[300px] flex-1" : "shrink-0"}`}
       style={flexFill ? undefined : { width }}
     >
-      <ChatHeader title={meta.title} iconName={meta.iconName} avatarInitial={meta.avatarInitial} />
+      <ChatHeader
+        title={meta.title}
+        iconName={meta.iconName}
+        avatarInitial={meta.avatarInitial}
+        relatedLinks={relatedLinks}
+        onSelectRelatedLink={handleSelectRelatedLink}
+        hideRelatedLinksControl={hideRelatedLinksControl}
+      />
 
       <div className="flex min-h-0 flex-1 flex-col">
         <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto px-[20px] pt-[10px]">

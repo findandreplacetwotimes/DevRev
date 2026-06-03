@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom"
+import { useEffect, useRef, useState } from "react"
+import { Link, useLocation, useNavigate, useOutletContext } from "react-router-dom"
 import { Icon } from "./Icon"
+import { RightPanelNavMenu } from "./RightPanelNavMenu"
 
 /** Figma breadcrumbs (`5662:256760`): leading pictogram + root, Trailing chevron (`5662:256682`), then “Issue” + “-####”. */
 
@@ -83,12 +85,70 @@ function renderSegment(segment, index, total) {
   )
 }
 
+function projectIdFromHref(href) {
+  if (typeof href !== "string") return null
+  const match = /^\/projects\/([^/?#]+)/.exec(href)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+function projectIdFromLabel(label) {
+  if (typeof label !== "string") return null
+  const match = /^Project-(\d+)$/i.exec(label.trim())
+  return match ? `Project-${match[1]}` : null
+}
+
+function projectIdFromSuffix(root, suffix) {
+  if (root !== "Projects" || typeof suffix !== "string") return null
+  const match = /^-(\d+)$/.exec(suffix.trim())
+  return match ? `Project-${match[1]}` : null
+}
+
+function inferProjectId({ explicitProjectId, normalizedSegments, root, itemSuffix, pathname }) {
+  if (explicitProjectId) return explicitProjectId
+
+  for (const segment of normalizedSegments) {
+    const fromHref = projectIdFromHref(segment.href)
+    if (fromHref) return fromHref
+    const fromLabel = projectIdFromLabel(segment.label)
+    if (fromLabel) return fromLabel
+  }
+
+  const fromSuffix = projectIdFromSuffix(root, itemSuffix)
+  if (fromSuffix) return fromSuffix
+
+  return projectIdFromHref(pathname)
+}
+
+function selectedHrefFromLocation(location) {
+  const path = location.pathname
+  if (path.startsWith("/projects/")) {
+    const params = new URLSearchParams(location.search)
+    const tab = params.get("tab")
+    return tab ? `${path}?tab=${tab}` : path
+  }
+  return path
+}
+
 /**
  * Path-aware breadcrumbs.
  * - Prefer `segments` for up to three levels, e.g. `Projects > Project-0001 > Issue-0001`.
  * - Legacy props (`root/item/itemSuffix`) are still supported.
  */
-export function Breadcrumbs({ root = "Sprint", item = "Issue", itemSuffix = "-0001", rootHref, segments }) {
+export function Breadcrumbs({
+  root = "Sprint",
+  item = "Issue",
+  itemSuffix = "-0001",
+  rootHref,
+  segments,
+  projectId,
+  defaultMenuOpen = false,
+}) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const outletContext = useOutletContext()
+  const triggerRef = useRef(null)
+  const menuRef = useRef(null)
+  const [menuOpen, setMenuOpen] = useState(defaultMenuOpen)
   const normalizedSegments =
     Array.isArray(segments) && segments.length > 0
       ? segments
@@ -99,22 +159,59 @@ export function Breadcrumbs({ root = "Sprint", item = "Issue", itemSuffix = "-00
             ...(showItem ? [{ label: item, suffix: itemSuffix, showIcon: false }] : []),
           ]
         })()
+  const menuProjectId = inferProjectId({
+    explicitProjectId: projectId,
+    normalizedSegments,
+    root,
+    itemSuffix,
+    pathname: location.pathname,
+  })
+  const selectedHref = selectedHrefFromLocation(location)
+
+  useEffect(() => {
+    if (!menuOpen) return undefined
+    const onDocumentPointerDown = (event) => {
+      const target = event.target
+      if (triggerRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      setMenuOpen(false)
+    }
+    document.addEventListener("pointerdown", onDocumentPointerDown)
+    return () => document.removeEventListener("pointerdown", onDocumentPointerDown)
+  }, [menuOpen])
 
   return (
     <nav aria-label="Breadcrumb" className="inline-flex min-w-0">
       <div className={shellClass}>
         <div className="flex min-w-0 shrink items-center overflow-visible">
-          {normalizedSegments.map((segment, index) => (
-            <div key={`${segment.label}-${index}`} className="inline-flex min-w-0 items-center">
-              {renderSegment(segment, index, normalizedSegments.length)}
-              {index < normalizedSegments.length - 1 && !(normalizedSegments.length === 3 && index === 0) ? (
-                <span aria-hidden className="inline-flex h-[28px] w-[16px] shrink-0 items-center justify-center">
-                  {/* Figma trailing is 16×28, not 16×16 — avoid squashing */}
-                  <img src={BREADCRUMB_CHEVRON} alt="" className="h-[28px] w-[16px]" draggable={false} />
-                </span>
-              ) : null}
-            </div>
-          ))}
+          {normalizedSegments.map((segment, index) => {
+            const showLeadingIcon = index === 0 && segment.showIcon !== false
+            const segmentForText = showLeadingIcon ? { ...segment, showIcon: false } : segment
+            const hasSegmentText = segmentForText.showLabel !== false || Boolean(segmentForText.suffix)
+            return (
+              <div key={`${segment.label}-${index}`} className="inline-flex min-w-0 items-center">
+                {showLeadingIcon ? (
+                  <button
+                    ref={triggerRef}
+                    type="button"
+                    className="inline-flex h-[28px] shrink-0 items-center justify-center rounded-[2px] bg-transparent p-0 transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+                    aria-label="Open navigation menu"
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    onClick={() => setMenuOpen((value) => !value)}
+                  >
+                    <Icon name={segment.iconName ?? "team"} />
+                  </button>
+                ) : null}
+                {hasSegmentText ? renderSegment(segmentForText, index, normalizedSegments.length) : null}
+                {index < normalizedSegments.length - 1 && !(normalizedSegments.length === 3 && index === 0) ? (
+                  <span aria-hidden className="inline-flex h-[28px] w-[16px] shrink-0 items-center justify-center">
+                    {/* Figma trailing is 16×28, not 16×16 — avoid squashing */}
+                    <img src={BREADCRUMB_CHEVRON} alt="" className="h-[28px] w-[16px]" draggable={false} />
+                  </span>
+                ) : null}
+              </div>
+            )
+          })}
 
           {normalizedSegments.length === 0 ? (
             <>
@@ -133,6 +230,16 @@ export function Breadcrumbs({ root = "Sprint", item = "Issue", itemSuffix = "-00
           ) : null}
         </div>
       </div>
+      <RightPanelNavMenu
+        open={menuOpen}
+        anchorRef={triggerRef}
+        menuRef={menuRef}
+        projectId={menuProjectId}
+        selectedHref={selectedHref}
+        onClose={() => setMenuOpen(false)}
+        onNavigate={(href) => navigate(href)}
+        onClosePanel={outletContext?.closeRecordPanel}
+      />
     </nav>
   )
 }

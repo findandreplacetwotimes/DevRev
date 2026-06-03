@@ -10,7 +10,7 @@ const meta = {
   decorators: [
     (Story) => (
       <MemoryRouter>
-        <Story />
+        {Story()}
       </MemoryRouter>
     ),
   ],

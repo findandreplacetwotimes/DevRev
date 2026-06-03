@@ -109,6 +109,7 @@ export function IssuePage() {
       breadcrumbs={
         <Breadcrumbs
           segments={breadcrumbSegments}
+          projectId={issue.projectId}
         />
       }
       pagePills={

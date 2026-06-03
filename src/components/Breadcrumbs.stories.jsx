@@ -35,6 +35,14 @@ export const IssueDetail = {
   },
 }
 
+export const MenuOpenListPage = {
+  args: {
+    root: "Issues",
+    item: null,
+    defaultMenuOpen: true,
+  },
+}
+
 export const ThreeLevel = {
   args: {
     segments: [
@@ -42,5 +50,16 @@ export const ThreeLevel = {
       { label: "Project-0001", href: "/projects/Project-0001", showIcon: false },
       { label: "Issue-0001", showIcon: false },
     ],
+  },
+}
+
+export const ProjectMenuOpen = {
+  args: {
+    root: "Projects",
+    rootHref: "/projects",
+    item: "Project",
+    itemSuffix: "-0001",
+    projectId: "Project-0001",
+    defaultMenuOpen: true,
   },
 }

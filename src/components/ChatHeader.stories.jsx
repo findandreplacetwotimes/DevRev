@@ -7,8 +7,12 @@ const meta = {
     layout: "padded",
   },
   args: {
-    title: "Build chat",
+    title: "Build team chat",
     iconName: "chat",
+    relatedLinks: [
+      { title: "Issues", href: "/issues" },
+      { title: "Sprints", href: "/sprints" },
+    ],
   },
 }
 
@@ -16,7 +20,7 @@ export default meta
 
 export const Default = {
   render: (args) => (
-    <div className="w-full max-w-[410px] bg-[#f2f2f3]">
+    <div className="w-full max-w-[377px] bg-white">
       <ChatHeader {...args} />
     </div>
   ),
