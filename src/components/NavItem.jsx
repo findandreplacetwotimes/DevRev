@@ -3,7 +3,7 @@ import { Icon } from "./Icon"
 import { MenuItemLabel } from "./MenuItem"
 
 export const NavItem = forwardRef(function NavItem(
-  { label = "Issues", selected = false, onClick, iconName = "page", className = "", leading = null, toggle = false, ...rest },
+  { label = "Issues", selected = false, onClick, iconName = "page", className = "", leading = null, trailing = null, toggle = false, ...rest },
   ref
 ) {
   const baseClass = `inline-flex h-[28px] items-center rounded-[2px] pr-[6px] transition-colors duration-150 ${
@@ -21,6 +21,7 @@ export const NavItem = forwardRef(function NavItem(
     >
       {leading || <Icon name={iconName} />}
       <MenuItemLabel label={label} />
+      {trailing}
     </button>
   )
 })

@@ -139,6 +139,42 @@ const OTHER_TEAM_ITEMS = [
   { id: "sprints", label: "Sprints", iconName: "page", disabled: true },
 ]
 
+const CHAT_ITEMS = [
+  { id: "chat-project", label: "SummerEdge", initial: "SE", memberAvatars: ["A", "P", "D", "T"] },
+  { id: "chat-arjun", label: "Arjun Patel", initial: "A" },
+  { id: "chat-sneha", label: "Sneha Sharma", initial: "S" },
+  { id: "chat-rohan", label: "Rohan Verma", initial: "R" },
+  { id: "chat-leela", label: "Leela Nair", initial: "L" },
+]
+
+const NAV_AVATAR_COLORS = ["#5c3d2e", "#6b7c3a", "#2d4a3e", "#7a4a2a"]
+
+function NavAvatarStack({ initials = [] }) {
+  if (!initials.length) return null
+  return (
+    <span className="ml-auto flex shrink-0 items-center">
+      {initials.slice(0, 3).map((letter, i) => (
+        <span
+          key={letter}
+          className="inline-flex size-[16px] items-center justify-center rounded-full border border-white"
+          style={{
+            backgroundColor: NAV_AVATAR_COLORS[i % NAV_AVATAR_COLORS.length],
+            marginLeft: i > 0 ? "-5px" : "0",
+            zIndex: initials.length - i,
+          }}
+        >
+          <span
+            className="text-[7px] text-white"
+            style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 520' }}
+          >
+            {letter}
+          </span>
+        </span>
+      ))}
+    </span>
+  )
+}
+
 const SECONDARY_ITEMS = [
   { id: "inbox", label: "Inbox", iconName: "inbox" },
   { id: "discover", label: "Discover", iconName: "discover" },
@@ -199,7 +235,7 @@ export function NavPanel({
   }, [projects])
 
   const allItemIds = useMemo(() => {
-    const baseIds = [...WORKSPACE_ITEMS, ...BUILD_TEAM_ITEMS, ...SECONDARY_ITEMS].map((item) => item.id)
+    const baseIds = [...WORKSPACE_ITEMS, ...BUILD_TEAM_ITEMS, ...CHAT_ITEMS, ...SECONDARY_ITEMS].map((item) => item.id)
     const projectIds = memberProjects.flatMap(p => [
       `project-${p.id}`,
       `project-${p.id}-chat`,
@@ -598,6 +634,17 @@ export function NavPanel({
             className="w-full h-[24px] text-[13px] px-[6px] cursor-not-allowed"
             onClick={() => {}}
           />
+          {CHAT_ITEMS.map((item) => (
+          <NavItem
+            key={item.id}
+            label={item.label}
+            leading={<ChatAvatar initial={item.initial} />}
+            trailing={item.memberAvatars ? <NavAvatarStack initials={item.memberAvatars} /> : null}
+            selected={currentSelectedItemId === item.id}
+            className="w-full h-[24px] text-[13px] px-[6px]"
+            onClick={() => handleSelectItem(item.id)}
+          />
+          ))}
           <NavItem
             label="13 Crash when importing la..."
             leading={<span className="inline-flex size-[20px] shrink-0 items-center justify-center rounded-[4px] bg-[var(--foreground-error)] text-[10px] font-medium text-white" style={{ fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif', fontVariationSettings: '"wght" 540' }}>13</span>}

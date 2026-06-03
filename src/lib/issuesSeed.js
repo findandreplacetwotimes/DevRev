@@ -1,6 +1,6 @@
 /** Issue → [projectId, milestoneId] for demo scope (see `createInitialProjects` milestone ids). */
 const ISSUE_PROJECT_MILESTONE = {
-  /** Project-0001: 3 issues per milestone (`m1`, `m2`). */
+  /** Project-0001 (SummerEdge): issues grouped by milestone. */
   "Issue-0001": ["Project-0001", "Project-0001:m1"],
   "Issue-0002": ["Project-0001", "Project-0001:m1"],
   "Issue-0005": ["Project-0001", "Project-0001:m1"],
@@ -26,6 +26,11 @@ const ISSUE_PROJECT_MILESTONE = {
   "Issue-0022": ["Project-0004", "Project-0004:m3"],
   "Issue-0023": ["Project-0004", "Project-0004:m3"],
   "Issue-0024": ["Project-0004", "Project-0004:m4"],
+  /** SummerEdge demo issues (ISS-412, ISS-425, ISS-428, ISS-430) */
+  "ISS-412": ["Project-0001", "Project-0001:m1"],
+  "ISS-425": ["Project-0001", "Project-0001:m1"],
+  "ISS-428": ["Project-0001", "Project-0001:m2"],
+  "ISS-430": ["Project-0001", "Project-0001:m2"],
 }
 
 function seedCreatedDateByIssueId(issueId) {
@@ -202,6 +207,7 @@ function createInitialIssueRowsWithoutProjectLink() {
       stage: "In review",
     },
     // Arcade Design System issues (Project-0004)
+    // Arcade Design System issues (Project-0004)
     {
       id: "Issue-0017",
       team: "Design",
@@ -282,6 +288,47 @@ function createInitialIssueRowsWithoutProjectLink() {
       sprint: "Sprint 5",
       stage: "No stage",
     },
+    // SummerEdge issues (Project-0001)
+    {
+      id: "ISS-412",
+      team: "Platform",
+      title: "Fallback auth flow spec",
+      description: "Design and implement the fallback authentication flow for cases where OAuth2 token refresh fails. Blocked on partner team API spec.",
+      ownerId: "priya-kapoor",
+      dueDateId: "endOfWeek",
+      sprint: "Sprint 3",
+      stage: "In Progress",
+    },
+    {
+      id: "ISS-425",
+      team: "Core",
+      title: "Contact field mapping",
+      description: "Map incoming contact fields from partner CRM to our internal schema. Requires alignment on field normalization rules.",
+      ownerId: "tim-brooks",
+      dueDateId: "endOfWeek",
+      sprint: "Sprint 3",
+      stage: "In review",
+    },
+    {
+      id: "ISS-428",
+      team: "Platform",
+      title: "OAuth token refresh",
+      description: "Implement automatic OAuth2 token refresh with exponential backoff. Enterprise customers require silent re-auth.",
+      ownerId: "dev-patel",
+      dueDateId: "tomorrow",
+      sprint: "Sprint 3",
+      stage: "In review",
+    },
+    {
+      id: "ISS-430",
+      team: "Core",
+      title: "Bulk contact import design",
+      description: "Design the bulk contact import flow — CSV upload, validation, deduplication, and error reporting. Blocked on ISS-412.",
+      ownerId: "alex-chen",
+      dueDateId: "endOfNextWeek",
+      sprint: "Sprint 4",
+      stage: "In Progress",
+    },
   ]
 }
 
@@ -337,14 +384,19 @@ export function createInitialProjects() {
   const base = createInitialIssueRowsWithoutProjectLink().slice(0, 3)
   return [
     {
-      ...base[0],
       id: "Project-0001",
-      title: "Agentic Kanban",
-      healthId: healthRotation[0],
+      team: "Core",
+      title: "SummerEdge",
+      description: "Ship the SummerEdge integration to 10 beta customers before GA. Deadline: July 15. Success criteria: OAuth2 auth flow working, bulk contact import operational, 10 beta customers onboarded.\n\nOwners: @alex (eng lead), @priya (platform), @dev (backend), @tim (data).",
+      ownerId: "alex-chen",
+      dueDateId: "endOfNextWeek",
+      sprint: "Sprint 3",
+      stage: "In Progress",
+      healthId: "on-track",
       isMember: true,
       milestones: [
-        { id: "Project-0001:m1", title: "Milestone 1", dueDateId: "endOfWeek", healthId: "on-track" },
-        { id: "Project-0001:m2", title: "Milestone 2", dueDateId: "endOfNextWeek", healthId: "at-risk" },
+        { id: "Project-0001:m1", title: "Auth & API foundation", dueDateId: "endOfWeek", healthId: "on-track" },
+        { id: "Project-0001:m2", title: "Import & onboarding", dueDateId: "endOfNextWeek", healthId: "at-risk" },
       ],
     },
     {

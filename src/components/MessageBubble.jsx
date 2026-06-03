@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Icon } from "./Icon"
+import { renderTextWithMentions } from "../lib/mentionRenderer"
 
 const TEXT_STYLE = {
   fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -169,7 +170,7 @@ export function MessageBubble({
           className={`whitespace-pre-wrap break-words ${isInbound ? "text-[var(--foreground-primary)]" : "text-white"}`}
           style={TEXT_STYLE}
         >
-          {text}
+          {isInbound ? renderTextWithMentions(text) : text}
         </span>
       )}
       <span
