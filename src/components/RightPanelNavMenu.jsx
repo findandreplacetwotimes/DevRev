@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom"
 import { useEffect, useLayoutEffect, useState } from "react"
+import { COMPUTER_PAGE_LINKS } from "../lib/chatRelatedLinks"
 import { NavGroup } from "./NavGroup"
 import { NavItem } from "./NavItem"
 
@@ -99,6 +100,19 @@ export function RightPanelNavMenu({
       className="fixed z-[2147483646] inline-flex w-[202px] flex-col items-start gap-[10px] rounded-[2px] bg-white p-[6px]"
       style={{ boxShadow: modalShadow, top: `${style.top}px`, left: `${style.left}px` }}
     >
+      <div className="flex w-full flex-col gap-[4px]">
+        {COMPUTER_PAGE_LINKS.map((item) => (
+          <NavItem
+            key={item.id}
+            label={item.title}
+            iconName="page"
+            className="w-full"
+            inactive={!item.href}
+            onClick={item.href ? () => handleSelect(item.href) : undefined}
+          />
+        ))}
+      </div>
+
       <NavGroup label="Build team" iconName="team">
         {BUILD_TEAM_DESTINATIONS.map((item) => (
           <NavItem

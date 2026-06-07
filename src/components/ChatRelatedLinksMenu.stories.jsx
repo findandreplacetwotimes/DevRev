@@ -10,6 +10,21 @@ const meta = {
 
 export default meta
 
+export const AiChat = {
+  args: {
+    links: [
+      { id: "projects", title: "Projects" },
+      { id: "issues", title: "Issues" },
+      { id: "views", title: "Views" },
+    ],
+  },
+  render: (args) => (
+    <div className="flex h-screen w-[274px] bg-white">
+      <ChatRelatedLinksPanel {...args} />
+    </div>
+  ),
+}
+
 export const SidePanel = {
   args: {
     links: [

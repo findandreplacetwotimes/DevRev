@@ -7,6 +7,14 @@ const BUILD_TEAM_RELATED_LINKS = [
     title: "Sprints",
     href: "/sprints",
   },
+  {
+    title: "Projects",
+    href: "/projects",
+  },
+  {
+    title: "About",
+    href: "/about",
+  },
 ]
 
 function projectChatRelatedLinks(projectId) {
@@ -28,7 +36,14 @@ function projectChatRelatedLinks(projectId) {
   ]
 }
 
+export const COMPUTER_PAGE_LINKS = [
+  { id: "projects", title: "Projects" },
+  { id: "issues", title: "Issues" },
+  { id: "views", title: "Views" },
+]
+
 export function getChatRelatedLinks({ variant, linkedProjectChat } = {}) {
+  if (variant === "ai") return COMPUTER_PAGE_LINKS
   if (variant === "build-team") return BUILD_TEAM_RELATED_LINKS
   if (variant === "chat-project") return projectChatRelatedLinks(linkedProjectChat?.projectId)
   return []

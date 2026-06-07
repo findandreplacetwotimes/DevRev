@@ -15,9 +15,11 @@ const numericalStyle = {
   letterSpacing: "0px",
 }
 
-export function MenuItemLabel({ label }) {
+export function MenuItemLabel({ label, align = "center" }) {
   return (
-    <div className="inline-flex items-center justify-center py-[6px]">
+    <div
+      className={`inline-flex items-center py-[6px] ${align === "start" ? "justify-start" : "justify-center"}`}
+    >
       <span className="whitespace-nowrap text-[var(--foreground-primary)]" style={labelStyle}>
         {label}
       </span>

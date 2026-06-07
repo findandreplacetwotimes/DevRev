@@ -1,5 +1,7 @@
 import { createPortal } from "react-dom"
 import { useEffect, useLayoutEffect, useState } from "react"
+import { Icon } from "./Icon"
+import { MenuItemLabel } from "./MenuItem"
 import { NavItem } from "./NavItem"
 
 const modalShadow =
@@ -32,39 +34,74 @@ const titleStyle = {
   fontFeatureSettings: '"lnum", "tnum"',
 }
 
+function linkKey(link) {
+  return link.href ? `${link.title}-${link.href}` : link.title
+}
+
+function ChatRelatedLinkStaticRow({ link, className = "" }) {
+  return (
+    <div
+      role="menuitem"
+      aria-disabled="true"
+      className={`inline-flex h-[28px] w-full min-w-0 items-center rounded-[2px] bg-white pr-[6px] ${className}`}
+    >
+      <Icon name="page" />
+      {link.key ? (
+        <span
+          className="flex min-w-0 flex-1 items-center justify-start gap-[4px] overflow-hidden py-[6px] text-left"
+          style={titleStyle}
+        >
+          <span className="shrink-0 whitespace-nowrap text-[#939393]" style={keyStyle}>
+            {link.key}
+          </span>
+          <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-[rgba(48,46,47,0.94)]">
+            {link.title}
+          </span>
+        </span>
+      ) : (
+        <MenuItemLabel label={link.title} align="start" />
+      )}
+    </div>
+  )
+}
+
 function ChatRelatedLinksList({ links = [], onSelect, itemPadding = "px-[10px]" }) {
   return (
     <>
       <div className={`inline-flex w-full items-center rounded-[2px] bg-white ${itemPadding}`}>
         <div className="inline-flex items-center py-[10.5px]">
           <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[#939393]" style={labelStyle}>
-            LINKS
+            PAGES
           </span>
         </div>
       </div>
-      {links.map((link) => (
-        <button
-          key={`${link.title}-${link.href}`}
-          type="button"
-          role="menuitem"
-          className={`flex h-[28px] w-full min-w-0 items-center rounded-[2px] bg-white pr-[6px] text-left transition-colors duration-150 hover:bg-[var(--background-primary-subtle)] ${itemPadding}`}
-          onClick={() => onSelect?.(link)}
-        >
-          <span className="flex min-w-0 flex-1 items-center gap-[4px]">
-            {link.key ? (
-              <span className="shrink-0 whitespace-nowrap text-[#939393]" style={keyStyle}>
-                {link.key}
+      {links.map((link) =>
+        link.href ? (
+          <button
+            key={linkKey(link)}
+            type="button"
+            role="menuitem"
+            className={`flex h-[28px] w-full min-w-0 items-center rounded-[2px] bg-white pr-[6px] text-left transition-colors duration-150 hover:bg-[var(--background-primary-subtle)] ${itemPadding}`}
+            onClick={() => onSelect?.(link)}
+          >
+            <span className="flex min-w-0 flex-1 items-center gap-[4px]">
+              {link.key ? (
+                <span className="shrink-0 whitespace-nowrap text-[#939393]" style={keyStyle}>
+                  {link.key}
+                </span>
+              ) : null}
+              <span
+                className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[rgba(48,46,47,0.94)]"
+                style={titleStyle}
+              >
+                {link.title}
               </span>
-            ) : null}
-            <span
-              className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-[rgba(48,46,47,0.94)]"
-              style={titleStyle}
-            >
-              {link.title}
             </span>
-          </span>
-        </button>
-      ))}
+          </button>
+        ) : (
+          <ChatRelatedLinkStaticRow key={linkKey(link)} link={link} className={itemPadding} />
+        )
+      )}
     </>
   )
 }
@@ -125,7 +162,7 @@ export function ChatRelatedLinksMenu({ open, anchorRef, menuRef, links = [], onC
     <div
       ref={menuRef}
       role="menu"
-      aria-label="Related links"
+      aria-label="Pages"
       className="fixed z-[2147483646] inline-flex w-[202px] flex-col items-start gap-[4px] rounded-[2px] bg-white p-[6px]"
       style={{ boxShadow: modalShadow, top: `${style.top}px`, left: `${style.left}px` }}
     >
@@ -139,29 +176,30 @@ export function ChatRelatedLinksPanel({ links = [], onSelect }) {
   return (
     <aside
       className="flex h-full w-[274px] shrink-0 flex-col items-start border-r border-[#ececec] bg-white px-[12px] pb-[14px]"
-      aria-label="Related links"
+      aria-label="Pages"
     >
-      <div className="h-[14px] w-[192px] shrink-0 bg-white" />
-      <div className="flex w-[194px] flex-col items-start gap-[4px]" role="menu">
+      <div className="h-[14px] w-full shrink-0 bg-white" />
+      <div className="flex w-full min-w-0 flex-col items-stretch gap-[4px]" role="menu">
         <div className="inline-flex w-full items-center rounded-[2px] bg-white px-[6px]">
           <div className="inline-flex items-center py-[10.5px]">
             <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[#939393]" style={labelStyle}>
-              LINKS
+              PAGES
             </span>
           </div>
         </div>
         {links.map((link) => (
           <NavItem
-            key={`${link.title}-${link.href}`}
+            key={linkKey(link)}
             label={link.title}
             idLabel={link.key}
             iconName="page"
             className="w-full"
-            onClick={() => onSelect?.(link)}
+            inactive={!link.href}
+            onClick={link.href ? () => onSelect?.(link) : undefined}
           />
         ))}
       </div>
-      <div className="h-[20px] w-[192px] shrink-0 bg-white" />
+      <div className="h-[20px] w-full shrink-0 bg-white" />
     </aside>
   )
 }

@@ -12,6 +12,8 @@ const meta = {
     relatedLinks: [
       { title: "Issues", href: "/issues" },
       { title: "Sprints", href: "/sprints" },
+      { title: "Projects", href: "/projects" },
+      { title: "About", href: "/about" },
     ],
   },
 }
