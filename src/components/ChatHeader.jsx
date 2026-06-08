@@ -23,6 +23,7 @@ export function ChatHeader({
   iconName = "chat",
   avatarInitial = null,
   relatedLinks = [],
+  pagesLabel = "PAGES",
   onSelectRelatedLink,
   hideRelatedLinksControl = false,
 }) {
@@ -81,6 +82,7 @@ export function ChatHeader({
             anchorRef={triggerRef}
             menuRef={menuRef}
             links={relatedLinks}
+            pagesLabel={pagesLabel}
             onClose={() => setMenuOpen(false)}
             onSelect={onSelectRelatedLink}
           />

@@ -50,12 +50,13 @@ const SECONDARY_ITEMS = [
   { id: "me", label: "Me", leading: <MeAvatar /> },
 ]
 
+export const COMPUTER_NAV_ITEM_ID = "computer"
+
 export function NavPanel({
   className = "",
   selectedItemId,
   defaultSelectedItemId = "build-team",
   onSelectItem,
-  onComputerClick,
   chatPanelOpen = true,
   recordPanelOpen = true,
   onToggleChatPanel,
@@ -82,7 +83,7 @@ export function NavPanel({
   const [meMenuStyle, setMeMenuStyle] = useState({ top: 0, left: 0 })
 
   const handleSelectItem = (itemId) => {
-    if (!allItemIds.includes(itemId)) return
+    if (itemId !== COMPUTER_NAV_ITEM_ID && !allItemIds.includes(itemId)) return
     if (!isControlledSelection) {
       setUncontrolledSelectedItemId(itemId)
     }
@@ -158,7 +159,7 @@ export function NavPanel({
       <div className="flex w-full items-center gap-[4px]">
         <button
           type="button"
-          onClick={onComputerClick}
+          onClick={() => handleSelectItem(COMPUTER_NAV_ITEM_ID)}
           className="flex h-[29px] min-w-0 flex-1 items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
         >
           <img src="/icons/computer-wordmark.svg" alt="computer" className="h-[14px] w-[80px]" draggable={false} />

@@ -11,6 +11,7 @@ const meta = {
     defaultSelectedItemId: {
       control: "select",
       options: [
+        "computer",
         "build-team",
         "chat-project",
         "chat-arjun",

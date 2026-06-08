@@ -7,7 +7,7 @@ import { MessageInput } from "./MessageInput"
 import { useIssues } from "../context/IssuesContext"
 import { getAiResponse } from "../lib/aiClient"
 import { resolveChatNavigationIntent } from "../lib/chatNavigationIntent"
-import { getChatRelatedLinks } from "../lib/chatRelatedLinks"
+import { getChatPagesLabel, getChatRelatedLinks } from "../lib/chatRelatedLinks"
 import { messageTagsComputer } from "../lib/mentionUtils"
 import { appendProjectActivity } from "../lib/projectActivityStore"
 
@@ -297,6 +297,7 @@ export function ChatWindow({
       : CHAT_META[variant] ?? CHAT_META.ai
   const isGroupChat = variant === "build-team" || variant === "chat-project"
   const relatedLinks = getChatRelatedLinks({ variant, linkedProjectChat })
+  const pagesLabel = getChatPagesLabel({ variant })
 
   const handleSelectRelatedLink = (link) => {
     if (!link?.href) return
@@ -398,6 +399,7 @@ export function ChatWindow({
         iconName={meta.iconName}
         avatarInitial={meta.avatarInitial}
         relatedLinks={relatedLinks}
+        pagesLabel={pagesLabel}
         onSelectRelatedLink={handleSelectRelatedLink}
         hideRelatedLinksControl={hideRelatedLinksControl}
       />

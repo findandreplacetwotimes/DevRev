@@ -21,6 +21,8 @@ export const NavItem = forwardRef(function NavItem(
     toggle = false,
     idLabel,
     inactive = false,
+    hideIcon = false,
+    mutedLabel = false,
     ...rest
   },
   ref
@@ -41,10 +43,10 @@ export const NavItem = forwardRef(function NavItem(
       onClick={inactive ? undefined : onClick}
       aria-pressed={toggle ? selected : undefined}
       aria-disabled={inactive || undefined}
-      className={`group text-left ${baseClass} ${className || "w-[174px]"}`}
+      className={`group text-left ${baseClass} ${hideIcon ? "pl-[6px]" : ""} ${className || "w-[174px]"}`}
       {...rest}
     >
-      {leading || <Icon name={iconName} />}
+      {hideIcon ? null : leading || <Icon name={iconName} />}
       {isIdVariant ? (
         <span
           className="flex h-full min-w-0 flex-1 items-center justify-start gap-[4px] overflow-hidden py-[6px] text-left"
@@ -57,7 +59,7 @@ export const NavItem = forwardRef(function NavItem(
         </span>
       ) : (
         <span className="flex min-w-0 flex-1 items-center justify-start">
-          <MenuItemLabel label={label} align="start" />
+          <MenuItemLabel label={label} align="start" muted={mutedLabel} />
         </span>
       )}
     </button>
