@@ -116,9 +116,7 @@ export function ListItem({
 }) {
   if (type === "more") {
     return (
-      <div
-        className={`relative flex h-[48px] w-[44px] shrink-0 items-center justify-center ${className}`.trim()}
-      >
+      <div className={`flex h-[48px] w-[44px] shrink-0 items-center ${className}`.trim()}>
         {children ?? (
           <button
             type="button"
@@ -126,8 +124,10 @@ export function ListItem({
             onClick={onMorePress}
             className="inline-flex size-[28px] shrink-0 items-center justify-center rounded-[2px] border-0 bg-transparent p-0 text-[var(--foreground-primary)] appearance-none"
           >
-            <span className="relative block size-[16px]">
-              <img src="/icons/more-horizontal.svg" alt="" className="absolute inset-0 block size-full" draggable={false} />
+            <span className="inline-flex size-[28px] items-center justify-center">
+              <span className="relative block size-[16px]">
+                <img src="/icons/more-horizontal.svg" alt="" className="absolute inset-0 block size-full" draggable={false} />
+              </span>
             </span>
           </button>
         )}
@@ -137,7 +137,7 @@ export function ListItem({
 
   return (
     <div
-      className={`flex min-h-[48px] w-full min-w-0 items-center ${className}`.trim()}
+      className={`flex h-[48px] w-full min-w-0 items-center ${className}`.trim()}
     >
       <div className="flex min-w-0 flex-1 items-center gap-[4px]">
         <p

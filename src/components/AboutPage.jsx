@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
-import { Link, useOutletContext } from "react-router-dom"
+import { Link } from "react-router-dom"
+import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
+import { teamChatHref, teamIssuesHref, teamSprintsHref } from "../lib/teams"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Control } from "./Control"
 
@@ -61,7 +63,8 @@ function useCountUp(target, durationMs = 1000) {
 }
 
 export function AboutPage() {
-  const { openBuildTeamChat } = useOutletContext() ?? {}
+  const { navigateInSession, navContext } = useWorkspaceOutletContext()
+  const teamId = navContext?.teamId
   const issuesCount = useCountUp(256, 1000)
   const sprintCount = useCountUp(18, 1000)
 
@@ -88,7 +91,7 @@ export function AboutPage() {
 
       <div className="grid min-h-0 w-full flex-1 grid-cols-3 border-t border-[#ececec]">
         <Link
-          to="/sprints"
+          to={teamSprintsHref(teamId)}
           className="group flex min-h-0 flex-col justify-between border-r border-[#ececec] px-[20px] pt-[16px] pb-[5px] text-inherit no-underline transition-colors duration-150 hover:bg-[var(--control-bg-rest)]"
           aria-label="Open sprints page"
         >
@@ -104,7 +107,7 @@ export function AboutPage() {
           </span>
         </Link>
         <Link
-          to="/issues"
+          to={teamIssuesHref(teamId)}
           className="group flex min-h-0 flex-col justify-between border-r border-[#ececec] px-[20px] pt-[16px] pb-[5px] text-inherit no-underline transition-colors duration-150 hover:bg-[var(--control-bg-rest)]"
           aria-label="Open issues page"
         >
@@ -125,7 +128,7 @@ export function AboutPage() {
               type="button"
               className="m-0 w-fit border-0 bg-transparent p-0 text-[var(--foreground-primary)] text-left hover:underline"
               style={aboutLabelStyle}
-              onClick={() => openBuildTeamChat?.()}
+              onClick={() => navigateInSession?.(teamChatHref(teamId))}
             >
               Team chat
             </button>

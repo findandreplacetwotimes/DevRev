@@ -1,3 +1,4 @@
+import { DEFAULT_TEAM_ID, teamAboutHref } from "../lib/teams"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Control } from "./Control"
 import { TableCell } from "./TableCell"
@@ -43,7 +44,7 @@ export function TeamMembersPage() {
             <div className="flex min-w-0 flex-wrap items-center gap-[4px]">
               <Breadcrumbs
                 segments={[
-                  { label: "About", href: "/about", iconName: "team", showIcon: true },
+                  { label: "About", href: teamAboutHref(DEFAULT_TEAM_ID), iconName: "team", showIcon: true },
                   { label: "Team", showIcon: false },
                 ]}
               />

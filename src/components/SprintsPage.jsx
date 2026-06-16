@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
+import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
 import { useIssues } from "../context/IssuesContext"
+import { filterIssuesByProject, filterIssuesByTeam } from "../lib/teams"
 import { AppDocumentPageShell } from "./AppDocumentPageShell"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Page } from "./Page"
@@ -47,6 +49,9 @@ function loadInitialFilters() {
 
 export function SprintsPage() {
   const { issues, sprints, patchSprint } = useIssues()
+  const outletContext = useWorkspaceOutletContext()
+  const { teamId, projectId, scope } = outletContext.workspaceScope ?? {}
+  const syncSessionTabTitle = outletContext.syncSessionTabTitle
   const persistedRef = useRef(null)
   if (persistedRef.current === null) {
     persistedRef.current = loadInitialFilters()
@@ -59,11 +64,17 @@ export function SprintsPage() {
   const sprintOptions = useMemo(() => (sprints ?? []).map((row) => row.id), [sprints])
   const activeSprint = sprintMap.get(activeFilter.sprintId) ?? null
 
-  const filtered = useMemo(() => {
+  const scopedIssues = useMemo(() => {
     const rows = Array.isArray(issues) ? issues : []
+    if (scope === "project" && projectId) return filterIssuesByProject(rows, projectId)
+    if (scope === "team") return filterIssuesByTeam(rows, teamId)
+    return rows
+  }, [issues, projectId, scope, teamId])
+
+  const filtered = useMemo(() => {
     const targetSprintId = activeSprint?.id ?? activeFilter.sprintId
-    return rows.filter((row) => row.sprint === targetSprintId)
-  }, [issues, activeSprint?.id, activeFilter.sprintId])
+    return scopedIssues.filter((row) => row.sprint === targetSprintId)
+  }, [scopedIssues, activeSprint?.id, activeFilter.sprintId])
 
   useEffect(() => {
     try {
@@ -72,7 +83,8 @@ export function SprintsPage() {
     } catch {
       /* ignore storage failures */
     }
-  }, [activeFilterId, filtersById])
+    syncSessionTabTitle?.()
+  }, [activeFilterId, filtersById, syncSessionTabTitle])
 
   return (
     <AppDocumentPageShell

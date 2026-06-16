@@ -1,4 +1,6 @@
 import { useNavigate } from "react-router-dom"
+import { issueHref } from "../lib/navDestinations"
+import { projectPathId } from "../lib/projectsApi"
 import { EMPTY_ISSUE_TITLE_PLACEHOLDER, ticketChipFromIssueId } from "../lib/issuesApi"
 import { milestoneLabelAtIndex } from "../lib/projectMilestones"
 import { OWNERS } from "../lib/owners"
@@ -9,7 +11,7 @@ import { ProjectHealthSelector } from "./ProjectHealthSelector"
 function MilestoneTitleBlock({ index, milestone, onPatchMilestone }) {
   return (
     <div className="w-full px-[44px]">
-      <div className="mx-auto w-full min-w-0 max-w-[740px] py-[12px]">
+      <div className="w-full min-w-0 py-[12px]">
         <h2
           className="m-0 mb-[5px] min-h-[32px] text-[22px] leading-[28px] font-semibold text-[var(--fg-neutral-prominent)]"
           style={{
@@ -35,9 +37,9 @@ function MilestoneTitleBlock({ index, milestone, onPatchMilestone }) {
   )
 }
 
-function MilestoneListBlock({ issues, navigate, patchIssue, projectId }) {
+function MilestoneListBlock({ issues, navigate, patchIssue, projectRecord }) {
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       <div className="flex w-full min-w-0 flex-col">
         {issues.map((issue) => {
           const chip = ticketChipFromIssueId(issue.id)
@@ -57,7 +59,9 @@ function MilestoneListBlock({ issues, navigate, patchIssue, projectId }) {
               onDueDateChange={(dueDateId) => patchIssue(issue.id, { dueDateId })}
               showMore
               onRowClick={() =>
-                navigate(`/issues/${encodeURIComponent(issue.id)}`, { state: { sourceProjectId: projectId } })
+                navigate(issueHref(issue.id, { scope: "project", projectId: projectPathId(projectRecord) }), {
+                  state: { sourceProjectId: projectRecord.id },
+                })
               }
               onMoreClick={() => {}}
             />
@@ -70,7 +74,7 @@ function MilestoneListBlock({ issues, navigate, patchIssue, projectId }) {
 
 /**
  * Project overview: milestone headers (health + due, same chips as page meta) and linked issues (`ListItemRow`).
- * Milestone title and issue list both use `px-[44px]` + centered `max-w-[740px]` (same column as project title/description).
+ * Milestone titles use `px-[44px]`; issue rows are full-bleed (no horizontal inset), matching Issues/Links lists.
  *
  * @param {object} props
  * @param {import("../lib/issuesApi").Project} props.project
@@ -107,7 +111,7 @@ export function ProjectMilestonesOverview({ project, issues, patchProject, patch
               issues={inMilestone}
               navigate={navigate}
               patchIssue={patchIssue}
-              projectId={project.id}
+              projectRecord={project}
             />
           </section>
         )

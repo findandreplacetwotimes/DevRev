@@ -36,7 +36,9 @@
   --border-subtle: #e8e8e8;
   --fg-neutral-prominent: rgba(48, 46, 47, 0.94);
   --breadcrumb-bg: #f5f5f5;
-  --dragonfruit-200: #ff93ac;
+  /** Figma Icon pictogram tile style `red` (`5662:256812`, `5906:39050`). */
+  --dragonfruit-200: #ff0000;
+  --jabuticaba-200: #ccb7f9;
 }
 
 body {

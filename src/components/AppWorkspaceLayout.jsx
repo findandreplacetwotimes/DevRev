@@ -1,426 +1,492 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Outlet, useNavigate } from "react-router-dom"
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { Outlet, useLocation, useNavigate } from "react-router-dom"
 import { useIssues } from "../context/IssuesContext"
-import { getChatPagesLabel, getChatRelatedLinks } from "../lib/chatRelatedLinks"
-import { projectDisplayTitle, resolveProjectForWorkspaceChat } from "../lib/projectsApi"
-import { ChatRelatedLinksPanel } from "./ChatRelatedLinksMenu"
-import { ChatWindow } from "./ChatWindow"
-import { COMPUTER_NAV_ITEM_ID, NavPanel } from "./NavPanel"
-
-const INITIAL_CHAT_WIDTH = 377
-const MIN_CHAT_WIDTH = 300
-const MIN_RECORD_WIDTH = 560
-const NAV_WIDTH = 220
-const DEBOUNCE_LS_MS = 300
-
-const LS_CHAT_WIDTH = "devrev.workspace.chatWidth.v1"
-const LS_CHAT_OPEN = "devrev.workspace.chatPanelOpen.v1"
-const LS_RECORD_OPEN = "devrev.workspace.recordPanelOpen.v1"
-
-
-function loadBool(key, defaultVal) {
-  if (typeof window === "undefined") return defaultVal
-  try {
-    const raw = window.localStorage.getItem(key)
-    if (raw === "true") return true
-    if (raw === "false") return false
-  } catch {
-    /* ignore */
-  }
-  return defaultVal
-}
-
-function isFirstWorkspaceVisit() {
-  if (typeof window === "undefined") return false
-  try {
-    return window.localStorage.getItem(LS_CHAT_OPEN) == null && window.localStorage.getItem(LS_RECORD_OPEN) == null
-  } catch {
-    return false
-  }
-}
-
-function loadChatWidth() {
-  if (typeof window === "undefined") return INITIAL_CHAT_WIDTH
-  try {
-    const raw = window.localStorage.getItem(LS_CHAT_WIDTH)
-    const n = raw != null ? Number.parseInt(raw, 10) : NaN
-    if (Number.isFinite(n) && n >= MIN_CHAT_WIDTH && n <= 2000) return n
-  } catch {
-    /* ignore */
-  }
-  return INITIAL_CHAT_WIDTH
-}
-
-function loadInitialChatVariant() {
-  return isFirstWorkspaceVisit() ? "ai" : "build-team"
-}
-
-function loadInitialSelectedNavItemId() {
-  return isFirstWorkspaceVisit() ? COMPUTER_NAV_ITEM_ID : "build-team"
-}
-
-/** Never start with both panels hidden (blank canvas). */
-function loadInitialPanelOpen() {
-  const chat = loadBool(LS_CHAT_OPEN, true)
-  const record = loadBool(LS_RECORD_OPEN, false)
-  if (!chat && !record) {
-    try {
-      window.localStorage.setItem(LS_CHAT_OPEN, "true")
-      window.localStorage.setItem(LS_RECORD_OPEN, "false")
-    } catch {
-      /* ignore */
-    }
-    return { chat: true, record: false }
-  }
-  return { chat, record }
-}
+import { useWorkspaceScope } from "../hooks/useWorkspaceScope"
+import { createSeedMessagesForSession } from "../lib/chatSeedMessages"
+import {
+  chatVariantForRoute,
+  navItemIdForLocation,
+  parseWorkspaceRoute,
+  routeForNavItemId,
+  tabTitleForRoute,
+} from "../lib/navDestinations"
+import {
+  projectChatHeaderTitle,
+  projectNavLabelTitle,
+  projectPathId,
+  resolveProjectForWorkspaceChat,
+} from "../lib/projectsApi"
+import { DEFAULT_TEAM_ID, teamUrlSegment } from "../lib/teams"
+import { teamById } from "../lib/workspaceLabels"
+import {
+  activeNavItemIdForSession,
+  createDefaultSession,
+  createDefaultSplitSession,
+  focusedPaneRoute,
+  isSplitSession,
+  loadWorkspaceSessionState,
+  persistWorkspaceSessionState,
+} from "../lib/workspaceSessions"
+import { NavPanel } from "./NavPanel"
+import { SessionTabBar } from "./SessionTabBar"
+import { SplitWorkspaceView } from "./SplitWorkspaceView"
 
 /**
- * Outer shell: nav + optional chat split + optional record (main) split. Panel visibility and chat width persist in localStorage.
+ * Outer shell: session tabs + nav + main column (single route or split panes per active session).
  */
 export function AppWorkspaceLayout() {
   return <AppWorkspaceChrome />
 }
 
+function ensureChatMessagesForRoute(sessionId, route, ensureSessionMessages) {
+  const variant = chatVariantForRoute(route)
+  if (variant) ensureSessionMessages(sessionId, variant)
+}
+
 export function AppWorkspaceChrome() {
   const navigate = useNavigate()
-  const { projects } = useIssues()
+  const location = useLocation()
+  const { projects, issues } = useIssues()
+  const workspaceScope = useWorkspaceScope()
 
-  /** Nav + chat header follow `projectDisplayTitle` for the resolved project (works with multiple rows in storage). */
-  const linkedProjectChat = useMemo(() => {
-    const p = resolveProjectForWorkspaceChat(projects)
-    if (!p || typeof p.id !== "string") return null
-    return { projectId: p.id, title: projectDisplayTitle(p) }
-  }, [projects])
+  const parsedRoute = useMemo(() => parseWorkspaceRoute(location.pathname), [location.pathname])
+  const defaultTeam = useMemo(() => encodeURIComponent(teamUrlSegment(DEFAULT_TEAM_ID)), [])
 
-  const [panelsInitial] = useState(loadInitialPanelOpen)
+  const activeProject = useMemo(() => {
+    if (workspaceScope.isProjectContext && workspaceScope.project) {
+      return workspaceScope.project
+    }
+    return resolveProjectForWorkspaceChat(projects)
+  }, [projects, workspaceScope.isProjectContext, workspaceScope.project])
 
-  const [chatWidth, setChatWidth] = useState(loadChatWidth)
-  const [chatPanelOpen, setChatPanelOpen] = useState(panelsInitial.chat)
-  const [recordPanelOpen, setRecordPanelOpen] = useState(panelsInitial.record)
-  const [selectedNavItemId, setSelectedNavItemId] = useState(loadInitialSelectedNavItemId)
+  const activeProjectId = useMemo(() => {
+    if (activeProject) return projectPathId(activeProject)
+    return workspaceScope.projectId
+  }, [activeProject, workspaceScope.projectId])
 
-  /** `person` chats use LLM as teammate; `ai` uses computer mode. */
-  const [chatVariant, setChatVariant] = useState(loadInitialChatVariant)
-  const layoutRef = useRef(null)
-  const dragStateRef = useRef(null)
-  const stopResizeRef = useRef(null)
+  const activeTeamId = useMemo(() => {
+    if (workspaceScope.isTeamContext && workspaceScope.teamId) {
+      return workspaceScope.teamId
+    }
+    return DEFAULT_TEAM_ID
+  }, [workspaceScope.isTeamContext, workspaceScope.teamId])
 
-  const chatPanelOpenRef = useRef(chatPanelOpen)
-  const recordPanelOpenRef = useRef(recordPanelOpen)
-  useEffect(() => {
-    chatPanelOpenRef.current = chatPanelOpen
-  }, [chatPanelOpen])
-  useEffect(() => {
-    recordPanelOpenRef.current = recordPanelOpen
-  }, [recordPanelOpen])
+  const activeTeam = useMemo(() => teamById(activeTeamId), [activeTeamId])
 
-  const clampChatWidth = useCallback(
-    (nextWidth) => {
-      const layoutWidth = layoutRef.current?.clientWidth ?? window.innerWidth
-      const available = Math.max(0, layoutWidth - NAV_WIDTH)
-
-      if (!recordPanelOpen) {
-        const chatOnlyUpper = Math.max(0, available)
-        const chatOnlyLower = Math.min(MIN_CHAT_WIDTH, chatOnlyUpper || MIN_CHAT_WIDTH)
-        return Math.min(chatOnlyUpper, Math.max(chatOnlyLower, nextWidth))
-      }
-
-      /**
-       * Record column is flexible — reserve a proportional slice so chat's fixed px width never steals 100%
-       * of `(layout − nav)` (which used to squash the Outlet to zero / “empty page” on narrower viewports).
-       */
-      const reserveRecord = Math.min(MIN_RECORD_WIDTH, Math.max(140, Math.ceil(available * 0.45)))
-      const maxChat = Math.max(0, available - reserveRecord)
-      const minChatSoft = Math.min(MIN_CHAT_WIDTH, Math.max(96, Math.floor(available * 0.38)))
-      return Math.min(maxChat, Math.max(minChatSoft, nextWidth))
-    },
-    [recordPanelOpen]
+  const navContext = useMemo(
+    () => ({
+      teamId: activeTeamId,
+      projectId: activeProjectId,
+      scope: parsedRoute.scope,
+    }),
+    [activeProjectId, activeTeamId, parsedRoute.scope]
   )
 
-  const handleResizeMove = useCallback((event) => {
-    if (!dragStateRef.current) return
-    const deltaX = event.clientX - dragStateRef.current.startX
-    const nextWidth = dragStateRef.current.startWidth + deltaX
-    setChatWidth(clampChatWidth(nextWidth))
-  }, [clampChatWidth])
+  const titleContext = useMemo(
+    () => ({
+      teamId: activeTeamId,
+      projectName: activeProject ? projectNavLabelTitle(activeProject) : undefined,
+      issues,
+      projects,
+    }),
+    [activeProject, activeTeamId, issues, projects]
+  )
 
-  const stopResize = useCallback(() => {
-    dragStateRef.current = null
-    window.removeEventListener("pointermove", handleResizeMove)
-    if (stopResizeRef.current) {
-      window.removeEventListener("pointerup", stopResizeRef.current)
+  const linkedProjectChat = useMemo(() => {
+    if (!activeProject) return null
+    return {
+      projectId: activeProject.id,
+      title: projectChatHeaderTitle(activeProject),
     }
-    document.body.style.userSelect = ""
-  }, [handleResizeMove])
+  }, [activeProject])
 
-  useEffect(() => {
-    stopResizeRef.current = stopResize
-  }, [stopResize])
+  const initialState = useMemo(() => loadWorkspaceSessionState(), [])
+  const [sessions, setSessions] = useState(initialState.sessions)
+  const [activeSessionId, setActiveSessionId] = useState(initialState.activeSessionId)
+  const [sessionMessages, setSessionMessages] = useState({})
+  const switchingRef = useRef(false)
+  /** When set, location→session sync is skipped until the URL matches (avoids nav flicker). */
+  const ownedNavigationRef = useRef(null)
 
-  const startResize = (event) => {
-    if (!chatPanelOpen || !recordPanelOpen) return
-    event.preventDefault()
-    dragStateRef.current = { startX: event.clientX, startWidth: chatWidth }
-    window.addEventListener("pointermove", handleResizeMove)
-    window.addEventListener("pointerup", stopResize)
-    document.body.style.userSelect = "none"
-  }
+  const chromeRowRef = useRef(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const NAV_PANEL_WIDTH_PX = 220
+  const isNarrow = containerWidth > 0 && containerWidth - NAV_PANEL_WIDTH_PX < 700
 
-  useEffect(() => {
-    const updateBounds = () => {
-      setChatWidth((current) => clampChatWidth(current))
-    }
-    window.addEventListener("resize", updateBounds)
-    return () => {
-      window.removeEventListener("resize", updateBounds)
-      stopResize()
-    }
-  }, [clampChatWidth, stopResize])
+  const activeSession = useMemo(
+    () => sessions.find((session) => session.id === activeSessionId) ?? sessions[0],
+    [sessions, activeSessionId]
+  )
 
-  useEffect(() => {
-    const id = window.requestAnimationFrame(() => {
-      setChatWidth((current) => clampChatWidth(current))
-    })
-    return () => window.cancelAnimationFrame(id)
-  }, [recordPanelOpen, chatPanelOpen, clampChatWidth])
+  const currentRoute = `${location.pathname}${location.search}`
 
-  useEffect(() => {
-    const id = window.setTimeout(() => {
-      try {
-        window.localStorage.setItem(LS_CHAT_WIDTH, String(chatWidth))
-      } catch {
-        /* ignore */
-      }
-    }, DEBOUNCE_LS_MS)
-    return () => window.clearTimeout(id)
-  }, [chatWidth])
+  const updateSessions = useCallback(
+    (updater, nextActiveId = activeSessionId) => {
+      setSessions((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater
+        persistWorkspaceSessionState(next, nextActiveId)
+        return next
+      })
+    },
+    [activeSessionId]
+  )
 
-  useEffect(() => {
-    if (!chatPanelOpen && !recordPanelOpen) {
-      const id = window.requestAnimationFrame(() => {
-        setChatPanelOpen(true)
-        try {
-          window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        } catch {
-          /* ignore */
+  const patchActiveSession = useCallback(
+    (patch) => {
+      updateSessions((prev) =>
+        prev.map((session) => (session.id === activeSessionId ? { ...session, ...patch } : session))
+      )
+    },
+    [activeSessionId, updateSessions]
+  )
+
+  const ensureSessionMessages = useCallback(
+    (sessionId, variant) => {
+      setSessionMessages((prev) => {
+        if (prev[sessionId]) return prev
+        return {
+          ...prev,
+          [sessionId]: createSeedMessagesForSession(variant, linkedProjectChat),
         }
       })
-      return () => window.cancelAnimationFrame(id)
-    }
-    return undefined
-  }, [chatPanelOpen, recordPanelOpen])
-
-
-  const toggleChatPanel = () => {
-    setChatPanelOpen((prev) => {
-      if (prev && !recordPanelOpenRef.current) {
-        try {
-          window.localStorage.setItem(LS_CHAT_OPEN, "false")
-          window.localStorage.setItem(LS_RECORD_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        setRecordPanelOpen(true)
-        return false
-      }
-      const next = !prev
-      try {
-        window.localStorage.setItem(LS_CHAT_OPEN, String(next))
-      } catch {
-        /* ignore */
-      }
-      return next
-    })
-  }
-
-  const toggleRecordPanel = () => {
-    setRecordPanelOpen((prev) => {
-      if (prev && !chatPanelOpenRef.current) {
-        try {
-          window.localStorage.setItem(LS_RECORD_OPEN, "false")
-          window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        setChatPanelOpen(true)
-        return false
-      }
-      const next = !prev
-      try {
-        window.localStorage.setItem(LS_RECORD_OPEN, String(next))
-      } catch {
-        /* ignore */
-      }
-      return next
-    })
-  }
-
-
-  const ensureChatPanelOpenPersist = () => {
-    setChatPanelOpen((prev) => {
-      if (!prev) {
-        try {
-          window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        return true
-      }
-      return prev
-    })
-  }
-
-  const ensureRecordPanelOpenPersist = useCallback(() => {
-    setRecordPanelOpen((prev) => {
-      if (!prev) {
-        try {
-          window.localStorage.setItem(LS_RECORD_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        return true
-      }
-      return prev
-    })
-  }, [])
-
-  const closeRecordPanelPersist = useCallback(() => {
-    setRecordPanelOpen((prev) => {
-      if (!prev) return prev
-      try {
-        window.localStorage.setItem(LS_RECORD_OPEN, "false")
-        if (!chatPanelOpenRef.current) {
-          window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        }
-      } catch {
-        /* ignore */
-      }
-      if (!chatPanelOpenRef.current) setChatPanelOpen(true)
-      return false
-    })
-  }, [])
-
-  const openProjectChat = useCallback(() => {
-    setChatVariant("chat-project")
-    setSelectedNavItemId("chat-project")
-    setChatPanelOpen((prev) => {
-      if (!prev) {
-        try {
-          window.localStorage.setItem(LS_CHAT_OPEN, "true")
-        } catch {
-          /* ignore */
-        }
-        return true
-      }
-      return prev
-    })
-  }, [])
-
-  const openBuildTeamChat = useCallback(() => {
-    setChatVariant("build-team")
-    setSelectedNavItemId("build-team")
-    ensureChatPanelOpenPersist()
-  }, [])
-
-  const workspaceOutletContext = useMemo(
-    () => ({ openProjectChat, openBuildTeamChat, closeRecordPanel: closeRecordPanelPersist }),
-    [openProjectChat, openBuildTeamChat, closeRecordPanelPersist]
+    },
+    [linkedProjectChat]
   )
 
-  const handleNavSelectItem = (itemId) => {
-    setSelectedNavItemId(itemId)
-    if (itemId === COMPUTER_NAV_ITEM_ID) {
-      setChatVariant("ai")
-      ensureChatPanelOpenPersist()
+  const navigateInSession = useCallback(
+    (href, navItemId, paneId) => {
+      if (!href) return
+      ownedNavigationRef.current = href
+
+      const pathname = href.split("?")[0]
+      const search = href.includes("?") ? href.slice(href.indexOf("?")) : ""
+      const resolvedNavItemId = navItemId ?? navItemIdForLocation(pathname, search, navContext)
+
+      if (isSplitSession(activeSession)) {
+        const targetPane = paneId ?? activeSession.focusedPane
+        const patch =
+          targetPane === "left"
+            ? { leftRoute: href, leftNavItemId: resolvedNavItemId }
+            : { rightRoute: href, rightNavItemId: resolvedNavItemId }
+
+        patchActiveSession(patch)
+
+        if (targetPane === activeSession.focusedPane) {
+          navigate(href)
+        }
+        return
+      }
+
+      patchActiveSession({
+        route: href,
+        selectedNavItemId: resolvedNavItemId,
+        tabTitle: tabTitleForRoute(href, titleContext),
+      })
+
+      navigate(href)
+    },
+    [activeSession, navContext, navigate, patchActiveSession, titleContext]
+  )
+
+  const syncSessionTabTitle = useCallback(() => {
+    if (isSplitSession(activeSession)) return
+    const route = `${location.pathname}${location.search}`
+    patchActiveSession({
+      tabTitle: tabTitleForRoute(route, titleContext),
+    })
+  }, [activeSession, location.pathname, location.search, patchActiveSession, titleContext])
+
+  const handleNavSelectItem = useCallback(
+    (itemId) => {
+      const href = routeForNavItemId(itemId, navContext)
+      if (!href) return
+      navigateInSession(href, itemId)
+    },
+    [navContext, navigateInSession]
+  )
+
+  const handlePaneFocus = useCallback(
+    (paneId) => {
+      if (!isSplitSession(activeSession)) return
+      if (activeSession.focusedPane === paneId) return
+      patchActiveSession({ focusedPane: paneId })
+    },
+    [activeSession, patchActiveSession]
+  )
+
+  const handleSplitLeftWidthChange = useCallback(
+    (width) => {
+      patchActiveSession({ splitLeftWidthPx: width })
+    },
+    [patchActiveSession]
+  )
+
+  const handleSelectSession = useCallback(
+    (sessionId) => {
+      if (sessionId === activeSessionId) return
+      switchingRef.current = true
+      setActiveSessionId(sessionId)
+      persistWorkspaceSessionState(sessions, sessionId)
+      const target = sessions.find((session) => session.id === sessionId)
+      if (!target) return
+
+      const href = focusedPaneRoute(target)
+      if (href) {
+        ownedNavigationRef.current = href
+        navigate(href)
+        if (isSplitSession(target)) {
+          ensureChatMessagesForRoute(sessionId, target.leftRoute, ensureSessionMessages)
+          ensureChatMessagesForRoute(sessionId, target.rightRoute, ensureSessionMessages)
+        } else {
+          ensureChatMessagesForRoute(sessionId, target.route, ensureSessionMessages)
+        }
+      }
+      window.requestAnimationFrame(() => {
+        switchingRef.current = false
+      })
+    },
+    [activeSessionId, ensureSessionMessages, navigate, sessions]
+  )
+
+  const handleAddSession = useCallback(() => {
+    const nextSession = createDefaultSession()
+    const nextSessions = [...sessions, nextSession]
+    updateSessions(nextSessions, nextSession.id)
+    setActiveSessionId(nextSession.id)
+    const href = nextSession.route
+    if (href) {
+      ownedNavigationRef.current = href
+      navigate(href)
+      ensureChatMessagesForRoute(nextSession.id, href, ensureSessionMessages)
+    }
+  }, [ensureSessionMessages, sessions, updateSessions, navigate])
+
+  const handleAddSplitSession = useCallback(() => {
+    const nextSession = createDefaultSplitSession()
+    const nextSessions = [...sessions, nextSession]
+    updateSessions(nextSessions, nextSession.id)
+    setActiveSessionId(nextSession.id)
+    const href = focusedPaneRoute(nextSession)
+    if (href) {
+      ownedNavigationRef.current = href
+      navigate(href)
+      ensureChatMessagesForRoute(nextSession.id, nextSession.leftRoute, ensureSessionMessages)
+      ensureChatMessagesForRoute(nextSession.id, nextSession.rightRoute, ensureSessionMessages)
+    }
+  }, [ensureSessionMessages, sessions, updateSessions, navigate])
+
+  const handleCloseSession = useCallback(
+    (sessionId) => {
+      if (sessions.length <= 1) return
+      const index = sessions.findIndex((session) => session.id === sessionId)
+      const nextSessions = sessions.filter((session) => session.id !== sessionId)
+      const neighbor = nextSessions[Math.min(index, nextSessions.length - 1)]
+      updateSessions(nextSessions, neighbor.id)
+      setActiveSessionId(neighbor.id)
+      const href = focusedPaneRoute(neighbor)
+      if (href) {
+        ownedNavigationRef.current = href
+        navigate(href)
+        if (isSplitSession(neighbor)) {
+          ensureChatMessagesForRoute(neighbor.id, neighbor.leftRoute, ensureSessionMessages)
+          ensureChatMessagesForRoute(neighbor.id, neighbor.rightRoute, ensureSessionMessages)
+        } else {
+          ensureChatMessagesForRoute(neighbor.id, neighbor.route, ensureSessionMessages)
+        }
+      }
+      setSessionMessages((prev) => {
+        const next = { ...prev }
+        delete next[sessionId]
+        return next
+      })
+    },
+    [navigate, sessions, updateSessions, ensureSessionMessages]
+  )
+
+  const workspaceOutletContext = useMemo(
+    () => ({
+      navigateInSession,
+      syncSessionTabTitle,
+      linkedProjectChat,
+      activeSessionId,
+      sessionMessages,
+      setSessionMessages,
+      breadcrumbsMenuEnabled: isNarrow,
+      workspaceScope,
+      navContext,
+      titleContext,
+      activeTeam,
+      activeProject,
+    }),
+    [
+      activeSessionId,
+      linkedProjectChat,
+      navigateInSession,
+      syncSessionTabTitle,
+      sessionMessages,
+      isNarrow,
+      workspaceScope,
+      navContext,
+      titleContext,
+      activeTeam,
+      activeProject,
+    ]
+  )
+
+  // In-app navigation updates the active session route(s).
+  useEffect(() => {
+    if (!activeSession) return
+
+    const ownedRoute = ownedNavigationRef.current
+    if (ownedRoute) {
+      if (currentRoute === ownedRoute) {
+        ownedNavigationRef.current = null
+      }
       return
     }
-    if (itemId === "build-team" || itemId === "dev-team") {
-      setChatVariant("build-team")
-      ensureChatPanelOpenPersist()
+
+    if (switchingRef.current) return
+
+    const nextTitle = tabTitleForRoute(currentRoute, titleContext)
+    const nextNavItemId = navItemIdForLocation(location.pathname, location.search, navContext)
+
+    if (isSplitSession(activeSession)) {
+      const matchesLeft = currentRoute === activeSession.leftRoute
+      const matchesRight = currentRoute === activeSession.rightRoute
+
+      if (matchesLeft) {
+        if (activeSession.focusedPane !== "left") {
+          window.requestAnimationFrame(() => patchActiveSession({ focusedPane: "left" }))
+        }
+        return
+      }
+
+      if (matchesRight) {
+        if (activeSession.focusedPane !== "right") {
+          window.requestAnimationFrame(() => patchActiveSession({ focusedPane: "right" }))
+        }
+        return
+      }
+
+      const pane = activeSession.focusedPane
+      window.requestAnimationFrame(() => {
+        patchActiveSession(
+          pane === "left"
+            ? { leftRoute: currentRoute, leftNavItemId: nextNavItemId }
+            : { rightRoute: currentRoute, rightNavItemId: nextNavItemId }
+        )
+      })
       return
     }
-    if (itemId.startsWith("chat-")) {
-      setChatVariant(itemId)
-      ensureChatPanelOpenPersist()
+
+    if (!activeSession.route) return
+
+    if (currentRoute !== activeSession.route) {
+      window.requestAnimationFrame(() => {
+        patchActiveSession({
+          route: currentRoute,
+          selectedNavItemId: nextNavItemId,
+          tabTitle: nextTitle,
+        })
+      })
       return
     }
-  }
 
-  const showSplitHandle = chatPanelOpen && recordPanelOpen
-  const chatFillsRemainder = chatPanelOpen && !recordPanelOpen
-  const relatedLinks = getChatRelatedLinks({ variant: chatVariant, linkedProjectChat })
-  const pagesLabel = getChatPagesLabel({ variant: chatVariant })
-  const showRelatedLinksPanel = !recordPanelOpen && relatedLinks.length > 0
+    if (nextTitle !== activeSession.tabTitle) {
+      window.requestAnimationFrame(() => {
+        patchActiveSession({ tabTitle: nextTitle })
+      })
+    }
+  }, [
+    activeSession,
+    activeSession?.route,
+    activeSession?.tabTitle,
+    activeSession?.leftRoute,
+    activeSession?.rightRoute,
+    activeSession?.focusedPane,
+    currentRoute,
+    location.pathname,
+    location.search,
+    navContext,
+    patchActiveSession,
+    titleContext,
+  ])
 
-  const handleSelectRelatedLink = (link) => {
-    if (!link?.href) return
-    ensureRecordPanelOpenPersist()
-    navigate(link.href, link.state ? { state: link.state } : undefined)
-  }
+  useEffect(() => {
+    if (!activeSession) return
+    if (isSplitSession(activeSession)) {
+      window.requestAnimationFrame(() => {
+        ensureChatMessagesForRoute(activeSessionId, activeSession.leftRoute, ensureSessionMessages)
+        ensureChatMessagesForRoute(activeSessionId, activeSession.rightRoute, ensureSessionMessages)
+      })
+      return
+    }
+    if (!activeSession.route) return
+    window.requestAnimationFrame(() => {
+      ensureChatMessagesForRoute(activeSessionId, activeSession.route, ensureSessionMessages)
+    })
+  }, [
+    activeSession,
+    activeSession?.route,
+    activeSession?.leftRoute,
+    activeSession?.rightRoute,
+    activeSessionId,
+    ensureSessionMessages,
+  ])
 
-  const handlePagesPanelNavigate = (href) => {
-    if (!href) return
-    ensureRecordPanelOpenPersist()
-    navigate(href)
-  }
+  useLayoutEffect(() => {
+    const el = chromeRowRef.current
+    if (!el || typeof ResizeObserver === "undefined") return undefined
+
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect?.width ?? 0
+      setContainerWidth(w)
+    })
+
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const navSelectedItemId = activeNavItemIdForSession(activeSession)
 
   return (
-    <main className="flex h-screen items-stretch justify-center bg-white">
-      <div ref={layoutRef} className="flex h-full w-full min-w-0 items-stretch">
-        <NavPanel
-          selectedItemId={selectedNavItemId}
-          onSelectItem={handleNavSelectItem}
-          chatPanelOpen={chatPanelOpen}
-          recordPanelOpen={recordPanelOpen}
-          onToggleChatPanel={toggleChatPanel}
-          onToggleRecordPanel={toggleRecordPanel}
-          projectChatNavLabel={linkedProjectChat?.title}
-        />
-
-        {chatPanelOpen ? (
-          <ChatWindow
-            width={chatWidth}
-            variant={chatVariant}
-            flexFill={chatFillsRemainder}
-            linkedProjectChat={linkedProjectChat}
-            onOpenRecordPanel={ensureRecordPanelOpenPersist}
-            hideRelatedLinksControl={!recordPanelOpen}
+    <main className="flex h-screen flex-col bg-white">
+      <SessionTabBar
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        onSelectSession={handleSelectSession}
+        onCloseSession={handleCloseSession}
+        onAddSession={handleAddSession}
+        onAddSplitSession={handleAddSplitSession}
+      />
+      <div ref={chromeRowRef} className="flex min-h-0 flex-1 items-stretch">
+        {!isNarrow ? (
+          <NavPanel
+            selectedItemId={navSelectedItemId}
+            onSelectItem={handleNavSelectItem}
+            activeTeam={activeTeam}
+            activeProject={activeProject}
+            projectId={activeProjectId}
+            teamId={activeTeamId}
+            scope={parsedRoute.scope}
           />
         ) : null}
-
-        {showSplitHandle ? (
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize chat panel"
-            className="relative h-full w-px shrink-0 bg-[#ececec]"
-          >
-            <button
-              type="button"
-              aria-label="Resize chat panel"
-              onPointerDown={startResize}
-              className="absolute left-1/2 top-0 h-full w-[12px] -translate-x-1/2 bg-transparent"
+        <div className="right-panel-enter min-h-0 min-w-0 flex-1">
+          {isSplitSession(activeSession) ? (
+            <SplitWorkspaceView
+              leftRoute={activeSession.leftRoute}
+              rightRoute={activeSession.rightRoute}
+              splitLeftWidthPx={activeSession.splitLeftWidthPx}
+              focusedPane={activeSession.focusedPane}
+              onPaneFocus={handlePaneFocus}
+              onSplitLeftWidthChange={handleSplitLeftWidthChange}
+              outletContext={workspaceOutletContext}
+              defaultTeam={defaultTeam}
             />
-          </div>
-        ) : null}
-
-        {recordPanelOpen ? (
-          <div className="right-panel-enter min-h-0 min-w-0 flex-1">
+          ) : (
             <Outlet context={workspaceOutletContext} />
-          </div>
-        ) : showRelatedLinksPanel ? (
-          <div className="right-panel-enter flex h-full shrink-0">
-            {chatPanelOpen ? <div aria-hidden className="h-full w-px shrink-0 bg-[#ececec]" /> : null}
-            <ChatRelatedLinksPanel
-              links={relatedLinks}
-              pagesLabel={pagesLabel}
-              onSelect={handleSelectRelatedLink}
-              projectId={linkedProjectChat?.projectId}
-              onNavigate={handlePagesPanelNavigate}
-            />
-          </div>
-        ) : null}
+          )}
+        </div>
       </div>
     </main>
   )

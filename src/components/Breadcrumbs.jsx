@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import { Link, useLocation, useNavigate, useOutletContext } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
 import { Icon } from "./Icon"
 import { RightPanelNavMenu } from "./RightPanelNavMenu"
 
@@ -87,7 +88,7 @@ function renderSegment(segment, index, total) {
 
 function projectIdFromHref(href) {
   if (typeof href !== "string") return null
-  const match = /^\/projects\/([^/?#]+)/.exec(href)
+  const match = /^\/project\/([^/?#]+)/.exec(href) ?? /^\/projects\/([^/?#]+)/.exec(href)
   return match ? decodeURIComponent(match[1]) : null
 }
 
@@ -121,6 +122,9 @@ function inferProjectId({ explicitProjectId, normalizedSegments, root, itemSuffi
 
 function selectedHrefFromLocation(location) {
   const path = location.pathname
+  if (path.startsWith("/project/")) {
+    return path
+  }
   if (path.startsWith("/projects/")) {
     const params = new URLSearchParams(location.search)
     const tab = params.get("tab")
@@ -141,11 +145,16 @@ export function Breadcrumbs({
   rootHref,
   segments,
   projectId,
+  menuEnabled,
   defaultMenuOpen = false,
+  /** Leading pictogram on the first segment (`5662:256760`). */
+  iconName = "team",
 }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const outletContext = useOutletContext()
+  const outletContext = useWorkspaceOutletContext()
+  const resolvedMenuEnabled = menuEnabled ?? outletContext?.breadcrumbsMenuEnabled ?? true
+  const menuTeamId = outletContext?.navContext?.teamId ?? outletContext?.workspaceScope?.teamId
   const triggerRef = useRef(null)
   const menuRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(defaultMenuOpen)
@@ -155,7 +164,7 @@ export function Breadcrumbs({
       : (() => {
           const showItem = item != null && !(typeof item === "string" && item.trim().length === 0)
           return [
-            { label: root, href: rootHref, iconName: "team", showIcon: true },
+            { label: root, href: rootHref, iconName, showIcon: true },
             ...(showItem ? [{ label: item, suffix: itemSuffix, showIcon: false }] : []),
           ]
         })()
@@ -179,6 +188,12 @@ export function Breadcrumbs({
     return () => document.removeEventListener("pointerdown", onDocumentPointerDown)
   }, [menuOpen])
 
+  useEffect(() => {
+    if (resolvedMenuEnabled) return
+    // Close the menu as soon as the trigger becomes non-interactive.
+    window.requestAnimationFrame(() => setMenuOpen(false))
+  }, [resolvedMenuEnabled])
+
   return (
     <nav aria-label="Breadcrumb" className="inline-flex min-w-0">
       <div className={shellClass}>
@@ -190,17 +205,27 @@ export function Breadcrumbs({
             return (
               <div key={`${segment.label}-${index}`} className="inline-flex min-w-0 items-center">
                 {showLeadingIcon ? (
-                  <button
-                    ref={triggerRef}
-                    type="button"
-                    className="inline-flex h-[28px] shrink-0 items-center justify-center rounded-[2px] bg-transparent p-0 transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
-                    aria-label="Open navigation menu"
-                    aria-haspopup="menu"
-                    aria-expanded={menuOpen}
-                    onClick={() => setMenuOpen((value) => !value)}
-                  >
-                    <Icon name={segment.iconName ?? "team"} />
-                  </button>
+                  resolvedMenuEnabled ? (
+                    <button
+                      ref={triggerRef}
+                      type="button"
+                      className="inline-flex h-[28px] shrink-0 items-center justify-center rounded-[2px] bg-transparent p-0 transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+                      aria-label="Open navigation menu"
+                      aria-haspopup="menu"
+                      aria-expanded={menuOpen}
+                      onClick={() => setMenuOpen((value) => !value)}
+                    >
+                      <Icon name={segment.iconName ?? "team"} />
+                    </button>
+                  ) : (
+                    <span
+                      ref={triggerRef}
+                      className="inline-flex h-[28px] shrink-0 items-center justify-center rounded-[2px] bg-transparent p-0"
+                      aria-hidden
+                    >
+                      <Icon name={segment.iconName ?? "team"} />
+                    </span>
+                  )
                 ) : null}
                 {hasSegmentText ? renderSegment(segmentForText, index, normalizedSegments.length) : null}
                 {index < normalizedSegments.length - 1 && !(normalizedSegments.length === 3 && index === 0) ? (
@@ -234,11 +259,13 @@ export function Breadcrumbs({
         open={menuOpen}
         anchorRef={triggerRef}
         menuRef={menuRef}
-        projectId={menuProjectId}
+        projectId={outletContext?.workspaceScope?.projectId ?? outletContext?.navContext?.projectId}
+        project={outletContext?.workspaceScope?.project ?? outletContext?.activeProject}
+        activeTeam={outletContext?.activeTeam}
+        teamId={menuTeamId}
         selectedHref={selectedHref}
         onClose={() => setMenuOpen(false)}
-        onNavigate={(href) => navigate(href)}
-        onClosePanel={outletContext?.closeRecordPanel}
+        onNavigate={(href) => outletContext?.navigateInSession?.(href) ?? navigate(href)}
       />
     </nav>
   )

@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
 import { useIssues } from "../context/IssuesContext"
+import { issueHref } from "../lib/navDestinations"
 import { EMPTY_ISSUE_TITLE_PLACEHOLDER, ticketChipFromIssueId } from "../lib/issuesApi"
 import { OWNERS } from "../lib/owners"
 import { Selector } from "./Selector"
@@ -110,6 +112,8 @@ function fitColumnWidths(widths, containerInnerWidth) {
 
 export function Table({ className = "", rows = null, issueNavState = null }) {
   const navigate = useNavigate()
+  const outletContext = useWorkspaceOutletContext()
+  const workspaceScope = outletContext.workspaceScope ?? {}
   const { issues, patchIssue } = useIssues()
   const [columnWidths, setColumnWidths] = useState(loadStoredColumnWidths)
   const columnWidthsRef = useRef(columnWidths)
@@ -321,8 +325,14 @@ export function Table({ className = "", rows = null, issueNavState = null }) {
               return
             }
             navigate(
-              `/issues/${encodeURIComponent(issue.id)}`,
-              issueNavState != null && typeof issueNavState === "object" ? { state: issueNavState } : undefined
+              issueHref(issue.id, workspaceScope),
+              (() => {
+                if (issueNavState != null && typeof issueNavState === "object") return { state: issueNavState }
+                if (workspaceScope.scope === "project" && workspaceScope.projectId) {
+                  return { state: { sourceProjectId: workspaceScope.projectId } }
+                }
+                return undefined
+              })()
             )
           }
 

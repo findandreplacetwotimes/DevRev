@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useProjects } from "../context/IssuesContext"
-import { projectDisplayTitle, ticketChipFromProjectId } from "../lib/projectsApi"
+import { projectOverviewHref } from "../lib/navDestinations"
+import { projectDisplayTitle, projectPathId, ticketChipFromProjectId } from "../lib/projectsApi"
 import { OWNERS } from "../lib/owners"
 import { Selector } from "./Selector"
 import { TableCell } from "./TableCell"
@@ -105,9 +106,10 @@ function fitColumnWidths(widths, containerInnerWidth) {
   return out
 }
 
-export function ProjectsTable({ className = "" }) {
+export function ProjectsTable({ className = "", projects: projectsProp }) {
   const navigate = useNavigate()
-  const { projects, patchProject } = useProjects()
+  const { projects: contextProjects, patchProject } = useProjects()
+  const projects = projectsProp ?? contextProjects
   const [columnWidths, setColumnWidths] = useState(loadStoredColumnWidths)
   const columnWidthsRef = useRef(columnWidths)
   columnWidthsRef.current = columnWidths
@@ -296,7 +298,7 @@ export function ProjectsTable({ className = "" }) {
               toggleRowSelected(project.id)
               return
             }
-            navigate(`/projects/${encodeURIComponent(project.id)}`)
+            navigate(projectOverviewHref(projectPathId(project)))
           }
 
           return (

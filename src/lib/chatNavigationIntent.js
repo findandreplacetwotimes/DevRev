@@ -1,24 +1,37 @@
 import { getAiResponse } from "./aiClient"
+import { issueHref, projectOverviewHref, projectTabHref } from "./navDestinations"
+import { DEFAULT_PROJECT_ID, projectPathId } from "./projectsApi"
+import { DEFAULT_TEAM_ID, teamAboutHref, teamIssuesHref, teamProjectsHref, teamSprintsHref } from "./teams"
 
-const BUILD_TEAM_DESTINATIONS = [
-  { id: "issues", label: "Issues", href: "/issues" },
-  { id: "sprints", label: "Sprints", href: "/sprints" },
-  { id: "projects", label: "Projects", href: "/projects" },
-  { id: "about", label: "About", href: "/about" },
-]
+function pathIdForProjectId(projectId, projects) {
+  const list = Array.isArray(projects) ? projects : []
+  const record = list.find((row) => row?.id === projectId)
+  if (record) return projectPathId(record)
+  return projectId || DEFAULT_PROJECT_ID
+}
+
+function buildTeamDestinations(teamId) {
+  const id = teamId || DEFAULT_TEAM_ID
+  return [
+    { id: "issues", label: "Issues", href: teamIssuesHref(id) },
+    { id: "sprints", label: "Sprints", href: teamSprintsHref(id) },
+    { id: "projects", label: "Projects", href: teamProjectsHref(id) },
+    { id: "about", label: "About", href: teamAboutHref(id) },
+  ]
+}
 
 function displayTitle(row, fallback) {
   const trimmed = typeof row?.title === "string" ? row.title.trim() : ""
   return trimmed.length > 0 ? trimmed : fallback
 }
 
-function projectDestinations(projectId) {
-  const sourceProjectId = projectId || "Project-0001"
-  const encoded = encodeURIComponent(sourceProjectId)
+function projectDestinations(projectId, projects) {
+  const sourceProjectId = projectId || DEFAULT_PROJECT_ID
+  const pathId = pathIdForProjectId(sourceProjectId, projects)
   return [
-    { id: "overview", label: "Overview", href: `/projects/${encoded}`, state: { sourceProjectId } },
-    { id: "scope", label: "Scope", href: `/projects/${encoded}?tab=Scope`, state: { sourceProjectId } },
-    { id: "activity", label: "Activity", href: `/projects/${encoded}?tab=Activity`, state: { sourceProjectId } },
+    { id: "overview", label: "Overview", href: projectOverviewHref(pathId), state: { sourceProjectId } },
+    { id: "scope", label: "Scope", href: projectTabHref(pathId, "Scope"), state: { sourceProjectId } },
+    { id: "activity", label: "Activity", href: projectTabHref(pathId, "Activity"), state: { sourceProjectId } },
   ]
 }
 
@@ -29,10 +42,15 @@ function issueDestinations(issues, context) {
       ? list.filter((issue) => issue.projectId === context.projectId)
       : list
 
+  const scope =
+    context?.variant === "chat-project"
+      ? { scope: "project", projectId: pathIdForProjectId(context.projectId, context.projects) }
+      : { scope: "team", teamId: context?.teamId ?? DEFAULT_TEAM_ID }
+
   return projectScoped.map((issue) => ({
     id: `issue:${issue.id}`,
     label: `${issue.id} ${displayTitle(issue, "No title")}`,
-    href: `/issues/${encodeURIComponent(issue.id)}`,
+    href: issueHref(issue.id, scope, context?.projects),
     aliases: [issue.id, displayTitle(issue, "")].filter(Boolean),
   }))
 }
@@ -44,7 +62,7 @@ function projectRecordDestinations(projects) {
     return {
       id: `project:${project.id}`,
       label: `${project.id} ${title}`,
-      href: `/projects/${encodeURIComponent(project.id)}`,
+      href: projectOverviewHref(projectPathId(project)),
       state: { sourceProjectId: project.id },
       aliases: [project.id, title].filter(Boolean),
     }
@@ -57,9 +75,9 @@ function destinationsForContext(context) {
     ...projectRecordDestinations(context?.projects),
   ]
   if (context?.variant === "chat-project") {
-    return [...projectDestinations(context.projectId), ...recordDestinations]
+    return [...projectDestinations(context.projectId, context.projects), ...recordDestinations]
   }
-  return [...BUILD_TEAM_DESTINATIONS, ...recordDestinations]
+  return [...buildTeamDestinations(context?.teamId), ...recordDestinations]
 }
 
 function parseJsonObject(raw) {

@@ -1,4 +1,5 @@
 import { ChatRelatedLinksPanel } from "./ChatRelatedLinksMenu"
+import { CHAT_CANVAS_LABEL } from "../lib/chatRelatedLinks"
 
 const meta = {
   title: "Components/ChatRelatedLinksPanel",
@@ -12,11 +13,11 @@ export default meta
 
 export const PersonChat = {
   args: {
-    pagesLabel: "LINKS",
+    canvasLabel: CHAT_CANVAS_LABEL,
     links: [
-      { key: "Issue-0001", title: "Build core flow for feature", href: "/issues/Issue-0001" },
-      { key: "Issue-0003", title: "Polish nav-panel interactions", href: "/issues/Issue-0003" },
-      { key: "Project-0001", title: "Build core flow", href: "/projects/Project-0001" },
+      { key: "Doc-0001", title: "Core flow spec" },
+      { key: "Doc-0002", title: "Nav interaction notes" },
+      { key: "Doc-0003", title: "Build core flow overview" },
     ],
   },
   render: (args) => (
@@ -26,32 +27,27 @@ export const PersonChat = {
   ),
 }
 
-export const AiChat = {
+export const TeamChat = {
   args: {
+    canvasLabel: CHAT_CANVAS_LABEL,
     links: [
-      { id: "projects", title: "Projects" },
-      { id: "issues", title: "Issues" },
-      { id: "views", title: "Views" },
+      { key: "Doc-0001", title: "Q2 planning brief" },
+      { key: "Doc-0002", title: "Core flow spec" },
+      { key: "Doc-0003", title: "Nav interaction notes" },
+      { key: "Doc-0004", title: "API schema reference" },
     ],
   },
-  render: (args) => (
-    <div className="flex h-screen w-[274px] bg-white">
-      <ChatRelatedLinksPanel {...args} />
-    </div>
-  ),
+  render: PersonChat.render,
 }
 
-export const SidePanel = {
+export const ProjectChat = {
   args: {
+    canvasLabel: CHAT_CANVAS_LABEL,
     links: [
-      { key: "Issue-0001", title: "Build core flow for feature", href: "/issues/Issue-0001" },
-      { key: "Issue-0003", title: "Polish nav-panel interactions", href: "/issues/Issue-0003" },
-      { key: "Project-0001", title: "Overview", href: "/projects/Project-0001" },
+      { key: "Doc-0001", title: "Project brief" },
+      { key: "Doc-0002", title: "Scope and milestones" },
+      { key: "Doc-0003", title: "Reference links" },
     ],
   },
-  render: (args) => (
-    <div className="flex h-screen w-[274px] bg-white">
-      <ChatRelatedLinksPanel {...args} />
-    </div>
-  ),
+  render: PersonChat.render,
 }

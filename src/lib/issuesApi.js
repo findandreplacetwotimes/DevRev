@@ -24,6 +24,7 @@
  * @typedef {object} Project
  * @property {string} id
  * @property {string} team
+ * @property {string} [name] — short name for labels/URLs (e.g. "Core" → "Core Project", /project/core)
  * @property {string} title
  * @property {string} description
  * @property {string | null} ownerId

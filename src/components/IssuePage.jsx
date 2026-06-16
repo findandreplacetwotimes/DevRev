@@ -1,8 +1,11 @@
 import { useMemo, useRef, useState } from "react"
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
+import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
 import { useIssues } from "../context/IssuesContext"
+import { buildIssueBreadcrumbSegments, issueHref, projectOverviewHref } from "../lib/navDestinations"
 import { EMPTY_ISSUE_TITLE_PLACEHOLDER } from "../lib/issuesApi"
-import { ticketChipFromProjectId } from "../lib/projectsApi"
+import { projectPathId, ticketChipFromProjectId } from "../lib/projectsApi"
+import { DEFAULT_TEAM_ID, projectBasePath, teamIdFromDataTeam, teamIssuesHref } from "../lib/teams"
 import { dueDateIdFromDate, parseDateInput } from "../lib/dueDates"
 import {
   ENABLE_AI_SLASH_COMMAND_SIGNAL,
@@ -30,6 +33,9 @@ export function IssuePage() {
   const { issueId: issueIdParam } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
+  const outletContext = useWorkspaceOutletContext()
+  const workspaceScope = outletContext.workspaceScope ?? {}
+  const { teamId, projectId: scopeProjectId, scope } = workspaceScope
   const { issues, projects, patchIssue } = useIssues()
   const [activeTab, setActiveTab] = useState("Overview")
   const [isAttributesModalOpen, setIsAttributesModalOpen] = useState(false)
@@ -54,8 +60,14 @@ export function IssuePage() {
   }
 
   if (!issue) {
-    return <Navigate to="/issues" replace />
+    const fallback =
+      scope === "project" && scopeProjectId
+        ? `${projectBasePath(scopeProjectId)}/issues`
+        : teamIssuesHref(teamId ?? DEFAULT_TEAM_ID)
+    return <Navigate to={fallback} replace />
   }
+
+  const resolvedTeamId = teamId ?? teamIdFromDataTeam(issue.team) ?? DEFAULT_TEAM_ID
 
   const titleId = `issue-title-${issue.id}`
   const trimmedTitle = issue.title.trim()
@@ -66,21 +78,15 @@ export function IssuePage() {
       ? location.state.sourceProjectId.trim()
       : null
   const sourceSprints = location.state?.sourceSprints === true
-  const breadcrumbSegments = sourceProjectId
-    ? [
-        { label: "Projects", href: "/projects", iconName: "team", showIcon: true, showLabel: false },
-        { label: sourceProjectId, href: `/projects/${encodeURIComponent(sourceProjectId)}`, showIcon: false },
-        { label: issue.id, showIcon: false },
-      ]
-    : sourceSprints
-      ? [
-          { label: "Sprints", href: "/sprints", iconName: "team", showIcon: true },
-          { label: issue.id, showIcon: false },
-        ]
-      : [
-          { label: "Issues", href: "/issues", iconName: "team", showIcon: true },
-          { label: issue.id, showIcon: false },
-        ]
+  const { segments: breadcrumbSegments, projectId: breadcrumbMenuProjectId } = buildIssueBreadcrumbSegments({
+    issue,
+    teamId: resolvedTeamId,
+    projects,
+    sourceProjectId,
+    sourceSprints,
+    scope,
+    scopeProjectId,
+  })
 
   const runIssueSlashCommand = async ({ command, valueWithoutCommand }) => {
     if (!ENABLE_LOCAL_SLASH_DATE_COMMAND) return { handled: false }
@@ -109,11 +115,11 @@ export function IssuePage() {
       breadcrumbs={
         <Breadcrumbs
           segments={breadcrumbSegments}
-          projectId={issue.projectId}
+          projectId={breadcrumbMenuProjectId}
         />
       }
       pagePills={
-        <div className="flex flex-wrap items-center gap-[4px]" role="tablist" aria-label="Page sections">
+        <div className="flex items-center gap-[4px]" role="tablist" aria-label="Page sections">
           {ISSUE_PAGE_TAB_IDS.map((label) => (
             <Page
               key={label}
@@ -126,7 +132,7 @@ export function IssuePage() {
         </div>
       }
       metaSlot={
-        <div className="flex w-full min-w-0 flex-nowrap items-center gap-1">
+        <div className="flex w-full min-w-0 flex-nowrap items-center gap-[4px]">
           <OwnerSelector
             owners={OWNERS}
             selectedOwnerId={issue.ownerId}
@@ -214,7 +220,7 @@ export function IssuePage() {
                     controlsInteractive={false}
                     showMore
                     showMoreIcon={false}
-                    onRowClick={() => navigate(`/projects/${encodeURIComponent(parentProject.id)}`)}
+                    onRowClick={() => navigate(projectOverviewHref(projectPathId(parentProject)))}
                   />
                 </div>
               </div>

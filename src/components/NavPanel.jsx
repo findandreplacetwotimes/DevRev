@@ -1,9 +1,24 @@
 import { createPortal } from "react-dom"
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
 import { useAnchoredPopoverPosition } from "../hooks/useAnchoredPopoverPosition"
+export { COMPUTER_NAV_ITEM_ID } from "../lib/workspaceSessions"
+
+import {
+  CHAT_PEOPLE_ITEMS,
+  projectPageDestinations,
+  projectChatDestination,
+  teamChatDestination,
+  teamPageDestinations,
+} from "../lib/navDestinations"
+import { projectGroupLabel, projectPathId } from "../lib/projectsApi"
+import {
+  teamChatNavLabel,
+  teamGroupLabel,
+  projectChatNavLabel,
+} from "../lib/workspaceLabels"
+import { COMPUTER_NAV_ITEM_ID } from "../lib/workspaceSessions"
 import { ChatAvatar } from "./ChatAvatar"
-import { Control } from "./Control"
-import { MenuItem } from "./MenuItem"
+import { NavGroup } from "./NavGroup"
 import { NavItem } from "./NavItem"
 
 const modalShadow =
@@ -31,18 +46,6 @@ function MeAvatar({ selected = false }) {
   )
 }
 
-const PROJECT_CHAT_ITEMS = [
-  { id: "chat-project", label: "Project chat", iconName: "project" },
-]
-
-const PEOPLE_CHAT_ITEMS = [
-  { id: "build-team", label: "Build team chat", iconName: "chat" },
-  { id: "chat-arjun", label: "Arjun Patel", initial: "A" },
-  { id: "chat-sneha", label: "Sneha Sharma", initial: "S" },
-  { id: "chat-rohan", label: "Rohan Verma", initial: "R" },
-  { id: "chat-leela", label: "Leela Nair", initial: "L" },
-]
-
 const SECONDARY_ITEMS = [
   { id: "inbox", label: "Inbox", iconName: "inbox" },
   { id: "discover", label: "Discover", iconName: "discover" },
@@ -50,30 +53,20 @@ const SECONDARY_ITEMS = [
   { id: "me", label: "Me", leading: <MeAvatar /> },
 ]
 
-export const COMPUTER_NAV_ITEM_ID = "computer"
-
 export function NavPanel({
   className = "",
   selectedItemId,
-  defaultSelectedItemId = "build-team",
+  defaultSelectedItemId = "team:chat",
   onSelectItem,
-  chatPanelOpen = true,
-  recordPanelOpen = true,
-  onToggleChatPanel,
-  onToggleRecordPanel,
-  /** Overrides "Project chat" when a project is linked (e.g. `Design refresh chat`). */
-  projectChatNavLabel,
+  activeTeam,
+  activeProject,
+  projectId,
+  teamId,
+  scope = "team",
 }) {
   const [uncontrolledSelectedItemId, setUncontrolledSelectedItemId] = useState(defaultSelectedItemId)
   const isControlledSelection = selectedItemId !== undefined
   const currentSelectedItemId = isControlledSelection ? selectedItemId : uncontrolledSelectedItemId
-  const allItemIds = useMemo(
-    () => [...PROJECT_CHAT_ITEMS, ...PEOPLE_CHAT_ITEMS, ...SECONDARY_ITEMS].map((item) => item.id),
-    []
-  )
-
-  const hasPanelToggles =
-    typeof onToggleChatPanel === "function" || typeof onToggleRecordPanel === "function"
 
   const meMenuId = useId()
   const meTriggerRef = useRef(null)
@@ -82,8 +75,16 @@ export function NavPanel({
   const mePopoverPos = useAnchoredPopoverPosition(meTriggerRef, meMenuOpen, 2)
   const [meMenuStyle, setMeMenuStyle] = useState({ top: 0, left: 0 })
 
+  const resolvedProjectId = projectId ?? (activeProject ? projectPathId(activeProject) : null)
+  const teamPages = teamPageDestinations(teamId)
+  const teamChat = teamChatDestination(teamId)
+  const projectChat = projectChatDestination(resolvedProjectId)
+  const projectPages = projectPageDestinations(resolvedProjectId)
+  const teamLabel = activeTeam ? teamGroupLabel(activeTeam) : teamGroupLabel({ id: teamId })
+  const projectGroupTitle = activeProject ? projectGroupLabel(activeProject) : "Project"
+  const showProjectSection = scope === "project" || Boolean(resolvedProjectId)
+
   const handleSelectItem = (itemId) => {
-    if (itemId !== COMPUTER_NAV_ITEM_ID && !allItemIds.includes(itemId)) return
     if (!isControlledSelection) {
       setUncontrolledSelectedItemId(itemId)
     }
@@ -116,16 +117,13 @@ export function NavPanel({
       const viewportW = window.innerWidth
       const viewportH = window.innerHeight
 
-      // Prefer below; flip above when close to bottom edge.
       let top = Math.round(triggerRect.bottom + 2)
       const bottomOverflow = top + menuHeight - viewportH + EDGE_GUTTER_PX
       if (bottomOverflow > 0) {
         top = Math.round(triggerRect.top - menuHeight - 2)
       }
-      // Clamp inside viewport in extreme short-height cases.
       top = Math.max(EDGE_GUTTER_PX, Math.min(top, viewportH - menuHeight - EDGE_GUTTER_PX))
 
-      // Keep menu within left/right viewport edges.
       let left = Math.round(triggerRect.left)
       left = Math.max(EDGE_GUTTER_PX, Math.min(left, viewportW - MENU_WIDTH_PX - EDGE_GUTTER_PX))
 
@@ -156,52 +154,73 @@ export function NavPanel({
     <aside
       className={`flex h-full min-h-0 w-[220px] shrink-0 flex-col items-start overflow-hidden border-r border-[#ececec] bg-white px-[12px] py-[14px] ${className}`}
     >
-      <div className="flex w-full items-center gap-[4px]">
+      <div className="flex w-full items-center">
         <button
           type="button"
           onClick={() => handleSelectItem(COMPUTER_NAV_ITEM_ID)}
-          className="flex h-[29px] min-w-0 flex-1 items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+          className="flex h-[29px] w-full items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
         >
           <img src="/icons/computer-wordmark.svg" alt="computer" className="h-[14px] w-[80px]" draggable={false} />
         </button>
-        <Control type="iconOnly" leadingIcon="clock" label="" />
       </div>
 
       <div className="h-[20px] w-[192px] shrink-0 bg-white" />
 
-      <div className="flex w-[194px] flex-col gap-[4px]">
-        <MenuItem type="label" label="Projects" fullWidth />
-        {PROJECT_CHAT_ITEMS.map((item) => (
+      <div className="flex w-[194px] flex-col gap-[10px]">
+        <NavGroup label={teamLabel} variant="section">
           <NavItem
-            key={item.id}
-            label={
-              item.id === "chat-project" && typeof projectChatNavLabel === "string" && projectChatNavLabel.trim()
-                ? projectChatNavLabel.trim()
-                : item.label
-            }
-            iconName={item.iconName}
-            selected={currentSelectedItemId === item.id}
+            label={teamChatNavLabel()}
+            leading={<ChatAvatar memberCount={teamChat.memberCount} />}
+            selected={currentSelectedItemId === "team:chat" || currentSelectedItemId === "build-team"}
             className="w-full"
-            onClick={() => handleSelectItem(item.id)}
+            onClick={() => handleSelectItem("team:chat")}
           />
-        ))}
-      </div>
+          {teamPages.map((item) => (
+            <NavItem
+              key={item.id}
+              label={item.label}
+              iconName={item.iconName}
+              selected={currentSelectedItemId === item.id}
+              className="w-full"
+              onClick={() => handleSelectItem(item.id)}
+            />
+          ))}
+        </NavGroup>
 
-      <div className="h-[20px] w-[192px] shrink-0 bg-white" />
+        {showProjectSection ? (
+          <NavGroup label={projectGroupTitle} variant="section">
+            <NavItem
+              label={projectChatNavLabel()}
+              leading={<ChatAvatar memberCount={projectChat.memberCount} />}
+              selected={currentSelectedItemId === "project:chat" || currentSelectedItemId === "chat-project"}
+              className="w-full"
+              onClick={() => handleSelectItem("project:chat")}
+            />
+            {projectPages.map((item) => (
+              <NavItem
+                key={item.id}
+                label={item.label}
+                iconName={item.iconName}
+                selected={currentSelectedItemId === item.id}
+                className="w-full"
+                onClick={() => handleSelectItem(item.id)}
+              />
+            ))}
+          </NavGroup>
+        ) : null}
 
-      <div className="flex w-[194px] flex-col gap-[4px]">
-        <MenuItem type="label" label="People" fullWidth />
-        {PEOPLE_CHAT_ITEMS.map((item) => (
-          <NavItem
-            key={item.id}
-            label={item.label}
-            iconName={item.iconName ?? "page"}
-            leading={typeof item.iconName === "string" ? undefined : <ChatAvatar initial={item.initial} />}
-            selected={currentSelectedItemId === item.id}
-            className="w-full"
-            onClick={() => handleSelectItem(item.id)}
-          />
-        ))}
+        <NavGroup label="Chat" variant="section">
+          {CHAT_PEOPLE_ITEMS.map((item) => (
+            <NavItem
+              key={item.id}
+              label={item.label}
+              leading={<ChatAvatar initial={item.initial} />}
+              selected={currentSelectedItemId === item.id}
+              className="w-full"
+              onClick={() => handleSelectItem(item.id)}
+            />
+          ))}
+        </NavGroup>
       </div>
 
       <div className="min-h-0 w-[192px] flex-1 bg-white" />
@@ -238,7 +257,7 @@ export function NavPanel({
               ref={meMenuRef}
               id={`${meMenuId}-menu`}
               role="menu"
-              aria-label="Panels"
+              aria-label="Account"
               className="fixed z-[2147483646] inline-flex w-[202px] flex-col items-start gap-[4px] rounded-[2px] bg-white p-[6px]"
               style={{
                 boxShadow: modalShadow,
@@ -246,27 +265,7 @@ export function NavPanel({
                 left: `${meMenuStyle.left}px`,
               }}
             >
-              <MenuItem type="label" label="Panels" fullWidth />
-              {hasPanelToggles ? (
-                <>
-                  {typeof onToggleChatPanel === "function" ? (
-                    <NavItem
-                      label={chatPanelOpen ? "Hide Chat" : "Show Chat"}
-                      leading={<></>}
-                      className="w-full max-w-none pr-[6px]"
-                      onClick={() => onToggleChatPanel()}
-                    />
-                  ) : null}
-                  {typeof onToggleRecordPanel === "function" ? (
-                    <NavItem
-                      label={recordPanelOpen ? "Hide Panel" : "Show Panel"}
-                      leading={<></>}
-                      className="w-full max-w-none pr-[6px]"
-                      onClick={() => onToggleRecordPanel()}
-                    />
-                  ) : null}
-                </>
-              ) : null}
+              <NavItem label="Profile" leading={<></>} className="w-full max-w-none pr-[6px]" onClick={() => setMeMenuOpen(false)} />
             </div>,
             document.body
           )
