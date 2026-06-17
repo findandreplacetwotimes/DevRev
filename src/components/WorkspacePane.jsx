@@ -11,35 +11,13 @@ function routeToLocation(route) {
   return { pathname, search, hash: "" }
 }
 
-export function WorkspacePane({
-  route,
-  paneId,
-  focused = false,
-  onPaneFocus,
-  outletContext,
-  defaultTeam,
-  className = "",
-  style,
-}) {
+export function WorkspacePane({ route, outletContext, defaultTeam, className = "", style }) {
   const location = useMemo(() => routeToLocation(route), [route])
   const teamSegment = defaultTeam ?? encodeURIComponent(teamUrlSegment(DEFAULT_TEAM_ID))
 
-  const paneContext = useMemo(
-    () => ({
-      ...outletContext,
-      paneId,
-      navigateInSession: (href, navItemId) => outletContext.navigateInSession?.(href, navItemId, paneId),
-    }),
-    [outletContext, paneId]
-  )
-
   return (
-    <WorkspaceOutletProvider value={paneContext}>
-      <div
-        className={`flex h-full min-h-0 min-w-0 flex-col bg-white ${focused ? "ring-1 ring-inset ring-[var(--border-subtle)]" : ""} ${className}`.trim()}
-        style={style}
-        onPointerDown={() => onPaneFocus?.(paneId)}
-      >
+    <WorkspaceOutletProvider value={outletContext}>
+      <div className={`flex h-full min-h-0 min-w-0 flex-col bg-white ${className}`.trim()} style={style}>
         <Routes location={location}>
           <Route path="/" element={<Outlet />}>
             {renderWorkspaceRoutes(teamSegment)}

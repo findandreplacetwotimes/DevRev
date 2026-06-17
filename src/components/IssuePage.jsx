@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react"
-import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
+import { Navigate, useLocation, useParams } from "react-router-dom"
 import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
+import { useWorkspaceNavigate } from "../hooks/useWorkspaceNavigate"
 import { useIssues } from "../context/IssuesContext"
 import { buildIssueBreadcrumbSegments, issueHref, projectOverviewHref } from "../lib/navDestinations"
 import { EMPTY_ISSUE_TITLE_PLACEHOLDER } from "../lib/issuesApi"
@@ -32,11 +33,11 @@ import { IssueAttributesModal } from "./IssueAttributesModal"
 export function IssuePage() {
   const { issueId: issueIdParam } = useParams()
   const location = useLocation()
-  const navigate = useNavigate()
   const outletContext = useWorkspaceOutletContext()
   const workspaceScope = outletContext.workspaceScope ?? {}
   const { teamId, projectId: scopeProjectId, scope } = workspaceScope
   const { issues, projects, patchIssue } = useIssues()
+  const navigate = useWorkspaceNavigate()
   const [activeTab, setActiveTab] = useState("Overview")
   const [isAttributesModalOpen, setIsAttributesModalOpen] = useState(false)
   const attributesTriggerRef = useRef(null)

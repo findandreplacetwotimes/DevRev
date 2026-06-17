@@ -3,10 +3,10 @@ import { createPortal } from "react-dom"
 import {
   Navigate,
   useLocation,
-  useNavigate,
   useParams,
   useSearchParams,
 } from "react-router-dom"
+import { useWorkspaceNavigate } from "../hooks/useWorkspaceNavigate"
 import { useIssues } from "../context/IssuesContext"
 import { projectTabHref } from "../lib/navDestinations"
 import { EMPTY_PROJECT_TITLE_PLACEHOLDER, projectBreadcrumbProjectSuffix, projectByPathId, projectPathId } from "../lib/projectsApi"
@@ -134,7 +134,7 @@ function groupKey(group) {
 export function ProjectPage() {
   const { projectId: projectIdParam } = useParams()
   const location = useLocation()
-  const navigate = useNavigate()
+  const navigate = useWorkspaceNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { projects, issues, patchProject, patchIssue } = useIssues()
 

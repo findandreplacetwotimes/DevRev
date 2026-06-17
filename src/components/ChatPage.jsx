@@ -21,6 +21,7 @@ export function ChatPage() {
     activeProject,
     breadcrumbsMenuEnabled,
     workspaceScope,
+    showCanvasSidePanel = true,
   } = outletContext
 
   const variant = chatVariantForRoute(`${location.pathname}${location.search}`) ?? "ai"
@@ -66,9 +67,12 @@ export function ChatPage() {
           }))
         }
         onOpenPageInSession={(href) => navigateInSession?.(href)}
-        hideRelatedLinksControl
+        hideRelatedLinksControl={showCanvasSidePanel}
+        relatedLinks={canvasLinks}
+        canvasLabel={canvasLabel}
+        onSelectRelatedLink={handleSelectCanvasLink}
       />
-      {canvasLinks.length > 0 ? (
+      {showCanvasSidePanel && canvasLinks.length > 0 ? (
         <ChatRelatedLinksPanel
           links={canvasLinks}
           canvasLabel={canvasLabel}

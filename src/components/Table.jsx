@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
 import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
+import { useWorkspaceNavigate } from "../hooks/useWorkspaceNavigate"
 import { useIssues } from "../context/IssuesContext"
 import { issueHref } from "../lib/navDestinations"
 import { EMPTY_ISSUE_TITLE_PLACEHOLDER, ticketChipFromIssueId } from "../lib/issuesApi"
@@ -111,7 +111,7 @@ function fitColumnWidths(widths, containerInnerWidth) {
 }
 
 export function Table({ className = "", rows = null, issueNavState = null }) {
-  const navigate = useNavigate()
+  const navigate = useWorkspaceNavigate()
   const outletContext = useWorkspaceOutletContext()
   const workspaceScope = outletContext.workspaceScope ?? {}
   const { issues, patchIssue } = useIssues()

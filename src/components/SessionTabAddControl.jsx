@@ -87,7 +87,6 @@ export function SessionTabAddControl({ onAddSession, onAddSplitSession }) {
       >
         <Icon name="plus" />
       </button>
-      <span className="h-[16px] w-px shrink-0 bg-[#ececec]" aria-hidden />
       <button
         ref={chevronRef}
         type="button"

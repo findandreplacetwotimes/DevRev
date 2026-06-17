@@ -117,7 +117,6 @@ export function createDefaultSplitSession(overrides = {}) {
     leftNavItemId: COMPUTER_NAV_ITEM_ID,
     rightRoute: teamIssuesHref(teamId),
     rightNavItemId: "team:page:issues",
-    focusedPane: "right",
     splitLeftWidthPx: INITIAL_SPLIT_LEFT_WIDTH_PX,
     ...overrides,
   }
@@ -167,7 +166,6 @@ function legacySessionTabLabel(session) {
 function normalizeSplitSession(session) {
   const left = resolveRouteAndNavItemId(session.leftRoute, session.leftNavItemId)
   const right = resolveRouteAndNavItemId(session.rightRoute, session.rightNavItemId)
-  const focusedPane = session.focusedPane === "left" ? "left" : "right"
   const splitLeftWidthPx =
     typeof session.splitLeftWidthPx === "number" && Number.isFinite(session.splitLeftWidthPx)
       ? session.splitLeftWidthPx
@@ -180,7 +178,6 @@ function normalizeSplitSession(session) {
     leftNavItemId: left.selectedNavItemId,
     rightRoute: right.route,
     rightNavItemId: right.selectedNavItemId,
-    focusedPane,
     splitLeftWidthPx,
   }
 }
@@ -234,16 +231,19 @@ export function sessionTabIcons(session) {
   }
 }
 
-export function focusedPaneRoute(session) {
+/** URL-backed route for a session — split tabs always use the left (main) pane. */
+export function mainPaneRoute(session) {
   if (!isSplitSession(session)) return session?.route ?? "/computer"
-  return session.focusedPane === "left" ? session.leftRoute : session.rightRoute
+  return session.leftRoute ?? "/computer"
+}
+
+/** @deprecated Use mainPaneRoute */
+export function focusedPaneRoute(session) {
+  return mainPaneRoute(session)
 }
 
 export function activeNavItemIdForSession(session) {
   if (!session) return COMPUTER_NAV_ITEM_ID
-  if (isSplitSession(session)) {
-    return session.focusedPane === "left" ? session.leftNavItemId : session.rightNavItemId
-  }
   return session.selectedNavItemId ?? COMPUTER_NAV_ITEM_ID
 }
 

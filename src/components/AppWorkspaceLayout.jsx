@@ -22,11 +22,12 @@ import {
   activeNavItemIdForSession,
   createDefaultSession,
   createDefaultSplitSession,
-  focusedPaneRoute,
   isSplitSession,
   loadWorkspaceSessionState,
+  mainPaneRoute,
   persistWorkspaceSessionState,
 } from "../lib/workspaceSessions"
+import { shouldShowCanvasSidePanel } from "../lib/workspacePaneContext"
 import { NavPanel } from "./NavPanel"
 import { SessionTabBar } from "./SessionTabBar"
 import { SplitWorkspaceView } from "./SplitWorkspaceView"
@@ -163,7 +164,7 @@ export function AppWorkspaceChrome() {
       const resolvedNavItemId = navItemId ?? navItemIdForLocation(pathname, search, navContext)
 
       if (isSplitSession(activeSession)) {
-        const targetPane = paneId ?? activeSession.focusedPane
+        const targetPane = paneId ?? "left"
         const patch =
           targetPane === "left"
             ? { leftRoute: href, leftNavItemId: resolvedNavItemId }
@@ -171,7 +172,7 @@ export function AppWorkspaceChrome() {
 
         patchActiveSession(patch)
 
-        if (targetPane === activeSession.focusedPane) {
+        if (targetPane === "left") {
           navigate(href)
         }
         return
@@ -205,15 +206,6 @@ export function AppWorkspaceChrome() {
     [navContext, navigateInSession]
   )
 
-  const handlePaneFocus = useCallback(
-    (paneId) => {
-      if (!isSplitSession(activeSession)) return
-      if (activeSession.focusedPane === paneId) return
-      patchActiveSession({ focusedPane: paneId })
-    },
-    [activeSession, patchActiveSession]
-  )
-
   const handleSplitLeftWidthChange = useCallback(
     (width) => {
       patchActiveSession({ splitLeftWidthPx: width })
@@ -230,7 +222,7 @@ export function AppWorkspaceChrome() {
       const target = sessions.find((session) => session.id === sessionId)
       if (!target) return
 
-      const href = focusedPaneRoute(target)
+      const href = mainPaneRoute(target)
       if (href) {
         ownedNavigationRef.current = href
         navigate(href)
@@ -266,7 +258,7 @@ export function AppWorkspaceChrome() {
     const nextSessions = [...sessions, nextSession]
     updateSessions(nextSessions, nextSession.id)
     setActiveSessionId(nextSession.id)
-    const href = focusedPaneRoute(nextSession)
+    const href = mainPaneRoute(nextSession)
     if (href) {
       ownedNavigationRef.current = href
       navigate(href)
@@ -283,7 +275,7 @@ export function AppWorkspaceChrome() {
       const neighbor = nextSessions[Math.min(index, nextSessions.length - 1)]
       updateSessions(nextSessions, neighbor.id)
       setActiveSessionId(neighbor.id)
-      const href = focusedPaneRoute(neighbor)
+      const href = mainPaneRoute(neighbor)
       if (href) {
         ownedNavigationRef.current = href
         navigate(href)
@@ -303,6 +295,8 @@ export function AppWorkspaceChrome() {
     [navigate, sessions, updateSessions, ensureSessionMessages]
   )
 
+  const showCanvasSidePanel = shouldShowCanvasSidePanel(containerWidth, !isNarrow)
+
   const workspaceOutletContext = useMemo(
     () => ({
       navigateInSession,
@@ -312,6 +306,7 @@ export function AppWorkspaceChrome() {
       sessionMessages,
       setSessionMessages,
       breadcrumbsMenuEnabled: isNarrow,
+      showCanvasSidePanel,
       workspaceScope,
       navContext,
       titleContext,
@@ -325,6 +320,7 @@ export function AppWorkspaceChrome() {
       syncSessionTabTitle,
       sessionMessages,
       isNarrow,
+      showCanvasSidePanel,
       workspaceScope,
       navContext,
       titleContext,
@@ -351,31 +347,14 @@ export function AppWorkspaceChrome() {
     const nextNavItemId = navItemIdForLocation(location.pathname, location.search, navContext)
 
     if (isSplitSession(activeSession)) {
-      const matchesLeft = currentRoute === activeSession.leftRoute
-      const matchesRight = currentRoute === activeSession.rightRoute
-
-      if (matchesLeft) {
-        if (activeSession.focusedPane !== "left") {
-          window.requestAnimationFrame(() => patchActiveSession({ focusedPane: "left" }))
-        }
-        return
+      if (currentRoute !== activeSession.leftRoute) {
+        window.requestAnimationFrame(() => {
+          patchActiveSession({
+            leftRoute: currentRoute,
+            leftNavItemId: nextNavItemId,
+          })
+        })
       }
-
-      if (matchesRight) {
-        if (activeSession.focusedPane !== "right") {
-          window.requestAnimationFrame(() => patchActiveSession({ focusedPane: "right" }))
-        }
-        return
-      }
-
-      const pane = activeSession.focusedPane
-      window.requestAnimationFrame(() => {
-        patchActiveSession(
-          pane === "left"
-            ? { leftRoute: currentRoute, leftNavItemId: nextNavItemId }
-            : { rightRoute: currentRoute, rightNavItemId: nextNavItemId }
-        )
-      })
       return
     }
 
@@ -402,8 +381,6 @@ export function AppWorkspaceChrome() {
     activeSession?.route,
     activeSession?.tabTitle,
     activeSession?.leftRoute,
-    activeSession?.rightRoute,
-    activeSession?.focusedPane,
     currentRoute,
     location.pathname,
     location.search,
@@ -448,6 +425,7 @@ export function AppWorkspaceChrome() {
   }, [])
 
   const navSelectedItemId = activeNavItemIdForSession(activeSession)
+  const isSplit = isSplitSession(activeSession)
 
   return (
     <main className="flex h-screen flex-col bg-white">
@@ -460,7 +438,7 @@ export function AppWorkspaceChrome() {
         onAddSplitSession={handleAddSplitSession}
       />
       <div ref={chromeRowRef} className="flex min-h-0 flex-1 items-stretch">
-        {!isNarrow ? (
+        {!isNarrow && !isSplit ? (
           <NavPanel
             selectedItemId={navSelectedItemId}
             onSelectItem={handleNavSelectItem}
@@ -472,13 +450,13 @@ export function AppWorkspaceChrome() {
           />
         ) : null}
         <div className="right-panel-enter min-h-0 min-w-0 flex-1">
-          {isSplitSession(activeSession) ? (
+          {isSplit ? (
             <SplitWorkspaceView
               leftRoute={activeSession.leftRoute}
               rightRoute={activeSession.rightRoute}
+              leftNavItemId={activeSession.leftNavItemId}
+              rightNavItemId={activeSession.rightNavItemId}
               splitLeftWidthPx={activeSession.splitLeftWidthPx}
-              focusedPane={activeSession.focusedPane}
-              onPaneFocus={handlePaneFocus}
               onSplitLeftWidthChange={handleSplitLeftWidthChange}
               outletContext={workspaceOutletContext}
               defaultTeam={defaultTeam}

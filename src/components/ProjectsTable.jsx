@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useWorkspaceNavigate } from "../hooks/useWorkspaceNavigate"
 import { useProjects } from "../context/IssuesContext"
 import { projectOverviewHref } from "../lib/navDestinations"
 import { projectDisplayTitle, projectPathId, ticketChipFromProjectId } from "../lib/projectsApi"
@@ -107,7 +107,7 @@ function fitColumnWidths(widths, containerInnerWidth) {
 }
 
 export function ProjectsTable({ className = "", projects: projectsProp }) {
-  const navigate = useNavigate()
+  const navigate = useWorkspaceNavigate()
   const { projects: contextProjects, patchProject } = useProjects()
   const projects = projectsProp ?? contextProjects
   const [columnWidths, setColumnWidths] = useState(loadStoredColumnWidths)

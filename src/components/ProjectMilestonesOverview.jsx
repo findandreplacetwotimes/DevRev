@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"
+import { useWorkspaceNavigate } from "../hooks/useWorkspaceNavigate"
 import { issueHref } from "../lib/navDestinations"
 import { projectPathId } from "../lib/projectsApi"
 import { EMPTY_ISSUE_TITLE_PLACEHOLDER, ticketChipFromIssueId } from "../lib/issuesApi"
@@ -83,7 +83,7 @@ function MilestoneListBlock({ issues, navigate, patchIssue, projectRecord }) {
  * @param {(issueId: string, patch: Partial<import("../lib/issuesApi").Issue>) => void} props.patchIssue
  */
 export function ProjectMilestonesOverview({ project, issues, patchProject, patchIssue }) {
-  const navigate = useNavigate()
+  const navigate = useWorkspaceNavigate()
   const milestones = project.milestones ?? []
   if (milestones.length === 0) return null
 

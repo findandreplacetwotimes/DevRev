@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
-import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
+import { useWorkspaceNavigate } from "../hooks/useWorkspaceNavigate"
 import { Icon } from "./Icon"
 import { RightPanelNavMenu } from "./RightPanelNavMenu"
 
@@ -57,13 +58,20 @@ function renderSegmentContent(segment, showLeadingIcon) {
   )
 }
 
-function renderSegment(segment, index, total) {
+function renderSegment(segment, index, total, onInternalNavigate) {
   const isLast = index === total - 1
   const useRouterLink = segment.href != null && isInternalAppPath(segment.href)
   const showLeadingIcon = index === 0 && segment.showIcon !== false
   const className = rootClusterClass
 
   if (!isLast && useRouterLink) {
+    if (onInternalNavigate) {
+      return (
+        <button type="button" className={className} onClick={() => onInternalNavigate(segment.href)}>
+          {renderSegmentContent(segment, showLeadingIcon)}
+        </button>
+      )
+    }
     return (
       <Link to={segment.href} className={className}>
         {renderSegmentContent(segment, showLeadingIcon)}
@@ -150,7 +158,7 @@ export function Breadcrumbs({
   /** Leading pictogram on the first segment (`5662:256760`). */
   iconName = "team",
 }) {
-  const navigate = useNavigate()
+  const workspaceNavigate = useWorkspaceNavigate()
   const location = useLocation()
   const outletContext = useWorkspaceOutletContext()
   const resolvedMenuEnabled = menuEnabled ?? outletContext?.breadcrumbsMenuEnabled ?? true
@@ -227,7 +235,7 @@ export function Breadcrumbs({
                     </span>
                   )
                 ) : null}
-                {hasSegmentText ? renderSegment(segmentForText, index, normalizedSegments.length) : null}
+                {hasSegmentText ? renderSegment(segmentForText, index, normalizedSegments.length, workspaceNavigate) : null}
                 {index < normalizedSegments.length - 1 && !(normalizedSegments.length === 3 && index === 0) ? (
                   <span aria-hidden className="inline-flex h-[28px] w-[16px] shrink-0 items-center justify-center">
                     {/* Figma trailing is 16×28, not 16×16 — avoid squashing */}
@@ -265,7 +273,7 @@ export function Breadcrumbs({
         teamId={menuTeamId}
         selectedHref={selectedHref}
         onClose={() => setMenuOpen(false)}
-        onNavigate={(href) => outletContext?.navigateInSession?.(href) ?? navigate(href)}
+        onNavigate={(href) => outletContext?.navigateInSession?.(href) ?? workspaceNavigate(href)}
       />
     </nav>
   )

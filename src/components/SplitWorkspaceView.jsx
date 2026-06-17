@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react"
-import { WorkspacePane } from "./WorkspacePane"
+import { WorkspaceWindow } from "./WorkspaceWindow"
 
 const MIN_PANE_WIDTH = 280
 
@@ -13,9 +13,9 @@ export function clampSplitLeftWidth(nextWidth, layoutWidth) {
 export function SplitWorkspaceView({
   leftRoute,
   rightRoute,
+  leftNavItemId,
+  rightNavItemId,
   splitLeftWidthPx,
-  focusedPane,
-  onPaneFocus,
   onSplitLeftWidthChange,
   outletContext,
   defaultTeam,
@@ -67,12 +67,12 @@ export function SplitWorkspaceView({
 
   return (
     <div ref={layoutRef} className="flex h-full min-h-0 w-full items-stretch">
-      <WorkspacePane
+      <WorkspaceWindow
         route={leftRoute}
+        selectedNavItemId={leftNavItemId}
         paneId="left"
-        focused={focusedPane === "left"}
-        onPaneFocus={onPaneFocus}
-        outletContext={outletContext}
+        isMainPane
+        baseOutletContext={outletContext}
         defaultTeam={defaultTeam}
         className="shrink-0"
         style={{ width: splitLeftWidthPx }}
@@ -90,12 +90,11 @@ export function SplitWorkspaceView({
           className="absolute left-1/2 top-0 h-full w-[12px] -translate-x-1/2 cursor-col-resize bg-transparent"
         />
       </div>
-      <WorkspacePane
+      <WorkspaceWindow
         route={rightRoute}
+        selectedNavItemId={rightNavItemId}
         paneId="right"
-        focused={focusedPane === "right"}
-        onPaneFocus={onPaneFocus}
-        outletContext={outletContext}
+        baseOutletContext={outletContext}
         defaultTeam={defaultTeam}
         className="min-w-0 flex-1"
       />

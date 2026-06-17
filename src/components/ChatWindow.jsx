@@ -44,6 +44,9 @@ export function ChatWindow({
   onOpenPageInSession,
   onOpenRecordPanel,
   hideRelatedLinksControl = true,
+  relatedLinks = [],
+  canvasLabel = "CANVAS",
+  onSelectRelatedLink,
   navMenuEnabled = false,
   projectId = null,
   showProjectNavSection = true,
@@ -187,6 +190,9 @@ export function ChatWindow({
         avatarInitial={meta.avatarInitial}
         memberCount={meta.memberCount ?? null}
         hideRelatedLinksControl={hideRelatedLinksControl}
+        relatedLinks={relatedLinks}
+        canvasLabel={canvasLabel}
+        onSelectRelatedLink={onSelectRelatedLink}
         navMenuEnabled={navMenuEnabled}
         teamId={teamId}
         projectId={projectId}
