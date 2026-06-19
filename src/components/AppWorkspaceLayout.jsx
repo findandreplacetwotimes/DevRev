@@ -192,10 +192,10 @@ export function AppWorkspaceChrome() {
   const syncSessionTabTitle = useCallback(() => {
     if (isSplitSession(activeSession)) return
     const route = `${location.pathname}${location.search}`
-    patchActiveSession({
-      tabTitle: tabTitleForRoute(route, titleContext),
-    })
-  }, [activeSession, location.pathname, location.search, patchActiveSession, titleContext])
+    const nextTitle = tabTitleForRoute(route, titleContext)
+    if (activeSession.tabTitle === nextTitle) return
+    patchActiveSession({ tabTitle: nextTitle })
+  }, [activeSession, activeSession?.tabTitle, location.pathname, location.search, patchActiveSession, titleContext])
 
   const handleNavSelectItem = useCallback(
     (itemId) => {
@@ -208,9 +208,11 @@ export function AppWorkspaceChrome() {
 
   const handleSplitLeftWidthChange = useCallback(
     (width) => {
+      if (!isSplitSession(activeSession)) return
+      if (activeSession.splitLeftWidthPx === width) return
       patchActiveSession({ splitLeftWidthPx: width })
     },
-    [patchActiveSession]
+    [activeSession, patchActiveSession]
   )
 
   const handleSelectSession = useCallback(

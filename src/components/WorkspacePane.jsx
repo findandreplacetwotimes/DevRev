@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Outlet, Routes, Route } from "react-router-dom"
+import { Routes } from "react-router-dom"
 import { WorkspaceOutletProvider } from "../context/WorkspaceOutletContext"
 import { renderWorkspaceRoutes } from "../routes/workspaceRoutes"
 import { DEFAULT_TEAM_ID, teamUrlSegment } from "../lib/teams"
@@ -18,11 +18,7 @@ export function WorkspacePane({ route, outletContext, defaultTeam, className = "
   return (
     <WorkspaceOutletProvider value={outletContext}>
       <div className={`flex h-full min-h-0 min-w-0 flex-col bg-white ${className}`.trim()} style={style}>
-        <Routes location={location}>
-          <Route path="/" element={<Outlet />}>
-            {renderWorkspaceRoutes(teamSegment)}
-          </Route>
-        </Routes>
+        <Routes location={location}>{renderWorkspaceRoutes(teamSegment)}</Routes>
       </div>
     </WorkspaceOutletProvider>
   )
