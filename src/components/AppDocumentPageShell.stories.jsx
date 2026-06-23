@@ -77,7 +77,7 @@ export const ProjectTopbar = {
     return (
       <div className="h-screen w-full bg-white">
         <AppDocumentPageShell
-          breadcrumbs={<Breadcrumbs root="Projects" item="Project" itemSuffix="-0001" rootHref="/projects" />}
+          breadcrumbs={<Breadcrumbs root="Projects" item="Project" itemSuffix="-0001" rootHref="/projects" iconName="project" />}
           pagePills={
             <div className="flex items-center gap-[4px]" role="tablist" aria-label="Project sections">
               {tabs.map((label) => (
@@ -85,7 +85,7 @@ export const ProjectTopbar = {
               ))}
             </div>
           }
-          headerAfterPagePills={<Control type="leading" label="Discuss" />}
+          headerTrailing={<Control type="iconOnly" leadingIcon="more" label="" />}
           metaSlot={
             <div className="flex w-full items-center gap-[4px]">
               <OwnerSelector owners={OWNERS} selectedOwnerId={ownerId} onChange={setOwnerId} />

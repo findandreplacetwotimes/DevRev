@@ -23,18 +23,24 @@ export function AppDocumentPageShell({
     >
       <div className={`${singleRowTopbar ? "min-h-[56px]" : "min-h-[88px]"} w-full shrink-0`}>
         <header className="w-full p-[14px]">
-          <div className={`flex ${singleRowTopbar ? "flex-row items-start justify-between gap-[8px]" : "flex-col gap-[4px]"}`}>
-            <div className="flex w-full items-start justify-between gap-[8px]">
-              <div className="flex min-w-0 flex-wrap items-center gap-[4px]">
+          <div className={`flex ${singleRowTopbar ? "flex-row items-center justify-between gap-[8px]" : "flex-col gap-[4px]"}`}>
+            <div className="flex h-[28px] w-full min-w-0 items-center justify-between gap-[8px]">
+              <div className="flex min-w-0 flex-1 items-center gap-[4px] overflow-x-auto">
                 {breadcrumbs}
                 {pagePills}
                 {headerAfterPagePills}
               </div>
               <div className="flex shrink-0 items-center gap-[4px]">
-                {headerTrailing ?? <Control type="iconOnly" leadingIcon="more" label="" />}
+                {headerTrailing !== undefined ? (
+                  headerTrailing
+                ) : (
+                  <Control type="iconOnly" leadingIcon="more" label="" />
+                )}
               </div>
             </div>
-            {!singleRowTopbar ? metaSlot : null}
+            {!singleRowTopbar && metaSlot ? (
+              <div className="flex h-[28px] w-full min-w-0 items-center">{metaSlot}</div>
+            ) : null}
           </div>
         </header>
       </div>

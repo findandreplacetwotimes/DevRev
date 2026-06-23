@@ -142,6 +142,8 @@ export function Breadcrumbs({
   segments,
   projectId,
   defaultMenuOpen = false,
+  /** Leading pictogram on the first segment (`5662:256760`). */
+  iconName = "team",
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -155,7 +157,7 @@ export function Breadcrumbs({
       : (() => {
           const showItem = item != null && !(typeof item === "string" && item.trim().length === 0)
           return [
-            { label: root, href: rootHref, iconName: "team", showIcon: true },
+            { label: root, href: rootHref, iconName, showIcon: true },
             ...(showItem ? [{ label: item, suffix: itemSuffix, showIcon: false }] : []),
           ]
         })()

@@ -3,7 +3,6 @@ import { createPortal } from "react-dom"
 import {
   Navigate,
   useLocation,
-  useOutletContext,
   useParams,
   useSearchParams,
 } from "react-router-dom"
@@ -17,7 +16,6 @@ import { BUILD_PAGE_TAB_IDS } from "../lib/topbarTabs"
 import { AppDocumentPageShell } from "./AppDocumentPageShell"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Control } from "./Control"
-import { Icon } from "./Icon"
 import { DueDateSelector } from "./DueDateSelector"
 import { MenuItem } from "./MenuItem"
 import { ProjectHealthSelector } from "./ProjectHealthSelector"
@@ -107,10 +105,8 @@ function ProjectMoreMenu({ onSettings }) {
   )
 
   return (
-    <div className="relative inline-flex">
-      <div ref={triggerRef}>
-        <Control type="iconOnly" leadingIcon="more" label="" onClick={() => setOpen((v) => !v)} />
-      </div>
+    <div className="relative inline-flex items-center" ref={triggerRef}>
+      <Control type="iconOnly" leadingIcon="more" label="" onClick={() => setOpen((v) => !v)} />
       {open && typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </div>
   )
@@ -137,7 +133,6 @@ export function ProjectPage() {
   const { projectId: projectIdParam } = useParams()
   const location = useLocation()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { openProjectChat } = useOutletContext() ?? {}
   const { projects, issues, patchProject, patchIssue } = useIssues()
   const [activeTab, setActiveTab] = useState("Overview")
   /** Deep-linkable full-page settings (`?settings=1`), not a pill tab. */
@@ -293,10 +288,11 @@ export function ProjectPage() {
           item="Project"
           itemSuffix={projectBreadcrumbProjectSuffix(project.id)}
           projectId={project.id}
+          iconName="project"
         />
       }
       pagePills={
-        <div className="flex flex-wrap items-center gap-[4px]" role="tablist" aria-label="Page sections">
+        <div className="flex items-center gap-[4px]" role="tablist" aria-label="Page sections">
           {BUILD_PAGE_TAB_IDS.map((label) => (
             <Page
               key={label}
@@ -320,20 +316,9 @@ export function ProjectPage() {
           ))}
         </div>
       }
-      headerAfterPagePills={
-        <Control
-          type="leading"
-          label="Discuss"
-          leadingSlot={<Icon name="project" />}
-          aria-label="Open project chat"
-          onClick={() => openProjectChat?.()}
-        />
-      }
-      headerTrailing={
-        <ProjectMoreMenu onSettings={openSettingsView} />
-      }
+      headerTrailing={<ProjectMoreMenu onSettings={openSettingsView} />}
       metaSlot={
-        <div className="flex w-full min-w-0 flex-nowrap items-center gap-1">
+        <div className="flex w-full min-w-0 flex-nowrap items-center gap-[4px]">
           <OwnerSelector
             owners={OWNERS}
             selectedOwnerId={project.ownerId}
