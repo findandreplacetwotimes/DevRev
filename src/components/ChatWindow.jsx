@@ -38,8 +38,10 @@ export function ChatWindow({
   linkedProjectChat = null,
   onOpenRecordPanel,
   hideRelatedLinksControl = false,
+  navigateInWorkspace,
 }) {
   const navigate = useNavigate()
+  const workspaceNavigate = navigateInWorkspace ?? navigate
   const { issues, projects } = useIssues()
   const [chatMessagesByVariant, setChatMessagesByVariant] = useState({
     ai: [],
@@ -302,7 +304,7 @@ export function ChatWindow({
   const handleSelectRelatedLink = (link) => {
     if (!link?.href) return
     onOpenRecordPanel?.()
-    navigate(link.href, link.state ? { state: link.state } : undefined)
+    workspaceNavigate(link.href, link.state ? { state: link.state } : undefined)
   }
 
   const handleSendMessage = async (text) => {
@@ -348,7 +350,7 @@ export function ChatWindow({
 
       if (navigationIntent?.action === "navigate") {
         onOpenRecordPanel?.()
-        navigate(navigationIntent.href, navigationIntent.state ? { state: navigationIntent.state } : undefined)
+        workspaceNavigate(navigationIntent.href, navigationIntent.state ? { state: navigationIntent.state } : undefined)
         setChatMessagesByVariant((prev) => ({
           ...prev,
           [messageVariantKey]: (prev[messageVariantKey] ?? []).map((message) =>
@@ -447,7 +449,7 @@ export function ChatWindow({
                       const t = String(message.text ?? "").trim()
                       if (!t) return
                       appendProjectActivity(pid, t)
-                      navigate(`/projects/${encodeURIComponent(pid)}?tab=Activity`)
+                      workspaceNavigate(`/projects/${encodeURIComponent(pid)}?tab=Activity`)
                     }}
                   />
                 )}

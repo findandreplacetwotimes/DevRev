@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useOutletContext } from "react-router-dom"
 import { useProjects } from "../context/IssuesContext"
 import { projectDisplayTitle, ticketChipFromProjectId } from "../lib/projectsApi"
 import { OWNERS } from "../lib/owners"
@@ -107,6 +107,8 @@ function fitColumnWidths(widths, containerInnerWidth) {
 
 export function ProjectsTable({ className = "" }) {
   const navigate = useNavigate()
+  const { navigateWithWorkspaceParams } = useOutletContext() ?? {}
+  const navigateInWorkspace = navigateWithWorkspaceParams ?? navigate
   const { projects, patchProject } = useProjects()
   const [columnWidths, setColumnWidths] = useState(loadStoredColumnWidths)
   const columnWidthsRef = useRef(columnWidths)
@@ -296,7 +298,7 @@ export function ProjectsTable({ className = "" }) {
               toggleRowSelected(project.id)
               return
             }
-            navigate(`/projects/${encodeURIComponent(project.id)}`)
+            navigateInWorkspace(`/projects/${encodeURIComponent(project.id)}`)
           }
 
           return (

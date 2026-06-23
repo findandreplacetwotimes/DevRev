@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useOutletContext } from "react-router-dom"
 import { useIssues } from "../context/IssuesContext"
 import { EMPTY_ISSUE_TITLE_PLACEHOLDER, ticketChipFromIssueId } from "../lib/issuesApi"
 import { OWNERS } from "../lib/owners"
@@ -110,6 +110,8 @@ function fitColumnWidths(widths, containerInnerWidth) {
 
 export function Table({ className = "", rows = null, issueNavState = null }) {
   const navigate = useNavigate()
+  const { navigateWithWorkspaceParams } = useOutletContext() ?? {}
+  const navigateInWorkspace = navigateWithWorkspaceParams ?? navigate
   const { issues, patchIssue } = useIssues()
   const [columnWidths, setColumnWidths] = useState(loadStoredColumnWidths)
   const columnWidthsRef = useRef(columnWidths)
@@ -320,7 +322,7 @@ export function Table({ className = "", rows = null, issueNavState = null }) {
               toggleRowSelected(issue.id)
               return
             }
-            navigate(
+            navigateInWorkspace(
               `/issues/${encodeURIComponent(issue.id)}`,
               issueNavState != null && typeof issueNavState === "object" ? { state: issueNavState } : undefined
             )

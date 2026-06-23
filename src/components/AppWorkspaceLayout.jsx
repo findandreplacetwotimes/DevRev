@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Outlet, useNavigate } from "react-router-dom"
+import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { useIssues } from "../context/IssuesContext"
 import { getChatPagesLabel, getChatRelatedLinks } from "../lib/chatRelatedLinks"
 import { projectDisplayTitle, resolveProjectForWorkspaceChat } from "../lib/projectsApi"
+import {
+  applyWorkspaceChatToSearchParams,
+  hasWorkspaceChatInUrl,
+  hrefWithWorkspaceParams,
+  parseWorkspaceChatState,
+} from "../lib/workspaceUrlState"
 import { ChatRelatedLinksPanel } from "./ChatRelatedLinksMenu"
 import { ChatWindow } from "./ChatWindow"
 import { COMPUTER_NAV_ITEM_ID, NavPanel } from "./NavPanel"
@@ -84,24 +90,58 @@ export function AppWorkspaceLayout() {
 
 export function AppWorkspaceChrome() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { projects } = useIssues()
+  const skipUrlSyncRef = useRef(false)
+  const urlChatInitializedRef = useRef(false)
 
-  /** Nav + chat header follow `projectDisplayTitle` for the resolved project (works with multiple rows in storage). */
-  const linkedProjectChat = useMemo(() => {
-    const p = resolveProjectForWorkspaceChat(projects)
-    if (!p || typeof p.id !== "string") return null
-    return { projectId: p.id, title: projectDisplayTitle(p) }
-  }, [projects])
+  const urlChatState = useMemo(
+    () =>
+      parseWorkspaceChatState({
+        searchParams,
+        projects,
+        pathname: location.pathname,
+      }),
+    [searchParams, projects, location.pathname]
+  )
 
   const [panelsInitial] = useState(loadInitialPanelOpen)
 
   const [chatWidth, setChatWidth] = useState(loadChatWidth)
   const [chatPanelOpen, setChatPanelOpen] = useState(panelsInitial.chat)
-  const [recordPanelOpen, setRecordPanelOpen] = useState(panelsInitial.record)
-  const [selectedNavItemId, setSelectedNavItemId] = useState(loadInitialSelectedNavItemId)
+  const [recordPanelOpen, setRecordPanelOpen] = useState(() => {
+    if (urlChatState.recordPanelOpen != null) return urlChatState.recordPanelOpen
+    return panelsInitial.record
+  })
+  const [selectedNavItemId, setSelectedNavItemId] = useState(() => {
+    if (hasWorkspaceChatInUrl(searchParams)) return urlChatState.selectedNavItemId
+    return loadInitialSelectedNavItemId()
+  })
 
   /** `person` chats use LLM as teammate; `ai` uses computer mode. */
-  const [chatVariant, setChatVariant] = useState(loadInitialChatVariant)
+  const [chatVariant, setChatVariant] = useState(() => {
+    if (hasWorkspaceChatInUrl(searchParams)) return urlChatState.chatVariant
+    return loadInitialChatVariant()
+  })
+  const [activeProjectChatId, setActiveProjectChatId] = useState(
+    () => urlChatState.projectChatId ?? null
+  )
+
+  /** Nav + chat header follow linked project from URL or workspace default. */
+  const linkedProjectChat = useMemo(() => {
+    const projectId =
+      (chatVariant === "chat-project" && activeProjectChatId) ||
+      urlChatState.projectChatId ||
+      resolveProjectForWorkspaceChat(projects)?.id ||
+      null
+
+    if (!projectId || !Array.isArray(projects)) return null
+    const project = projects.find((row) => row && row.id === projectId)
+    if (!project) return null
+    return { projectId: project.id, title: projectDisplayTitle(project) }
+  }, [projects, chatVariant, activeProjectChatId, urlChatState.projectChatId])
+
   const layoutRef = useRef(null)
   const dragStateRef = useRef(null)
   const stopResizeRef = useRef(null)
@@ -114,6 +154,73 @@ export function AppWorkspaceChrome() {
   useEffect(() => {
     recordPanelOpenRef.current = recordPanelOpen
   }, [recordPanelOpen])
+
+  const writeWorkspaceToUrl = useCallback(
+    (workspaceState) => {
+      skipUrlSyncRef.current = true
+      setSearchParams((prev) => applyWorkspaceChatToSearchParams(prev, workspaceState), { replace: true })
+    },
+    [setSearchParams]
+  )
+
+  const syncWorkspaceStateToUrl = useCallback(
+    (overrides = {}) => {
+      writeWorkspaceToUrl({
+        selectedNavItemId: overrides.selectedNavItemId ?? selectedNavItemId,
+        chatVariant: overrides.chatVariant ?? chatVariant,
+        projectChatId: overrides.projectChatId ?? activeProjectChatId ?? linkedProjectChat?.projectId ?? null,
+        recordPanelOpen: overrides.recordPanelOpen ?? recordPanelOpen,
+      })
+    },
+    [
+      writeWorkspaceToUrl,
+      selectedNavItemId,
+      chatVariant,
+      activeProjectChatId,
+      linkedProjectChat?.projectId,
+      recordPanelOpen,
+    ]
+  )
+
+  useEffect(() => {
+    if (skipUrlSyncRef.current) {
+      skipUrlSyncRef.current = false
+      return
+    }
+
+    if (!hasWorkspaceChatInUrl(searchParams)) {
+      if (!urlChatInitializedRef.current) {
+        urlChatInitializedRef.current = true
+      }
+      return
+    }
+
+    if (urlChatState.pendingProjects) return
+
+    setSelectedNavItemId(urlChatState.selectedNavItemId)
+    setChatVariant(urlChatState.chatVariant)
+    if (urlChatState.projectChatId) setActiveProjectChatId(urlChatState.projectChatId)
+    if (urlChatState.recordPanelOpen != null) setRecordPanelOpen(urlChatState.recordPanelOpen)
+    setChatPanelOpen(true)
+
+    if (urlChatState.shouldRewriteUrl) {
+      writeWorkspaceToUrl({
+        selectedNavItemId: urlChatState.selectedNavItemId,
+        chatVariant: urlChatState.chatVariant,
+        projectChatId: urlChatState.projectChatId,
+        recordPanelOpen: urlChatState.recordPanelOpen ?? recordPanelOpen,
+      })
+    }
+
+    urlChatInitializedRef.current = true
+  }, [searchParams, urlChatState, writeWorkspaceToUrl, recordPanelOpen])
+
+  const navigateWithWorkspaceParams = useCallback(
+    (href, options) => {
+      navigate(hrefWithWorkspaceParams(href, searchParams), options)
+    },
+    [navigate, searchParams]
+  )
 
   const clampChatWidth = useCallback(
     (nextWidth) => {
@@ -222,6 +329,7 @@ export function AppWorkspaceChrome() {
           /* ignore */
         }
         setRecordPanelOpen(true)
+        syncWorkspaceStateToUrl({ recordPanelOpen: true })
         return false
       }
       const next = !prev
@@ -244,6 +352,7 @@ export function AppWorkspaceChrome() {
           /* ignore */
         }
         setChatPanelOpen(true)
+        syncWorkspaceStateToUrl({ recordPanelOpen: false })
         return false
       }
       const next = !prev
@@ -252,6 +361,7 @@ export function AppWorkspaceChrome() {
       } catch {
         /* ignore */
       }
+      syncWorkspaceStateToUrl({ recordPanelOpen: next })
       return next
     })
   }
@@ -279,11 +389,12 @@ export function AppWorkspaceChrome() {
         } catch {
           /* ignore */
         }
+        syncWorkspaceStateToUrl({ recordPanelOpen: true })
         return true
       }
       return prev
     })
-  }, [])
+  }, [syncWorkspaceStateToUrl])
 
   const closeRecordPanelPersist = useCallback(() => {
     setRecordPanelOpen((prev) => {
@@ -297,13 +408,21 @@ export function AppWorkspaceChrome() {
         /* ignore */
       }
       if (!chatPanelOpenRef.current) setChatPanelOpen(true)
+      syncWorkspaceStateToUrl({ recordPanelOpen: false })
       return false
     })
-  }, [])
+  }, [syncWorkspaceStateToUrl])
 
   const openProjectChat = useCallback(() => {
+    const projectChatId =
+      activeProjectChatId ||
+      linkedProjectChat?.projectId ||
+      resolveProjectForWorkspaceChat(projects)?.id ||
+      null
+
     setChatVariant("chat-project")
     setSelectedNavItemId("chat-project")
+    if (projectChatId) setActiveProjectChatId(projectChatId)
     setChatPanelOpen((prev) => {
       if (!prev) {
         try {
@@ -315,17 +434,32 @@ export function AppWorkspaceChrome() {
       }
       return prev
     })
-  }, [])
+    syncWorkspaceStateToUrl({
+      selectedNavItemId: "chat-project",
+      chatVariant: "chat-project",
+      projectChatId,
+    })
+  }, [activeProjectChatId, linkedProjectChat?.projectId, projects, syncWorkspaceStateToUrl])
 
   const openBuildTeamChat = useCallback(() => {
     setChatVariant("build-team")
     setSelectedNavItemId("build-team")
     ensureChatPanelOpenPersist()
-  }, [])
+    syncWorkspaceStateToUrl({
+      selectedNavItemId: "build-team",
+      chatVariant: "build-team",
+      projectChatId: null,
+    })
+  }, [syncWorkspaceStateToUrl])
 
   const workspaceOutletContext = useMemo(
-    () => ({ openProjectChat, openBuildTeamChat, closeRecordPanel: closeRecordPanelPersist }),
-    [openProjectChat, openBuildTeamChat, closeRecordPanelPersist]
+    () => ({
+      openProjectChat,
+      openBuildTeamChat,
+      closeRecordPanel: closeRecordPanelPersist,
+      navigateWithWorkspaceParams,
+    }),
+    [openProjectChat, openBuildTeamChat, closeRecordPanelPersist, navigateWithWorkspaceParams]
   )
 
   const handleNavSelectItem = (itemId) => {
@@ -333,17 +467,36 @@ export function AppWorkspaceChrome() {
     if (itemId === COMPUTER_NAV_ITEM_ID) {
       setChatVariant("ai")
       ensureChatPanelOpenPersist()
+      syncWorkspaceStateToUrl({
+        selectedNavItemId: itemId,
+        chatVariant: "ai",
+        projectChatId: null,
+      })
       return
     }
     if (itemId === "build-team" || itemId === "dev-team") {
       setChatVariant("build-team")
       ensureChatPanelOpenPersist()
+      syncWorkspaceStateToUrl({
+        selectedNavItemId: "build-team",
+        chatVariant: "build-team",
+        projectChatId: null,
+      })
       return
     }
     if (itemId.startsWith("chat-")) {
       setChatVariant(itemId)
       ensureChatPanelOpenPersist()
-      return
+      const projectChatId =
+        itemId === "chat-project"
+          ? activeProjectChatId || linkedProjectChat?.projectId || resolveProjectForWorkspaceChat(projects)?.id || null
+          : null
+      if (itemId === "chat-project" && projectChatId) setActiveProjectChatId(projectChatId)
+      syncWorkspaceStateToUrl({
+        selectedNavItemId: itemId,
+        chatVariant: itemId,
+        projectChatId,
+      })
     }
   }
 
@@ -356,13 +509,13 @@ export function AppWorkspaceChrome() {
   const handleSelectRelatedLink = (link) => {
     if (!link?.href) return
     ensureRecordPanelOpenPersist()
-    navigate(link.href, link.state ? { state: link.state } : undefined)
+    navigateWithWorkspaceParams(link.href, link.state ? { state: link.state } : undefined)
   }
 
   const handlePagesPanelNavigate = (href) => {
     if (!href) return
     ensureRecordPanelOpenPersist()
-    navigate(href)
+    navigateWithWorkspaceParams(href)
   }
 
   return (
@@ -386,6 +539,7 @@ export function AppWorkspaceChrome() {
             linkedProjectChat={linkedProjectChat}
             onOpenRecordPanel={ensureRecordPanelOpenPersist}
             hideRelatedLinksControl={!recordPanelOpen}
+            navigateInWorkspace={navigateWithWorkspaceParams}
           />
         ) : null}
 
