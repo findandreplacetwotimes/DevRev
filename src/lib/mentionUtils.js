@@ -52,6 +52,15 @@ export function filterMentionTargets(targets, queryLower) {
   return targets.filter((t) => t.label.toLowerCase().startsWith(queryLower))
 }
 
+/** People picker for new-chat top bar (no `@`, excludes already picked). */
+export function filterPeoplePickerTargets(targets, query, excludeIds = []) {
+  const exclude = new Set(excludeIds)
+  const people = targets.filter((t) => t.kind === "person" && !exclude.has(t.id))
+  const q = query.trim().toLowerCase()
+  if (!q) return people
+  return filterMentionTargets(people, q)
+}
+
 /**
  * Split `text` into plain / mention spans for known `@Label` tokens (labels longest-first).
  */

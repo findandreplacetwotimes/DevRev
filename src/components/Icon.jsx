@@ -1,7 +1,7 @@
 /** SVG glyphs from Figma (App — Arcade v0.3 SOR). Arrow.right `6003:7021`: `Icons/Arrow.up` rotated 90° in 28×28. */
 const ICON_MAP = {
-  /** Nav / project chip — Figma `6044:7714` Icons/Project, 28×28. */
-  project: "/icons/project-nav.png",
+  /** Figma `6044:7714` — jabuticaba tile + 2×2 grid glyph. */
+  projectGrid: "/icons/project-grid.svg",
   team: "/icons/team-bolt.svg",
   calendar: "/icons/calendar.svg",
   search: "/icons/search.svg",
@@ -28,6 +28,10 @@ const ICON_MAP = {
   plus: "/icons/plus.svg",
   chevronDown: "/icons/chevron-down.svg",
   more: "/icons/more-horizontal.svg",
+  /** Figma `6232:11970` — Icons/Dot.in.left.window (Side panel). */
+  sidePanel: "/icons/side-panel.svg",
+  /** Figma `6235:12006` — Icons/Three.bars.horizontal (Canvas). */
+  canvas: "/icons/canvas.svg",
   page: "/icons/page.svg",
   /** Figma `6069:8208` — Icons/Reply, Size=Micro (22×22 frame). */
   reply: "/icons/reply.svg",
@@ -42,12 +46,58 @@ export function Icon({ name = "team", className = "", size = "default" }) {
   const centeredGlyph = isLarge ? "size-[20px]" : "size-[16px]"
 
   if (name === "project") {
-    const imgCls = isMicro
-      ? "pointer-events-none absolute left-1/2 top-1/2 size-[18px] max-w-none -translate-x-1/2 -translate-y-1/2 select-none object-contain"
-      : "pointer-events-none absolute left-0 top-0 size-[28px] max-w-none select-none object-contain"
+    const tileClass = isMicro
+      ? "absolute left-1/2 top-1/2 size-[18px] -translate-x-1/2 -translate-y-1/2 rounded-[2px] bg-[var(--jabuticaba-200)]"
+      : "absolute left-[5px] top-[5px] size-[18px] rounded-[2px] bg-[var(--jabuticaba-200)]"
     return (
       <span className={wrap}>
-        <img src={ICON_MAP.project} alt="" className={imgCls} draggable={false} />
+        <span className={tileClass}>
+          <span
+            className="absolute block"
+            style={{
+              top: "27.5%",
+              bottom: "27.5%",
+              left: "27.5%",
+              right: "27.5%",
+            }}
+          >
+            <img
+              src={ICON_MAP.projectGrid}
+              alt=""
+              className="absolute inset-0 block size-full max-h-none max-w-none select-none"
+              draggable={false}
+            />
+          </span>
+        </span>
+      </span>
+    )
+  }
+
+  /** Figma `6152:15072` — Project chat: jabuticaba circle + 2×2 grid. */
+  if (name === "projectChat") {
+    const tileClass = isMicro
+      ? "absolute left-1/2 top-1/2 size-[18px] -translate-x-1/2 -translate-y-1/2 rounded-[20px] bg-[var(--jabuticaba-200)]"
+      : "absolute left-[5px] top-[5px] size-[18px] rounded-[20px] bg-[var(--jabuticaba-200)]"
+    return (
+      <span className={wrap}>
+        <span className={tileClass}>
+          <span
+            className="absolute block"
+            style={{
+              top: "27.5%",
+              bottom: "27.5%",
+              left: "27.5%",
+              right: "27.5%",
+            }}
+          >
+            <img
+              src={ICON_MAP.projectGrid}
+              alt=""
+              className="absolute inset-0 block size-full max-h-none max-w-none select-none"
+              draggable={false}
+            />
+          </span>
+        </span>
       </span>
     )
   }
@@ -122,14 +172,14 @@ export function Icon({ name = "team", className = "", size = "default" }) {
   if (name === "computer") {
     return (
       <span className={wrap}>
-        <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[2px] bg-[var(--foreground-primary)]">
+        <span className="absolute left-[5px] top-[5px] size-[18px] rounded-full bg-[var(--foreground-primary)]">
           <span
             className="absolute block"
             style={{
-              top: "24.16%",
-              bottom: "47.15%",
-              left: "33.33%",
-              right: "29.16%",
+              top: "29.72%",
+              right: "31.25%",
+              bottom: "41.6%",
+              left: "31.25%",
             }}
           >
             <img

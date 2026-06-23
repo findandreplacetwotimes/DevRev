@@ -22,7 +22,7 @@ export function Control({
   const isInlineState = state === "inline"
   const isInlineType = resolvedType === "inline"
   const hasLeading = resolvedType === "leading" || resolvedType === "leadingTrailing" || resolvedType === "iconOnly" || isInlineType
-  const hasLabel = resolvedType !== "iconOnly"
+  const hasLabel = resolvedType !== "iconOnly" && label !== ""
   const hasTrailing = resolvedType === "trailing" || resolvedType === "leadingTrailing"
   const isLarge = size === "large"
   const horizontalPadding =

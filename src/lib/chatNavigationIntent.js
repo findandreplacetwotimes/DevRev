@@ -1,4 +1,5 @@
 import { getAiResponse } from "./aiClient"
+import { isProjectMainChatId } from "./relatedChats"
 
 const BUILD_TEAM_DESTINATIONS = [
   { id: "issues", label: "Issues", href: "/issues" },
@@ -6,6 +7,11 @@ const BUILD_TEAM_DESTINATIONS = [
   { id: "projects", label: "Projects", href: "/projects" },
   { id: "about", label: "About", href: "/about" },
 ]
+
+function isProjectScopedChat(context) {
+  if (context?.projectId) return true
+  return isProjectMainChatId(context?.variant)
+}
 
 function displayTitle(row, fallback) {
   const trimmed = typeof row?.title === "string" ? row.title.trim() : ""
@@ -24,8 +30,7 @@ function projectDestinations(projectId) {
 
 function issueDestinations(issues, context) {
   const list = Array.isArray(issues) ? issues : []
-  const projectScoped =
-    context?.variant === "chat-project" && context.projectId
+  const projectScoped = isProjectScopedChat(context)
       ? list.filter((issue) => issue.projectId === context.projectId)
       : list
 
@@ -56,7 +61,7 @@ function destinationsForContext(context) {
     ...issueDestinations(context?.issues, context),
     ...projectRecordDestinations(context?.projects),
   ]
-  if (context?.variant === "chat-project") {
+  if (isProjectScopedChat(context)) {
     return [...projectDestinations(context.projectId), ...recordDestinations]
   }
   return [...BUILD_TEAM_DESTINATIONS, ...recordDestinations]

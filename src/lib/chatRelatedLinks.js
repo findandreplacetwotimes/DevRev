@@ -1,3 +1,13 @@
+import {
+  getRelatedChatFamily,
+  isBranchedChatVariant,
+  isComputerChatVariant,
+  isProjectMainChatId,
+  resolveProjectIdFromVariant,
+  resolveRootChatId,
+  TEAM_ROOT_CHAT_ID,
+} from "./relatedChats"
+
 const BUILD_TEAM_RELATED_LINKS = [
   {
     title: "Issues",
@@ -66,24 +76,100 @@ const PERSON_CHAT_LINKS = {
 }
 
 export function isPersonDirectChat(variant) {
-  return typeof variant === "string" && variant.startsWith("chat-") && variant !== "chat-project"
+  return (
+    typeof variant === "string" &&
+    variant.startsWith("chat-") &&
+    !isProjectMainChatId(variant) &&
+    variant !== "chat-project" &&
+    !variant.startsWith("chat-group-") &&
+    !isBranchedChatVariant(variant)
+  )
 }
 
 function personChatRelatedLinks(variant) {
   return PERSON_CHAT_LINKS[variant] ?? []
 }
 
-export function getChatRelatedLinks({ variant, linkedProjectChat } = {}) {
-  if (variant === "ai") return COMPUTER_PAGE_LINKS
-  if (variant === "build-team") return BUILD_TEAM_RELATED_LINKS
-  if (variant === "chat-project") return projectChatRelatedLinks(linkedProjectChat?.projectId)
+export function getChatRelatedLinks({ variant, linkedProjectChat, relatedChatsRegistry = {} } = {}) {
+  if (variant === "ai" || isComputerChatVariant(variant)) return COMPUTER_PAGE_LINKS
+
+  const projectId =
+    resolveProjectIdFromVariant(variant, relatedChatsRegistry) ||
+    (isProjectMainChatId(variant) ? variant.slice("chat-project-".length) : null) ||
+    linkedProjectChat?.projectId ||
+    null
+
+  if (projectId) return projectChatRelatedLinks(projectId)
+
+  const rootId = resolveRootChatId(variant, relatedChatsRegistry)
+  if (variant === "build-team" || rootId === TEAM_ROOT_CHAT_ID) return BUILD_TEAM_RELATED_LINKS
+
   if (isPersonDirectChat(variant)) return personChatRelatedLinks(variant)
   return []
 }
 
-export function getChatPagesLabel({ variant } = {}) {
+export function getChatPagesLabel({ variant, linkedProjectChat, relatedChatsRegistry = {} } = {}) {
   if (isPersonDirectChat(variant)) return "LINKS"
-  if (variant === "build-team") return "TEAM PAGES"
-  if (variant === "chat-project") return "PROJECT PAGES"
+
+  const projectId =
+    resolveProjectIdFromVariant(variant, relatedChatsRegistry) ||
+    (isProjectMainChatId(variant) ? variant.slice("chat-project-".length) : null) ||
+    linkedProjectChat?.projectId ||
+    null
+
+  if (projectId) return "PROJECT PAGES"
+
+  const rootId = resolveRootChatId(variant, relatedChatsRegistry)
+  if (variant === "build-team" || rootId === TEAM_ROOT_CHAT_ID) return "TEAM PAGES"
+
   return "PAGES"
+}
+
+/**
+ * @param {object} options
+ * @param {string} options.variant
+ * @param {{ projectId?: string, title?: string } | null} [options.linkedProjectChat]
+ * @param {import("./relatedChats").RelatedChatRegistry} [options.relatedChatsRegistry]
+ * @param {string} [options.currentChatId]
+ */
+export function getChatLinkPanelSections({
+  variant,
+  linkedProjectChat,
+  relatedChatsRegistry = {},
+  currentChatId,
+} = {}) {
+  /** @type {Array<{ id: string, label: string, kind: "record", links: object[] } | { id: string, label: string, kind: "chat", chats: import("./relatedChats").RelatedChatRecord[] }>} */
+  const sections = []
+
+  const links = getChatRelatedLinks({ variant, linkedProjectChat, relatedChatsRegistry })
+  if (links.length > 0) {
+    sections.push({
+      id: "pages",
+      label: getChatPagesLabel({ variant, linkedProjectChat, relatedChatsRegistry }),
+      kind: "record",
+      links,
+    })
+  }
+
+  const rootId = resolveRootChatId(variant, relatedChatsRegistry)
+  if (rootId) {
+    const family = getRelatedChatFamily(rootId, relatedChatsRegistry)
+    if (family.length > 1) {
+      sections.push({
+        id: "chats",
+        label: "RELATED CHATS",
+        kind: "chat",
+        chats: family,
+      })
+    }
+  }
+
+  return sections
+}
+
+/** @param {ReturnType<typeof getChatLinkPanelSections>} sections */
+export function hasChatLinkPanelContent(sections) {
+  return sections.some((section) =>
+    section.kind === "record" ? section.links.length > 0 : section.chats.length > 0
+  )
 }

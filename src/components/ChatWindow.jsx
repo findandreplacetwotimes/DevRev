@@ -7,7 +7,9 @@ import { MessageInput } from "./MessageInput"
 import { useIssues } from "../context/IssuesContext"
 import { getAiResponse } from "../lib/aiClient"
 import { resolveChatNavigationIntent } from "../lib/chatNavigationIntent"
-import { getChatPagesLabel, getChatRelatedLinks } from "../lib/chatRelatedLinks"
+import { getChatRelatedLinks } from "../lib/chatRelatedLinks"
+import { isProjectMainChatId, isComputerChatVariant } from "../lib/relatedChats"
+import { chatVariantToNavItemId, isDynamicGroupChatVariant, NEW_CHAT_VARIANT, resolveGroupChatDisplay } from "../lib/navFolderState"
 import { messageTagsComputer } from "../lib/mentionUtils"
 import { appendProjectActivity } from "../lib/projectActivityStore"
 
@@ -21,8 +23,7 @@ const COMPUTER_PROJECT_REPLY_PREFIX =
 const PROJECT_CHAT_THREAD_KEY = "chat-project:Project-0001"
 
 const CHAT_META = {
-  "build-team": { title: "Build team chat", iconName: "chat", avatarInitial: null },
-  "chat-project": { title: "Project chat", iconName: "project", avatarInitial: null },
+  "build-team": { title: "Build team", iconName: "chat", avatarInitial: null },
   "chat-arjun": { title: "Arjun Patel", avatarInitial: "A" },
   "chat-sneha": { title: "Sneha Sharma", avatarInitial: "S" },
   "chat-rohan": { title: "Rohan Verma", avatarInitial: "R" },
@@ -36,8 +37,25 @@ export function ChatWindow({
   variant = "ai",
   flexFill = false,
   linkedProjectChat = null,
+  dynamicChatMeta = null,
+  newChatParticipants = [],
+  onNewChatParticipantsChange,
+  onConfirmNewChat,
+  onArchiveChat,
+  onBranchChat,
+  onSelectRelatedChat,
+  relatedChats = [],
+  currentChatId = null,
+  showChatActionsMenu = false,
+  showBranch = false,
+  showArchive = false,
+  hasPanelContent = false,
+  relatedChatsRegistry = {},
   onOpenRecordPanel,
-  hideRelatedLinksControl = false,
+  onComputerChatStarted,
+  tabsSideOpen = false,
+  onToggleTabsSide,
+  hideLinksPanelControl = false,
   navigateInWorkspace,
 }) {
   const navigate = useNavigate()
@@ -283,44 +301,65 @@ export function ChatWindow({
     ],
   })
   const scrollContainerRef = useRef(null)
-  const isPersonChat = variant !== "ai"
-  /** One thread per linked project; generic `chat-project` only when nav chosen before linking. */
+  const isNewChatDraft = variant === NEW_CHAT_VARIANT
+  const isComputerSession = isComputerChatVariant(variant)
+  const isDynamicGroup = isDynamicGroupChatVariant(variant)
+  const isPersonChat = variant !== "ai" && !isNewChatDraft && !isComputerSession
+  /** One thread per linked project main; branches use their own variant id. */
   const messageVariantKey =
-    variant === "chat-project" && linkedProjectChat?.projectId
+    isProjectMainChatId(variant) && linkedProjectChat?.projectId
       ? `chat-project:${linkedProjectChat.projectId}`
       : variant
   const chatMessages = useMemo(
-    () => chatMessagesByVariant[messageVariantKey] ?? [],
-    [chatMessagesByVariant, messageVariantKey]
+    () => (isNewChatDraft ? [] : chatMessagesByVariant[messageVariantKey] ?? []),
+    [chatMessagesByVariant, messageVariantKey, isNewChatDraft]
   )
-  const meta =
-    variant === "chat-project" && linkedProjectChat?.projectId
-      ? { ...CHAT_META["chat-project"], title: linkedProjectChat.title }
-      : CHAT_META[variant] ?? CHAT_META.ai
-  const isGroupChat = variant === "build-team" || variant === "chat-project"
-  const relatedLinks = getChatRelatedLinks({ variant, linkedProjectChat })
-  const pagesLabel = getChatPagesLabel({ variant })
-
-  const handleSelectRelatedLink = (link) => {
-    if (!link?.href) return
-    onOpenRecordPanel?.()
-    workspaceNavigate(link.href, link.state ? { state: link.state } : undefined)
-  }
+  const meta = isNewChatDraft
+    ? { title: "New chat", iconName: "chat", avatarInitial: null, memberCount: null }
+    : isDynamicGroup
+      ? (() => {
+          const display = resolveGroupChatDisplay(dynamicChatMeta?.participants ?? [])
+          return {
+            title: display.title,
+            iconName: "chat",
+            avatarInitial: display.avatarInitial,
+            memberCount: display.memberCount,
+          }
+        })()
+      : isProjectMainChatId(variant) && linkedProjectChat?.projectId
+        ? { title: linkedProjectChat.title, iconName: "projectChat", avatarInitial: null, memberCount: null }
+        : isComputerSession
+          ? { title: "Computer", iconName: "computer", avatarInitial: null, memberCount: null }
+          : { ...(CHAT_META[variant] ?? CHAT_META.ai), memberCount: null }
+  const isGroupChat = variant === "build-team" || isProjectMainChatId(variant) || isDynamicGroup
+  const relatedLinks = getChatRelatedLinks({ variant, linkedProjectChat, relatedChatsRegistry })
 
   const handleSendMessage = async (text) => {
+    if (isNewChatDraft) return
+
+    const isComputerDraft = variant === "ai"
+    const sessionId = isComputerDraft ? `chat-computer-${Date.now()}` : null
+    const effectiveMessageKey = sessionId ?? messageVariantKey
+    const effectiveVariant = sessionId ?? variant
+
+    if (sessionId) {
+      onComputerChatStarted?.(sessionId)
+    }
+
     const userId = `user-${Date.now()}`
     const replyId = `reply-${Date.now()}`
     const isProjectChat =
-      variant === "chat-project" ||
-      (typeof messageVariantKey === "string" && messageVariantKey.startsWith("chat-project:"))
+      isProjectMainChatId(effectiveVariant) ||
+      linkedProjectChat?.projectId != null ||
+      (typeof effectiveMessageKey === "string" && effectiveMessageKey.startsWith("chat-project:"))
     const replyAsComputer = isProjectChat && messageTagsComputer(text)
     const replyInitial =
       !replyAsComputer && isGroupChat && ["A", "R", "S", "M", "L"][Math.floor(Math.random() * 5)]
 
     setChatMessagesByVariant((prev) => ({
       ...prev,
-      [messageVariantKey]: [
-        ...(prev[messageVariantKey] ?? []),
+      [effectiveMessageKey]: [
+        ...(prev[effectiveMessageKey] ?? []),
         { id: userId, role: "user", text },
         {
           id: replyId,
@@ -338,7 +377,7 @@ export function ChatWindow({
         navigationIntent = await resolveChatNavigationIntent({
           text,
           context: {
-            variant,
+            variant: effectiveVariant,
             projectId: linkedProjectChat?.projectId,
             issues,
             projects,
@@ -353,7 +392,7 @@ export function ChatWindow({
         workspaceNavigate(navigationIntent.href, navigationIntent.state ? { state: navigationIntent.state } : undefined)
         setChatMessagesByVariant((prev) => ({
           ...prev,
-          [messageVariantKey]: (prev[messageVariantKey] ?? []).map((message) =>
+          [effectiveMessageKey]: (prev[effectiveMessageKey] ?? []).map((message) =>
             message.id === replyId
               ? { ...message, text: `Opening ${navigationIntent.label}.`, loading: false }
               : message
@@ -370,7 +409,7 @@ export function ChatWindow({
       const response = await getAiResponse(prompt)
       setChatMessagesByVariant((prev) => ({
         ...prev,
-        [messageVariantKey]: (prev[messageVariantKey] ?? []).map((message) =>
+        [effectiveMessageKey]: (prev[effectiveMessageKey] ?? []).map((message) =>
           message.id === replyId ? { ...message, text: response.trim(), loading: false } : message
         ),
       }))
@@ -378,7 +417,7 @@ export function ChatWindow({
       const fallback = error?.message || "AI request failed. Check API key and network."
       setChatMessagesByVariant((prev) => ({
         ...prev,
-        [messageVariantKey]: (prev[messageVariantKey] ?? []).map((message) =>
+        [effectiveMessageKey]: (prev[effectiveMessageKey] ?? []).map((message) =>
           message.id === replyId ? { ...message, text: fallback, loading: false } : message
         ),
       }))
@@ -397,13 +436,28 @@ export function ChatWindow({
       style={flexFill ? undefined : { width }}
     >
       <ChatHeader
+        mode={isNewChatDraft ? "newChat" : "default"}
         title={meta.title}
         iconName={meta.iconName}
         avatarInitial={meta.avatarInitial}
+        memberCount={meta.memberCount}
         relatedLinks={relatedLinks}
-        pagesLabel={pagesLabel}
-        onSelectRelatedLink={handleSelectRelatedLink}
-        hideRelatedLinksControl={hideRelatedLinksControl}
+        hasPanelContent={hasPanelContent}
+        tabsSideOpen={tabsSideOpen}
+        onToggleTabsSide={onToggleTabsSide}
+        hideLinksPanelControl={hideLinksPanelControl || isNewChatDraft}
+        participants={newChatParticipants}
+        onParticipantsChange={onNewChatParticipantsChange}
+        onConfirm={onConfirmNewChat}
+        navItemId={chatVariantToNavItemId(variant)}
+        onArchiveChat={onArchiveChat}
+        onBranchChat={onBranchChat}
+        onSelectRelatedChat={onSelectRelatedChat}
+        relatedChats={relatedChats}
+        currentChatId={currentChatId ?? variant}
+        showChatActionsMenu={showChatActionsMenu}
+        showBranch={showBranch}
+        showArchive={showArchive}
       />
 
       <div className="flex min-h-0 flex-1 flex-col">
@@ -460,7 +514,13 @@ export function ChatWindow({
           <div className="h-[40px] w-full" />
         </div>
         <div className="px-[20px] pb-[20px]">
-          <MessageInput mode={isPersonChat ? "message" : "ai"} initialValue="" onSendMessage={handleSendMessage} />
+          {isNewChatDraft ? (
+            <div className="pointer-events-none opacity-40" aria-hidden>
+              <MessageInput mode="message" initialValue="" onSendMessage={() => {}} />
+            </div>
+          ) : (
+            <MessageInput mode={isPersonChat ? "message" : "ai"} initialValue="" onSendMessage={handleSendMessage} />
+          )}
         </div>
       </div>
     </aside>

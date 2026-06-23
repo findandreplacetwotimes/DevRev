@@ -1,8 +1,11 @@
 import { createPortal } from "react-dom"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useLocation } from "react-router-dom"
+import { relatedChatToNavItem } from "../lib/relatedChats"
+import { ChatAvatar } from "./ChatAvatar"
 import { Icon } from "./Icon"
 import { MenuItemLabel } from "./MenuItem"
+import { NavGroup } from "./NavGroup"
 import { NavItem } from "./NavItem"
 import { RightPanelNavMenu } from "./RightPanelNavMenu"
 
@@ -57,7 +60,7 @@ function ChatRelatedLinkStaticRow({ link, className = "" }) {
       aria-disabled="true"
       className={`inline-flex h-[28px] w-full min-w-0 items-center rounded-[2px] bg-white pr-[6px] ${className}`}
     >
-      <Icon name="page" />
+      <Icon name="canvas" />
       {link.key ? (
         <span
           className="flex min-w-0 flex-1 items-center justify-start gap-[4px] overflow-hidden py-[6px] text-left"
@@ -192,18 +195,26 @@ export function ChatRelatedLinksMenu({
   )
 }
 
-export function ChatRelatedLinksPanel({
-  links = [],
-  pagesLabel = "PAGES",
+export function ChatRelatedLinksContent({
+  sections = [],
   onSelect,
+  onSelectChat,
   projectId,
   onNavigate,
+  currentChatId = null,
+  className = "",
+  linkItemIcon = "canvas",
 }) {
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const moreTriggerRef = useRef(null)
   const menuRef = useRef(null)
   const selectedHref = selectedHrefFromLocation(location)
+
+  const pagesSection = sections.find((section) => section.kind === "record")
+  const chatsSection = sections.find((section) => section.kind === "chat")
+  const pagesLabel = pagesSection?.label ?? "PAGES"
+  const links = pagesSection?.links ?? []
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -222,52 +233,101 @@ export function ChatRelatedLinksPanel({
   }
 
   return (
+    <div className={`flex w-full min-w-0 flex-col items-stretch ${className}`}>
+      <div className="flex w-full min-w-0 flex-col items-stretch gap-[4px]" role="menu">
+        {pagesSection ? (
+          <NavGroup label={pagesLabel} sectionLabel className="w-full">
+            {links.map((link) => (
+              <NavItem
+                key={linkKey(link)}
+                label={link.title}
+                idLabel={link.key}
+                iconName={linkItemIcon}
+                className="w-full"
+                inactive={!link.href}
+                onClick={link.href ? () => onSelect?.(link) : undefined}
+              />
+            ))}
+            <NavItem
+              ref={moreTriggerRef}
+              label="More"
+              hideIcon
+              mutedLabel
+              className="w-full"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              aria-label={`More ${pagesLabel.toLowerCase()}`}
+              onClick={() => setMenuOpen((value) => !value)}
+            />
+          </NavGroup>
+        ) : null}
+        {chatsSection ? (
+          <NavGroup label={chatsSection.label} sectionLabel className="w-full">
+            {chatsSection.chats.map((chat) => {
+              const navItem = relatedChatToNavItem(chat)
+              return (
+                <NavItem
+                  key={chat.id}
+                  label={navItem.label}
+                  iconName={navItem.iconName ?? "page"}
+                  leading={
+                    navItem.memberCount != null ? (
+                      <ChatAvatar count={navItem.memberCount} />
+                    ) : navItem.iconName ? undefined : (
+                      <ChatAvatar initial={navItem.initial ?? "?"} />
+                    )
+                  }
+                  className="w-full"
+                  selected={currentChatId === chat.id}
+                  onClick={() => onSelectChat?.(chat.id)}
+                />
+              )
+            })}
+          </NavGroup>
+        ) : null}
+      </div>
+      {pagesSection ? (
+        <RightPanelNavMenu
+          open={menuOpen}
+          anchorRef={moreTriggerRef}
+          menuRef={menuRef}
+          projectId={projectId}
+          selectedHref={selectedHref}
+          onClose={() => setMenuOpen(false)}
+          onNavigate={handleNavigate}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+export function ChatRelatedLinksPanel({
+  sections = [],
+  onSelect,
+  onSelectChat,
+  projectId,
+  onNavigate,
+  currentChatId = null,
+}) {
+  const pagesSection = sections.find((section) => section.kind === "record")
+  const pagesLabel = pagesSection?.label ?? "PAGES"
+
+  return (
     <aside
-      className="flex h-full w-[274px] shrink-0 flex-col items-start border-r border-[#ececec] bg-white px-[12px] pb-[14px]"
+      className="flex h-full w-[220px] shrink-0 flex-col items-start border-r border-[#ececec] bg-white px-[12px] pb-[14px]"
       aria-label={pagesLabel}
     >
       <div className="h-[14px] w-full shrink-0 bg-white" />
-      <div className="flex w-full min-w-0 flex-col items-stretch gap-[4px]" role="menu">
-        <div className="inline-flex w-full items-center rounded-[2px] bg-white px-[6px]">
-          <div className="inline-flex items-center py-[10.5px]">
-            <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[#939393]" style={labelStyle}>
-              {pagesLabel}
-            </span>
-          </div>
-        </div>
-        {links.map((link) => (
-          <NavItem
-            key={linkKey(link)}
-            label={link.title}
-            idLabel={link.key}
-            iconName="page"
-            className="w-full"
-            inactive={!link.href}
-            onClick={link.href ? () => onSelect?.(link) : undefined}
-          />
-        ))}
-        <NavItem
-          ref={moreTriggerRef}
-          label="More"
-          hideIcon
-          mutedLabel
-          className="w-full"
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          aria-label={`More ${pagesLabel.toLowerCase()}`}
-          onClick={() => setMenuOpen((value) => !value)}
-        />
-      </div>
-      <div className="h-[20px] w-full shrink-0 bg-white" />
-      <RightPanelNavMenu
-        open={menuOpen}
-        anchorRef={moreTriggerRef}
-        menuRef={menuRef}
+      <ChatRelatedLinksContent
+        sections={sections}
+        onSelect={onSelect}
+        onSelectChat={onSelectChat}
         projectId={projectId}
-        selectedHref={selectedHref}
-        onClose={() => setMenuOpen(false)}
-        onNavigate={handleNavigate}
+        onNavigate={onNavigate}
+        currentChatId={currentChatId}
+        className="min-h-0 flex-1"
       />
+      <div className="h-[20px] w-full shrink-0 bg-white" />
     </aside>
   )
 }

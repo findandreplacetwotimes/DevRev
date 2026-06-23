@@ -28,6 +28,7 @@ const meta = {
         "chevronDown",
         "chevronUp",
         "more",
+        "sidePanel",
         "close",
         "plus",
         "arrowUp",
@@ -35,7 +36,9 @@ const meta = {
         "arrowRightSmall",
         "reply",
         "page",
+        "canvas",
         "project",
+        "projectChat",
         "agent",
         "inbox",
         "discover",
@@ -163,10 +166,24 @@ export const Page = {
   },
 }
 
+/** Figma `6235:12006` — Icons/Three.bars.horizontal (Canvas). */
+export const Canvas = {
+  args: {
+    name: "canvas",
+  },
+}
+
 /** Figma `6044:7714` — Icons/Project (nav), 28×28. */
 export const Project = {
   args: {
     name: "project",
+  },
+}
+
+/** Figma `6152:15072` — Icons/Project chat (circle + grid). */
+export const ProjectChat = {
+  args: {
+    name: "projectChat",
   },
 }
 
@@ -197,5 +214,12 @@ export const Filter = {
 export const Clock = {
   args: {
     name: "clock",
+  },
+}
+
+/** Figma `6232:11970` — Icons/Dot.in.left.window (Side panel). */
+export const SidePanel = {
+  args: {
+    name: "sidePanel",
   },
 }

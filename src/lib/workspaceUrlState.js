@@ -1,5 +1,20 @@
 import { COMPUTER_NAV_ITEM_ID } from "../components/NavPanel"
+import { isBranchedChatVariant, isComputerChatVariant, isProjectMainChatId, projectMainChatId } from "./relatedChats"
 import { resolveProjectForWorkspaceChat } from "./projectsApi"
+import {
+  CANVAS_INDEX_TAB_ID,
+  canvasTabIdFromLocation as canvasTabIdFromLocationImpl,
+  isCanvasIndexPath,
+  tabIdFromHref,
+} from "./canvasTabs"
+
+export { isCanvasIndexPath, CANVAS_INDEX_TAB_ID }
+export { tabIdFromHref as canvasTabIdFromHref }
+
+/** @param {string} pathname @param {string} [search] */
+export function canvasTabIdFromLocation(pathname, search = "") {
+  return canvasTabIdFromLocationImpl(pathname, search)
+}
 
 /** Query keys owned by workspace shell (chat + record panel). */
 export const WORKSPACE_QUERY_KEYS = ["chat", "projectChat", "id", "record"]
@@ -7,7 +22,7 @@ export const WORKSPACE_QUERY_KEYS = ["chat", "projectChat", "id", "record"]
 export const PERSON_CHAT_IDS = ["chat-arjun", "chat-sneha", "chat-rohan", "chat-leela"]
 
 const COMPUTER_FALLBACK = {
-  selectedNavItemId: COMPUTER_NAV_ITEM_ID,
+  selectedNavItemId: null,
   chatVariant: "ai",
   projectChatId: null,
 }
@@ -58,10 +73,22 @@ export function parseWorkspaceChatState({ searchParams, projects, pathname }) {
     Array.isArray(projects) && projects.some((row) => row && row.id === projectId)
 
   if (chat === "computer") {
+    const computerId = searchParams.get("id")
+    if (computerId && isComputerChatVariant(computerId)) {
+      return {
+        fromUrl: true,
+        shouldRewriteUrl: false,
+        selectedNavItemId: computerId,
+        chatVariant: computerId,
+        projectChatId: null,
+        recordPanelOpen,
+      }
+    }
+
     return {
       fromUrl: true,
       shouldRewriteUrl: false,
-      selectedNavItemId: COMPUTER_NAV_ITEM_ID,
+      selectedNavItemId: null,
       chatVariant: "ai",
       projectChatId: null,
       recordPanelOpen,
@@ -87,23 +114,27 @@ export function parseWorkspaceChatState({ searchParams, projects, pathname }) {
       null
 
     if (projects === null) {
+      const pendingVariant = requestedProjectId
+        ? projectMainChatId(requestedProjectId)
+        : projectMainChatId("Project-0001")
       return {
         fromUrl: true,
         shouldRewriteUrl: false,
         pendingProjects: true,
-        selectedNavItemId: "chat-project",
-        chatVariant: "chat-project",
+        selectedNavItemId: pendingVariant,
+        chatVariant: pendingVariant,
         projectChatId: requestedProjectId,
         recordPanelOpen,
       }
     }
 
     if (requestedProjectId && projectExists(requestedProjectId)) {
+      const variant = projectMainChatId(requestedProjectId)
       return {
         fromUrl: true,
         shouldRewriteUrl: false,
-        selectedNavItemId: "chat-project",
-        chatVariant: "chat-project",
+        selectedNavItemId: variant,
+        chatVariant: variant,
         projectChatId: requestedProjectId,
         recordPanelOpen,
       }
@@ -125,6 +156,59 @@ export function parseWorkspaceChatState({ searchParams, projects, pathname }) {
         shouldRewriteUrl: false,
         selectedNavItemId: personId,
         chatVariant: personId,
+        projectChatId: null,
+        recordPanelOpen,
+      }
+    }
+
+    return {
+      fromUrl: true,
+      shouldRewriteUrl: true,
+      ...COMPUTER_FALLBACK,
+      recordPanelOpen,
+    }
+  }
+
+  if (chat === "new") {
+    return {
+      fromUrl: true,
+      shouldRewriteUrl: false,
+      selectedNavItemId: null,
+      chatVariant: "new-chat",
+      projectChatId: null,
+      recordPanelOpen,
+    }
+  }
+
+  if (chat === "group") {
+    const groupId = searchParams.get("id")
+    if (groupId && typeof groupId === "string" && groupId.startsWith("chat-group-")) {
+      return {
+        fromUrl: true,
+        shouldRewriteUrl: false,
+        selectedNavItemId: groupId,
+        chatVariant: groupId,
+        projectChatId: null,
+        recordPanelOpen,
+      }
+    }
+
+    return {
+      fromUrl: true,
+      shouldRewriteUrl: true,
+      ...COMPUTER_FALLBACK,
+      recordPanelOpen,
+    }
+  }
+
+  if (chat === "branch") {
+    const branchId = searchParams.get("id")
+    if (branchId && isBranchedChatVariant(branchId)) {
+      return {
+        fromUrl: true,
+        shouldRewriteUrl: false,
+        selectedNavItemId: branchId,
+        chatVariant: branchId,
         projectChatId: null,
         recordPanelOpen,
       }
@@ -162,13 +246,29 @@ export function applyWorkspaceChatToSearchParams(searchParams, state) {
 
   const { selectedNavItemId, chatVariant, projectChatId, recordPanelOpen } = state
 
-  if (selectedNavItemId === COMPUTER_NAV_ITEM_ID || chatVariant === "ai") {
+  if (chatVariant === "new-chat") {
+    next.set("chat", "new")
+  } else if (typeof chatVariant === "string" && chatVariant.startsWith("chat-group-")) {
+    next.set("chat", "group")
+    next.set("id", chatVariant)
+  } else if (isBranchedChatVariant(chatVariant)) {
+    next.set("chat", "branch")
+    next.set("id", chatVariant)
+  } else if (isComputerChatVariant(chatVariant)) {
+    next.set("chat", "computer")
+    next.set("id", chatVariant)
+  } else if (chatVariant === "ai") {
+    next.set("chat", "computer")
+  } else if (selectedNavItemId === COMPUTER_NAV_ITEM_ID) {
     next.set("chat", "computer")
   } else if (selectedNavItemId === "build-team" || chatVariant === "build-team") {
     next.set("chat", "build-team")
-  } else if (selectedNavItemId === "chat-project" || chatVariant === "chat-project") {
+  } else if (isProjectMainChatId(chatVariant) || isProjectMainChatId(selectedNavItemId)) {
+    const pid =
+      projectChatId ||
+      (isProjectMainChatId(chatVariant) ? chatVariant.slice("chat-project-".length) : null)
     next.set("chat", "project")
-    if (projectChatId) next.set("projectChat", projectChatId)
+    if (pid) next.set("projectChat", pid)
   } else if (typeof chatVariant === "string" && chatVariant.startsWith("chat-")) {
     next.set("chat", "person")
     next.set("id", chatVariant)
@@ -178,6 +278,10 @@ export function applyWorkspaceChatToSearchParams(searchParams, state) {
   else if (recordPanelOpen === false) next.set("record", "closed")
 
   return next
+}
+
+export function canvasIndexHref(searchParams) {
+  return hrefWithWorkspaceParams("/canvas", searchParams)
 }
 
 /**

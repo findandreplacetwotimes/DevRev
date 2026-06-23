@@ -13,7 +13,7 @@ const meta = {
       options: [
         "computer",
         "build-team",
-        "chat-project",
+        "chat-project-Project-0001",
         "chat-arjun",
         "chat-sneha",
         "chat-rohan",

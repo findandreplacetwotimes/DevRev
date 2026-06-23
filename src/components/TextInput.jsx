@@ -9,6 +9,24 @@ const systemLabelStyle = {
   fontVariationSettings: '"wght" 460',
 }
 
+/** Figma Text input → Label (`6035:7702`) — UI/System text, `py-[6px]`. */
+export function TextInputLabel({ children, secondary = false, className = "" }) {
+  return (
+    <div className={`inline-flex shrink-0 items-center justify-center py-[6px] ${className}`}>
+      <span
+        className={`whitespace-nowrap leading-[16px] ${
+          secondary ? "text-[var(--control-content-secondary)]" : "text-[var(--control-content-primary)]"
+        }`}
+        style={systemLabelStyle}
+      >
+        {children}
+      </span>
+    </div>
+  )
+}
+
+export { systemLabelStyle as SYSTEM_LABEL_STYLE }
+
 function defaultPlaceholder(type) {
   return type === "leading" || type === "inline" ? "Search" : "Placeholder"
 }

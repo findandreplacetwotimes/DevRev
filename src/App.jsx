@@ -16,6 +16,7 @@ export default function App() {
         <Route path="sprints" element={<SprintsPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="team-members" element={<TeamMembersPage />} />
+        <Route path="canvas" element={null} />
         <Route path="issues" element={<IssuesListPage />} />
         <Route path="issues/:issueId" element={<IssuePage />} />
         <Route path="projects" element={<ProjectsListPage />} />

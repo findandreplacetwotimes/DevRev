@@ -78,7 +78,10 @@ export function MenuItem({ type = "leading", state = "rest", label = "Date", ful
     >
       {isLabel ? (
         <div className="inline-flex items-center py-[10.5px]">
-          <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[#939393]" style={numericalStyle}>
+          <span
+            className="overflow-hidden text-ellipsis whitespace-nowrap text-[#939393] [text-box-edge:cap_alphabetic] [text-box-trim:trim-both]"
+            style={numericalStyle}
+          >
             {label.toUpperCase()}
           </span>
         </div>
