@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { WorkspaceWindow } from "./WorkspaceWindow"
 
 const MIN_PANE_WIDTH = 280
@@ -22,48 +22,62 @@ export function SplitWorkspaceView({
 }) {
   const layoutRef = useRef(null)
   const dragStateRef = useRef(null)
+  const splitLeftWidthRef = useRef(splitLeftWidthPx)
+  const onSplitLeftWidthChangeRef = useRef(onSplitLeftWidthChange)
+  const [dragWidthPx, setDragWidthPx] = useState(null)
 
-  const handleResizeMove = useCallback(
+  splitLeftWidthRef.current = splitLeftWidthPx
+  onSplitLeftWidthChangeRef.current = onSplitLeftWidthChange
+  const displayLeftWidth = dragWidthPx ?? splitLeftWidthPx
+
+  const applyWidth = useCallback((nextWidth, persist = false) => {
+    const layoutWidth = layoutRef.current?.clientWidth ?? 0
+    if (!layoutWidth) return null
+    const clamped = clampSplitLeftWidth(nextWidth, layoutWidth)
+    if (persist) {
+      onSplitLeftWidthChangeRef.current?.(clamped)
+      return clamped
+    }
+    setDragWidthPx(clamped)
+    return clamped
+  }, [])
+
+  const handleResizeMove = useCallback((event) => {
+    if (!dragStateRef.current) return
+    const deltaX = event.clientX - dragStateRef.current.startX
+    applyWidth(dragStateRef.current.startWidth + deltaX)
+  }, [applyWidth])
+
+  const stopResize = useCallback(
     (event) => {
       if (!dragStateRef.current) return
       const deltaX = event.clientX - dragStateRef.current.startX
-      const layoutWidth = layoutRef.current?.clientWidth ?? 0
-      const nextWidth = dragStateRef.current.startWidth + deltaX
-      onSplitLeftWidthChange?.(clampSplitLeftWidth(nextWidth, layoutWidth))
+      const finalWidth = applyWidth(dragStateRef.current.startWidth + deltaX, true)
+      dragStateRef.current = null
+      setDragWidthPx(null)
+      if (finalWidth != null) splitLeftWidthRef.current = finalWidth
+      event.currentTarget?.releasePointerCapture?.(event.pointerId)
     },
-    [onSplitLeftWidthChange]
+    [applyWidth]
   )
-
-  const stopResize = useCallback(() => {
-    dragStateRef.current = null
-    window.removeEventListener("pointermove", handleResizeMove)
-    window.removeEventListener("pointerup", stopResize)
-    window.removeEventListener("pointercancel", stopResize)
-  }, [handleResizeMove])
 
   const startResize = useCallback(
     (event) => {
       event.preventDefault()
-      dragStateRef.current = { startX: event.clientX, startWidth: splitLeftWidthPx }
-      window.addEventListener("pointermove", handleResizeMove)
-      window.addEventListener("pointerup", stopResize)
-      window.addEventListener("pointercancel", stopResize)
+      event.currentTarget.setPointerCapture(event.pointerId)
+      dragStateRef.current = { startX: event.clientX, startWidth: splitLeftWidthRef.current }
     },
-    [handleResizeMove, splitLeftWidthPx, stopResize]
+    []
   )
 
   useEffect(() => {
     const updateBounds = () => {
-      const layoutWidth = layoutRef.current?.clientWidth ?? 0
-      if (!layoutWidth) return
-      onSplitLeftWidthChange?.(clampSplitLeftWidth(splitLeftWidthPx, layoutWidth))
+      applyWidth(splitLeftWidthRef.current, true)
     }
     updateBounds()
     window.addEventListener("resize", updateBounds)
     return () => window.removeEventListener("resize", updateBounds)
-  }, [onSplitLeftWidthChange, splitLeftWidthPx])
-
-  useEffect(() => () => stopResize(), [stopResize])
+  }, [applyWidth])
 
   return (
     <div ref={layoutRef} className="flex h-full min-h-0 w-full items-stretch">
@@ -75,7 +89,7 @@ export function SplitWorkspaceView({
         baseOutletContext={outletContext}
         defaultTeam={defaultTeam}
         className="shrink-0"
-        style={{ width: splitLeftWidthPx }}
+        style={{ width: displayLeftWidth }}
       />
       <div
         role="separator"
@@ -87,7 +101,10 @@ export function SplitWorkspaceView({
           type="button"
           aria-label="Resize split panes"
           onPointerDown={startResize}
-          className="absolute left-1/2 top-0 h-full w-[12px] -translate-x-1/2 cursor-col-resize bg-transparent"
+          onPointerMove={handleResizeMove}
+          onPointerUp={stopResize}
+          onPointerCancel={stopResize}
+          className="absolute left-1/2 top-0 h-full w-[12px] -translate-x-1/2 cursor-col-resize bg-transparent touch-none"
         />
       </div>
       <WorkspaceWindow

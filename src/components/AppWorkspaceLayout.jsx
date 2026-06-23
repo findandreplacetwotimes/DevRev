@@ -27,7 +27,6 @@ import {
   mainPaneRoute,
   persistWorkspaceSessionState,
 } from "../lib/workspaceSessions"
-import { shouldShowCanvasSidePanel } from "../lib/workspacePaneContext"
 import { NavPanel } from "./NavPanel"
 import { SessionTabBar } from "./SessionTabBar"
 import { SplitWorkspaceView } from "./SplitWorkspaceView"
@@ -297,8 +296,6 @@ export function AppWorkspaceChrome() {
     [navigate, sessions, updateSessions, ensureSessionMessages]
   )
 
-  const showCanvasSidePanel = shouldShowCanvasSidePanel(containerWidth, !isNarrow)
-
   const workspaceOutletContext = useMemo(
     () => ({
       navigateInSession,
@@ -308,7 +305,6 @@ export function AppWorkspaceChrome() {
       sessionMessages,
       setSessionMessages,
       breadcrumbsMenuEnabled: isNarrow,
-      showCanvasSidePanel,
       workspaceScope,
       navContext,
       titleContext,
@@ -322,7 +318,6 @@ export function AppWorkspaceChrome() {
       syncSessionTabTitle,
       sessionMessages,
       isNarrow,
-      showCanvasSidePanel,
       workspaceScope,
       navContext,
       titleContext,

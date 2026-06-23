@@ -1,5 +1,4 @@
 import { ChatHeader } from "./ChatHeader"
-import { CHAT_CANVAS_LABEL } from "../lib/chatRelatedLinks"
 
 const meta = {
   title: "Components/ChatHeader",
@@ -10,12 +9,9 @@ const meta = {
   args: {
     title: "Build team chat",
     memberCount: 12,
-    canvasLabel: CHAT_CANVAS_LABEL,
-    relatedLinks: [
-      { key: "Doc-0001", title: "Q2 planning brief" },
-      { key: "Doc-0002", title: "Core flow spec" },
-      { key: "Doc-0003", title: "Nav interaction notes" },
-    ],
+    showCanvasToggle: true,
+    canvasPanelOpen: true,
+    onToggleCanvasPanel: () => {},
   },
 }
 
@@ -49,7 +45,6 @@ export const PersonChat = {
   render: Default.render,
 }
 
-/** Narrow layout — leading icon opens the workspace nav menu (Figma `6199:11474`). */
 export const NarrowNavMenu = {
   args: {
     title: "Build Team Chat",
@@ -79,6 +74,17 @@ export const ProjectGroupChat = {
     title: "Project chat",
     memberCount: 23,
     avatarInitial: null,
+  },
+  render: Default.render,
+}
+
+export const CanvasPanelClosed = {
+  args: {
+    title: "Computer",
+    iconName: "computer",
+    showCanvasToggle: true,
+    canvasPanelOpen: false,
+    onToggleCanvasPanel: () => {},
   },
   render: Default.render,
 }

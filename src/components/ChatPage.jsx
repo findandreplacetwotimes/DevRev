@@ -1,10 +1,32 @@
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
 import { ChatRelatedLinksPanel } from "./ChatRelatedLinksMenu"
 import { ChatWindow } from "./ChatWindow"
 import { chatVariantForRoute } from "../lib/navDestinations"
 import { getChatCanvasLabel, getChatRelatedLinks } from "../lib/chatRelatedLinks"
+
+const LS_CHAT_CANVAS_PANEL_OPEN = "devrev.chat.canvasPanelOpen.v1"
+
+function loadCanvasPanelOpen() {
+  if (typeof window === "undefined") return true
+  try {
+    const raw = window.localStorage.getItem(LS_CHAT_CANVAS_PANEL_OPEN)
+    if (raw === "0" || raw === "false") return false
+    if (raw === "1" || raw === "true") return true
+  } catch {
+    /* ignore */
+  }
+  return true
+}
+
+function persistCanvasPanelOpen(open) {
+  try {
+    window.localStorage.setItem(LS_CHAT_CANVAS_PANEL_OPEN, open ? "1" : "0")
+  } catch {
+    /* ignore */
+  }
+}
 
 export function ChatPage() {
   const location = useLocation()
@@ -21,10 +43,10 @@ export function ChatPage() {
     activeProject,
     breadcrumbsMenuEnabled,
     workspaceScope,
-    showCanvasSidePanel = true,
   } = outletContext
 
-  const variant = chatVariantForRoute(`${location.pathname}${location.search}`) ?? "ai"
+  const routeKey = `${location.pathname}${location.search}`
+  const variant = chatVariantForRoute(routeKey) ?? "ai"
   const messages = sessionMessages?.[activeSessionId] ?? []
 
   const canvasLinks = useMemo(
@@ -37,6 +59,18 @@ export function ChatPage() {
     [linkedProjectChat, navContext?.teamId, variant]
   )
   const canvasLabel = getChatCanvasLabel()
+  const hasCanvasLinks = canvasLinks.length > 0
+
+  const [canvasPanelOpen, setCanvasPanelOpen] = useState(loadCanvasPanelOpen)
+
+  const handleToggleCanvasPanel = useCallback(() => {
+    if (!hasCanvasLinks) return
+    setCanvasPanelOpen((value) => {
+      const next = !value
+      persistCanvasPanelOpen(next)
+      return next
+    })
+  }, [hasCanvasLinks])
 
   const handleSelectCanvasLink = useCallback(
     (link) => {
@@ -67,12 +101,11 @@ export function ChatPage() {
           }))
         }
         onOpenPageInSession={(href) => navigateInSession?.(href)}
-        hideRelatedLinksControl={showCanvasSidePanel}
-        relatedLinks={canvasLinks}
-        canvasLabel={canvasLabel}
-        onSelectRelatedLink={handleSelectCanvasLink}
+        showCanvasToggle={hasCanvasLinks}
+        canvasPanelOpen={canvasPanelOpen}
+        onToggleCanvasPanel={handleToggleCanvasPanel}
       />
-      {showCanvasSidePanel && canvasLinks.length > 0 ? (
+      {canvasPanelOpen && hasCanvasLinks ? (
         <ChatRelatedLinksPanel
           links={canvasLinks}
           canvasLabel={canvasLabel}

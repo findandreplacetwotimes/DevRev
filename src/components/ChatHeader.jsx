@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useLocation } from "react-router-dom"
 import { ChatAvatar } from "./ChatAvatar"
-import { ChatRelatedLinksMenu } from "./ChatRelatedLinksMenu"
 import { Control } from "./Control"
 import { Icon } from "./Icon"
 import { RightPanelNavMenu } from "./RightPanelNavMenu"
@@ -30,9 +29,9 @@ export function ChatHeader({
   avatarInitial = null,
   memberCount = null,
   relatedLinks = [],
-  canvasLabel = "CANVAS",
-  onSelectRelatedLink,
-  hideRelatedLinksControl = false,
+  canvasPanelOpen = false,
+  onToggleCanvasPanel,
+  showCanvasToggle = false,
   navMenuEnabled = false,
   onNavigate,
   teamId,
@@ -42,25 +41,10 @@ export function ChatHeader({
   showProjectSection = true,
 }) {
   const location = useLocation()
-  const [relatedMenuOpen, setRelatedMenuOpen] = useState(false)
   const [navMenuOpen, setNavMenuOpen] = useState(false)
-  const relatedTriggerRef = useRef(null)
-  const relatedMenuRef = useRef(null)
   const navTriggerRef = useRef(null)
   const navMenuRef = useRef(null)
-  const hasRelatedLinks = relatedLinks.length > 0
   const selectedHref = selectedHrefFromLocation(location)
-
-  useEffect(() => {
-    if (!relatedMenuOpen) return undefined
-    const onPointerDown = (event) => {
-      const target = event.target
-      if (relatedTriggerRef.current?.contains(target) || relatedMenuRef.current?.contains(target)) return
-      setRelatedMenuOpen(false)
-    }
-    document.addEventListener("pointerdown", onPointerDown)
-    return () => document.removeEventListener("pointerdown", onPointerDown)
-  }, [relatedMenuOpen])
 
   useEffect(() => {
     if (!navMenuOpen) return undefined
@@ -72,12 +56,6 @@ export function ChatHeader({
     document.addEventListener("pointerdown", onPointerDown)
     return () => document.removeEventListener("pointerdown", onPointerDown)
   }, [navMenuOpen])
-
-  useEffect(() => {
-    if (!hideRelatedLinksControl) return undefined
-    const id = window.requestAnimationFrame(() => setRelatedMenuOpen(false))
-    return () => window.cancelAnimationFrame(id)
-  }, [hideRelatedLinksControl])
 
   useEffect(() => {
     if (navMenuEnabled) return undefined
@@ -120,33 +98,16 @@ export function ChatHeader({
           </div>
         </div>
       </div>
-      {hideRelatedLinksControl ? null : (
-        <>
-          <span ref={relatedTriggerRef} className="inline-flex">
-            <Control
-              type="iconOnly"
-              leadingIcon="more"
-              label=""
-              aria-label="More chat actions"
-              aria-haspopup="menu"
-              aria-expanded={relatedMenuOpen}
-              disabled={!hasRelatedLinks}
-              onClick={() => {
-                if (hasRelatedLinks) setRelatedMenuOpen((value) => !value)
-              }}
-            />
-          </span>
-          <ChatRelatedLinksMenu
-            open={relatedMenuOpen}
-            anchorRef={relatedTriggerRef}
-            menuRef={relatedMenuRef}
-            links={relatedLinks}
-            canvasLabel={canvasLabel}
-            onClose={() => setRelatedMenuOpen(false)}
-            onSelect={onSelectRelatedLink}
-          />
-        </>
-      )}
+      {showCanvasToggle ? (
+        <Control
+          type="iconOnly"
+          leadingIcon="more"
+          label=""
+          aria-label={canvasPanelOpen ? "Hide CANVAS panel" : "Show CANVAS panel"}
+          aria-pressed={canvasPanelOpen}
+          onClick={onToggleCanvasPanel}
+        />
+      ) : null}
       <RightPanelNavMenu
         open={navMenuOpen}
         anchorRef={navTriggerRef}
