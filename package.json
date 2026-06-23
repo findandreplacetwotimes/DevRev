@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:conv-nav": "vite --port 5173",
+    "dev:tab-nav": "vite --port 5174",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "deploy": "npm run build && vercel link --yes --scope tim-8121s-projects --project prj_j6VdXtz8tghVn056SHXDaLzEO0Hj && vercel deploy --prod -y -A vercel.app.json",
+    "deploy:conv-nav": "npm run build && vercel link --yes --scope tim-8121s-projects --project prj_qFbgEuzhDRliFSNgze1usVIzH4LF && vercel deploy --prod -y -A vercel.app.json",
+    "deploy:tab-nav": "npm run build && vercel link --yes --scope tim-8121s-projects --project prj_775psuMgM8IaI8vx7yl3RJjX8ZVe && vercel deploy --prod -y -A vercel.app.json",
     "deploy:storybook-components": "npm run build-storybook && cd storybook-static && vercel link --yes --scope tim-8121s-projects --project prj_6OuZHRn0rtSVjn8Ztp4rpwz3WC2z && vercel deploy --prod -y",
     "deploy:storybook": "npm run deploy:storybook-components",
     "deploy:all": "npm run deploy && npm run deploy:storybook-components"
