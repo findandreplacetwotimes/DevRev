@@ -1,17 +1,9 @@
 import { issuesLinkedToProject } from "./projectsApi"
 import {
   DEFAULT_TEAM_ID,
-  defaultTeamId,
-  defaultTeamSlug,
   normalizeTeamPathId,
   teamById,
   teamBySlug,
-  teamGroupLabel,
-  teamIdFromDataTeam,
-  teamLabelForId,
-  teamLabelForSlug,
-  teamPathId,
-  teamSlugFromDataTeam,
   teamUrlSegment,
 } from "./workspaceLabels"
 import { projectUrlSegment } from "./projectsApi"

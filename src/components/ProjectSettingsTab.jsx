@@ -356,7 +356,7 @@ function MeetingsSourceConfig({ config, onChange }) {
   )
 }
 
-function GithubSourceConfig({ config, onChange }) {
+function GithubSourceConfig() {
   return (
     <div className="flex flex-col gap-[12px]">
       <div className="flex items-center justify-between">
@@ -370,7 +370,7 @@ function GithubSourceConfig({ config, onChange }) {
   )
 }
 
-function DocumentsSourceConfig({ config, onChange }) {
+function DocumentsSourceConfig() {
   return (
     <div className="flex flex-col gap-[12px]">
       <div className="flex items-center justify-between">

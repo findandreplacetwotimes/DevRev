@@ -1,6 +1,5 @@
 import {
   DEFAULT_TEAM_ID,
-  defaultTeamId,
   normalizeTeamPathId,
   teamUrlSegment,
   projectChatNavLabel,
