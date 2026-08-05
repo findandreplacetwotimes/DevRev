@@ -95,6 +95,7 @@ const preview = {
       return createElement(
         "div",
         {
+          "data-lumina-theme": theme,
           style: {
             minHeight: "100vh",
             width: "100%",
