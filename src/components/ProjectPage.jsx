@@ -197,6 +197,20 @@ export function ProjectPage() {
     return () => window.removeEventListener("devrev-project-activity", onActivity)
   }, [project?.id])
 
+  const syntheticActivity = useMemo(
+    () => (project?.id ? generateProjectActivity(project.id) : []),
+    [project?.id]
+  )
+
+  const mergedActivity = useMemo(() => {
+    const persisted = projectActivities.map(persistedToActivityItem)
+    return [...persisted, ...syntheticActivity]
+      .filter((item) => !hiddenSyntheticIds.has(item.id))
+      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
+  }, [projectActivities, syntheticActivity, hiddenSyntheticIds])
+
+  const activityFeed = useMemo(() => buildProjectActivityFeed(mergedActivity), [mergedActivity])
+
   if (projects === null) {
     return (
       <section className="flex h-full min-h-0 w-full flex-col rounded-[2px] bg-white" aria-busy="true">
@@ -212,20 +226,6 @@ export function ProjectPage() {
   }
 
   const ownerTeamId = teamIdFromDataTeam(project.team) ?? DEFAULT_TEAM_ID
-
-  const syntheticActivity = useMemo(
-    () => (project?.id ? generateProjectActivity(project.id) : []),
-    [project?.id]
-  )
-
-  const mergedActivity = useMemo(() => {
-    const persisted = projectActivities.map(persistedToActivityItem)
-    return [...persisted, ...syntheticActivity]
-      .filter((item) => !hiddenSyntheticIds.has(item.id))
-      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-  }, [projectActivities, syntheticActivity, hiddenSyntheticIds])
-
-  const activityFeed = useMemo(() => buildProjectActivityFeed(mergedActivity), [mergedActivity])
 
   const toggleGroupExpanded = (key) => {
     setExpandedGroupKeys((prev) => {

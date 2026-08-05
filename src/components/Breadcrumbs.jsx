@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { useLocation } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
 import { useWorkspaceNavigate } from "../hooks/useWorkspaceNavigate"
 import { Icon } from "./Icon"
@@ -94,40 +94,6 @@ function renderSegment(segment, index, total, onInternalNavigate) {
   )
 }
 
-function projectIdFromHref(href) {
-  if (typeof href !== "string") return null
-  const match = /^\/project\/([^/?#]+)/.exec(href) ?? /^\/projects\/([^/?#]+)/.exec(href)
-  return match ? decodeURIComponent(match[1]) : null
-}
-
-function projectIdFromLabel(label) {
-  if (typeof label !== "string") return null
-  const match = /^Project-(\d+)$/i.exec(label.trim())
-  return match ? `Project-${match[1]}` : null
-}
-
-function projectIdFromSuffix(root, suffix) {
-  if (root !== "Projects" || typeof suffix !== "string") return null
-  const match = /^-(\d+)$/.exec(suffix.trim())
-  return match ? `Project-${match[1]}` : null
-}
-
-function inferProjectId({ explicitProjectId, normalizedSegments, root, itemSuffix, pathname }) {
-  if (explicitProjectId) return explicitProjectId
-
-  for (const segment of normalizedSegments) {
-    const fromHref = projectIdFromHref(segment.href)
-    if (fromHref) return fromHref
-    const fromLabel = projectIdFromLabel(segment.label)
-    if (fromLabel) return fromLabel
-  }
-
-  const fromSuffix = projectIdFromSuffix(root, itemSuffix)
-  if (fromSuffix) return fromSuffix
-
-  return projectIdFromHref(pathname)
-}
-
 function selectedHrefFromLocation(location) {
   const path = location.pathname
   if (path.startsWith("/project/")) {
@@ -152,7 +118,6 @@ export function Breadcrumbs({
   itemSuffix = "-0001",
   rootHref,
   segments,
-  projectId,
   menuEnabled,
   defaultMenuOpen = false,
   /** Leading pictogram on the first segment (`5662:256760`). */
@@ -176,13 +141,6 @@ export function Breadcrumbs({
             ...(showItem ? [{ label: item, suffix: itemSuffix, showIcon: false }] : []),
           ]
         })()
-  const menuProjectId = inferProjectId({
-    explicitProjectId: projectId,
-    normalizedSegments,
-    root,
-    itemSuffix,
-    pathname: location.pathname,
-  })
   const selectedHref = selectedHrefFromLocation(location)
 
   useEffect(() => {

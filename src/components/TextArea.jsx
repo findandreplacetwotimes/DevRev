@@ -116,7 +116,6 @@ export function TextArea({
       }
 
       const estimatedMenuHeight = estimateMentionMenuHeight(filtered.length)
-      const vh = typeof window !== "undefined" ? window.innerHeight : 800
       const gapWhenBelow = 4
 
       /**

@@ -34,7 +34,6 @@ export function ChatWindow({
   width = 377,
   variant = "ai",
   flexFill = false,
-  sessionId,
   linkedProjectChat = null,
   teamId = null,
   activeTeam = null,

@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useState } from "react"
 import { Icon } from "./Icon"
 import { MenuItemLabel } from "./MenuItem"
 import { NavItem } from "./NavItem"
