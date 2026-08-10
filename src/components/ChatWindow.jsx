@@ -2,12 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { AiMessageBubble } from "./AiMessageBubble"
 import { ChatHeader } from "./ChatHeader"
+import { MeetingActionsMessage } from "./MeetingActionsMessage"
+import { MeetingDigestMessage } from "./MeetingDigestMessage"
 import { MessageBubble } from "./MessageBubble"
 import { MessageInput } from "./MessageInput"
 import { useIssues } from "../context/IssuesContext"
 import { getAiResponse } from "../lib/aiClient"
 import { resolveChatNavigationIntent } from "../lib/chatNavigationIntent"
 import { getChatPagesLabel, getChatRelatedLinks } from "../lib/chatRelatedLinks"
+import { PROCESS_PROMPT, wantsMeetingProcessing } from "../lib/meetingDigest"
 import { messageTagsComputer } from "../lib/mentionUtils"
 import { appendProjectActivity } from "../lib/projectActivityStore"
 
@@ -28,6 +31,16 @@ const CHAT_META = {
   "chat-rohan": { title: "Rohan Verma", avatarInitial: "R" },
   "chat-leela": { title: "Leela Nair", avatarInitial: "L" },
   ai: { title: "Computer", iconName: "computer", avatarInitial: null },
+}
+
+/** Meeting IDs the project has granted content access to (latest grant on any digest in a thread). */
+function findGrantedMeetingIds(thread) {
+  if (!Array.isArray(thread)) return []
+  for (let i = thread.length - 1; i >= 0; i -= 1) {
+    const m = thread[i]
+    if (m.kind === "meeting-digest" && m.digestStatus === "granted") return m.digestMeetingIds ?? []
+  }
+  return []
 }
 
 /** Chat column: fixed `width`, or `flexFill` to grow when the record panel is hidden. */
@@ -281,6 +294,8 @@ export function ChatWindow({
     ],
   })
   const scrollContainerRef = useRef(null)
+  /** Project threads that have already had the PM Agent digest injected (one-time per thread). */
+  const digestInjectedRef = useRef(new Set())
   const isPersonChat = variant !== "ai"
   /** One thread per linked project; generic `chat-project` only when nav chosen before linking. */
   const messageVariantKey =
@@ -311,6 +326,24 @@ export function ChatWindow({
     const isProjectChat =
       variant === "chat-project" ||
       (typeof messageVariantKey === "string" && messageVariantKey.startsWith("chat-project:"))
+
+    /**
+     * "@Computer process the meetings…" in a project chat with granted access: post the extracted
+     * action items directly instead of the generic model reply (which has no meeting content to read).
+     */
+    const grantedMeetingIds = findGrantedMeetingIds(chatMessagesByVariant[messageVariantKey])
+    if (isProjectChat && messageTagsComputer(text) && wantsMeetingProcessing(text) && grantedMeetingIds.length > 0) {
+      setChatMessagesByVariant((prev) => ({
+        ...prev,
+        [messageVariantKey]: [
+          ...(prev[messageVariantKey] ?? []),
+          { id: userId, role: "user", text },
+          { id: `${userId}-actions`, role: "system", kind: "meeting-actions", meetingIds: grantedMeetingIds },
+        ],
+      }))
+      return
+    }
+
     const replyAsComputer = isProjectChat && messageTagsComputer(text)
     const replyInitial =
       !replyAsComputer && isGroupChat && ["A", "R", "S", "M", "L"][Math.floor(Math.random() * 5)]
@@ -383,6 +416,59 @@ export function ChatWindow({
     }
   }
 
+  /** Any project member's grant/revoke/unlink collapses the digest to a transparency-ledger line. */
+  const handleDigestAction = (digestId, status, meetingIds) => {
+    setChatMessagesByVariant((prev) => ({
+      ...prev,
+      [messageVariantKey]: (prev[messageVariantKey] ?? []).map((message) =>
+        message.id === digestId ? { ...message, digestStatus: status, digestMeetingIds: meetingIds } : message
+      ),
+    }))
+  }
+
+  /**
+   * "Process meetings" CTA: echo the prompt as the user's own message, then post the agent's
+   * extracted action items + next steps (scoped to the granted meetings) as a structured message.
+   */
+  const handleProcessMeetings = (meetingIds) => {
+    const ids = (meetingIds ?? []).filter(Boolean)
+    if (ids.length === 0) return
+    const baseId = `process-${Date.now()}`
+    setChatMessagesByVariant((prev) => ({
+      ...prev,
+      [messageVariantKey]: [
+        ...(prev[messageVariantKey] ?? []),
+        { id: baseId, role: "user", text: PROCESS_PROMPT },
+        { id: `${baseId}-actions`, role: "system", kind: "meeting-actions", meetingIds: ids },
+      ],
+    }))
+  }
+
+  /**
+   * Simulate the PM Agent posting its daily digest into the project chat shortly after it opens
+   * (spec § Project chat notifications). Injected once per project thread.
+   */
+  useEffect(() => {
+    const isProjectChat = messageVariantKey.startsWith("chat-project:")
+    if (!isProjectChat || digestInjectedRef.current.has(messageVariantKey)) return
+    digestInjectedRef.current.add(messageVariantKey)
+    const key = messageVariantKey
+    const timer = setTimeout(() => {
+      setChatMessagesByVariant((prev) => {
+        const thread = prev[key] ?? []
+        if (thread.some((m) => m.role === "system" && m.kind === "meeting-digest")) return prev
+        return {
+          ...prev,
+          [key]: [
+            ...thread,
+            { id: `digest-${key}`, role: "system", kind: "meeting-digest", digestStatus: "pending" },
+          ],
+        }
+      })
+    }, 1800)
+    return () => clearTimeout(timer)
+  }, [messageVariantKey])
+
   useEffect(() => {
     const container = scrollContainerRef.current
     if (!container) return
@@ -427,7 +513,16 @@ export function ChatWindow({
 
             return (
               <div key={message.id} className={`w-full ${spacingClass}`}>
-                {message.role === "user" ? (
+                {message.role === "system" && message.kind === "meeting-digest" ? (
+                  <MeetingDigestMessage
+                    status={message.digestStatus}
+                    actedMeetingIds={message.digestMeetingIds}
+                    onAction={(status, meetingIds) => handleDigestAction(message.id, status, meetingIds)}
+                    onProcess={handleProcessMeetings}
+                  />
+                ) : message.role === "system" && message.kind === "meeting-actions" ? (
+                  <MeetingActionsMessage meetingIds={message.meetingIds} />
+                ) : message.role === "user" ? (
                   <MessageBubble text={message.text} />
                 ) : message.role === "person" ? (
                   <MessageBubble
