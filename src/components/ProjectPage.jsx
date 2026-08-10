@@ -203,20 +203,6 @@ export function ProjectPage() {
     return () => window.removeEventListener("devrev-project-activity", onActivity)
   }, [project?.id])
 
-  if (projects === null) {
-    return (
-      <section className="flex h-full min-h-0 w-full flex-col rounded-[2px] bg-white" aria-busy="true">
-        <div className="flex flex-1 items-center justify-center p-[40px] text-[13px] text-[#939393]">
-          Loading project…
-        </div>
-      </section>
-    )
-  }
-
-  if (!project) {
-    return <Navigate to="/projects" replace />
-  }
-
   const syntheticActivity = useMemo(
     () => (project?.id ? generateProjectActivity(project.id) : []),
     [project?.id]
@@ -230,6 +216,21 @@ export function ProjectPage() {
   }, [projectActivities, syntheticActivity, hiddenSyntheticIds])
 
   const activityFeed = useMemo(() => buildProjectActivityFeed(mergedActivity), [mergedActivity])
+
+  /** Early returns must follow every hook — see React's rules of hooks. */
+  if (projects === null) {
+    return (
+      <section className="flex h-full min-h-0 w-full flex-col rounded-[2px] bg-white" aria-busy="true">
+        <div className="flex flex-1 items-center justify-center p-[40px] text-[13px] text-[#939393]">
+          Loading project…
+        </div>
+      </section>
+    )
+  }
+
+  if (!project) {
+    return <Navigate to="/projects" replace />
+  }
 
   const toggleGroupExpanded = (key) => {
     setExpandedGroupKeys((prev) => {

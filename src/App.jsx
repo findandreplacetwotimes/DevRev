@@ -7,6 +7,7 @@ import { ProjectsListPage } from "./components/ProjectsListPage"
 import { SprintsPage } from "./components/SprintsPage"
 import { AboutPage } from "./components/AboutPage"
 import { TeamMembersPage } from "./components/TeamMembersPage"
+import { TeamSettingsPage } from "./components/TeamSettingsPage"
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
         <Route path="sprints" element={<SprintsPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="team-members" element={<TeamMembersPage />} />
+        <Route path="settings" element={<TeamSettingsPage />} />
         <Route path="issues" element={<IssuesListPage />} />
         <Route path="issues/:issueId" element={<IssuePage />} />
         <Route path="projects" element={<ProjectsListPage />} />

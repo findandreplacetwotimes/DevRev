@@ -1,46 +1,24 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { Link } from "react-router-dom"
 import { Control } from "./Control"
-
-const sectionTitleStyle = {
-  fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-  fontSize: "14px",
-  lineHeight: "20px",
-  letterSpacing: "-0.14px",
-  fontVariationSettings: '"wght" 560',
-}
-
-const sectionDescStyle = {
-  fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-  fontSize: "13px",
-  lineHeight: "18px",
-  letterSpacing: "-0.13px",
-  fontVariationSettings: '"wght" 420',
-}
-
-const labelStyle = {
-  fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-  fontSize: "13px",
-  lineHeight: "16px",
-  letterSpacing: "-0.13px",
-  fontVariationSettings: '"wght" 520',
-}
-
-const valueStyle = {
-  fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-  fontSize: "13px",
-  lineHeight: "16px",
-  letterSpacing: "-0.13px",
-  fontVariationSettings: '"wght" 420',
-}
-
-const subHeaderStyle = {
-  fontFamily: '"Chip Text Variable", -apple-system, BlinkMacSystemFont, sans-serif',
-  fontSize: "13px",
-  lineHeight: "16px",
-  letterSpacing: "-0.13px",
-  fontVariationSettings: '"wght" 560',
-}
+import {
+  CadenceRow,
+  CheckboxOption,
+  RadioOption,
+  SelectDropdown,
+  SettingsSection,
+  SubSection,
+  TagInput,
+} from "./SettingsPrimitives"
+import {
+  labelStyle,
+  sectionDescStyle,
+  sectionTitleStyle,
+  subHeaderStyle,
+  valueStyle,
+} from "../lib/settingsStyles"
+import { loadTeamAgentSettings, summarizeTeamAgentSettings } from "../lib/teamAgentSettings"
 
 const GRANOLA_FOLDERS = [
   { id: "product-meetings", label: "Product Meetings" },
@@ -55,208 +33,6 @@ const TIME_WINDOW_OPTIONS = [
   { id: "6m", label: "Last 6 months" },
   { id: "all", label: "All time" },
 ]
-
-function SettingsSection({ title, description, children, defaultOpen = false }) {
-  const [expanded, setExpanded] = useState(defaultOpen)
-
-  return (
-    <div className="w-full rounded-[4px] border border-[#f2f2f3] bg-white">
-      <button
-        type="button"
-        className="flex w-full items-center justify-between px-[16px] py-[14px] text-left appearance-none border-0 bg-transparent"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <div className="flex flex-col gap-[2px]">
-          <span className="text-[var(--foreground-primary)]" style={sectionTitleStyle}>{title}</span>
-          <span className="text-[#939393]" style={sectionDescStyle}>{description}</span>
-        </div>
-        <span
-          className={`inline-flex size-[28px] items-center justify-center transition-transform duration-150 ${expanded ? "rotate-180" : ""}`}
-        >
-          <img src="/icons/chevron-down.svg" alt="" className="block size-[16px]" draggable={false} />
-        </span>
-      </button>
-      {expanded && (
-        <div className="border-t border-[#f2f2f3] px-[16px] py-[14px]">
-          {children}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function SettingsRow({ label, value, action }) {
-  return (
-    <div className="flex items-center justify-between py-[8px]">
-      <span className="text-[var(--control-content-secondary)]" style={labelStyle}>{label}</span>
-      <div className="flex items-center gap-[8px]">
-        <span className="text-[var(--foreground-primary)]" style={valueStyle}>{value}</span>
-        {action}
-      </div>
-    </div>
-  )
-}
-
-function ToggleRow({ label, description, enabled, onToggle }) {
-  return (
-    <div className="flex items-center justify-between py-[8px]">
-      <div className="flex flex-col gap-[1px]">
-        <span className="text-[var(--foreground-primary)]" style={labelStyle}>{label}</span>
-        {description && <span className="text-[#939393]" style={sectionDescStyle}>{description}</span>}
-      </div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className={`relative inline-flex h-[20px] w-[36px] shrink-0 items-center rounded-[10px] border-0 p-0 transition-colors duration-150 appearance-none ${
-          enabled ? "bg-[#6e56cf]" : "bg-[#e0dfe0]"
-        }`}
-      >
-        <span
-          className={`inline-block size-[16px] rounded-full bg-white shadow-sm transition-transform duration-150 ${
-            enabled ? "translate-x-[18px]" : "translate-x-[2px]"
-          }`}
-        />
-      </button>
-    </div>
-  )
-}
-
-function RadioOption({ selected, onClick, label, children }) {
-  return (
-    <div className="flex flex-col gap-[8px]">
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex items-center gap-[8px] appearance-none border-0 bg-transparent p-0 text-left"
-      >
-        <span
-          className={`inline-flex size-[16px] shrink-0 items-center justify-center rounded-full border-[1.5px] ${
-            selected ? "border-[#6e56cf]" : "border-[#c8c7c8]"
-          }`}
-        >
-          {selected && <span className="block size-[8px] rounded-full bg-[#6e56cf]" />}
-        </span>
-        <span className="text-[var(--foreground-primary)]" style={labelStyle}>{label}</span>
-      </button>
-      {selected && children && <div className="ml-[24px] flex flex-col gap-[8px]">{children}</div>}
-    </div>
-  )
-}
-
-function CheckboxOption({ checked, onChange, label }) {
-  return (
-    <button
-      type="button"
-      onClick={onChange}
-      className="flex items-center gap-[8px] appearance-none border-0 bg-transparent p-0 text-left"
-    >
-      <span
-        className={`inline-flex size-[16px] shrink-0 items-center justify-center rounded-[3px] border-[1.5px] ${
-          checked ? "border-[#6e56cf] bg-[#6e56cf]" : "border-[#c8c7c8]"
-        }`}
-      >
-        {checked && (
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        )}
-      </span>
-      <span className="text-[var(--foreground-primary)]" style={valueStyle}>{label}</span>
-    </button>
-  )
-}
-
-function SelectDropdown({ value, options, onChange }) {
-  const [open, setOpen] = useState(false)
-  const selected = options.find((o) => o.id === value)
-
-  return (
-    <div className="relative inline-flex">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-[28px] items-center gap-[4px] rounded-[2px] bg-[var(--background-primary-subtle)] px-[10px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)] appearance-none border-0"
-        style={valueStyle}
-      >
-        <span className="text-[var(--foreground-primary)]">{selected?.label ?? "Select..."}</span>
-        <img src="/icons/chevron-down.svg" alt="" className="block size-[12px]" draggable={false} />
-      </button>
-      {open && (
-        <div className="absolute top-[32px] left-0 z-[100] min-w-[160px] rounded-[4px] border border-[#f2f2f3] bg-white p-[4px] shadow-lg">
-          {options.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => { onChange(opt.id); setOpen(false) }}
-              className={`flex w-full items-center rounded-[2px] px-[10px] py-[6px] text-left appearance-none border-0 transition-colors duration-100 ${
-                opt.id === value ? "bg-[#f5f3ff]" : "bg-transparent hover:bg-[var(--control-bg-hover)]"
-              }`}
-              style={valueStyle}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function TagInput({ tags, onChange, placeholder = "Add keyword..." }) {
-  const [inputValue, setInputValue] = useState("")
-
-  function handleKeyDown(e) {
-    if (e.key === "Enter" && inputValue.trim()) {
-      e.preventDefault()
-      onChange([...tags, inputValue.trim()])
-      setInputValue("")
-    } else if (e.key === "Backspace" && !inputValue && tags.length > 0) {
-      onChange(tags.slice(0, -1))
-    }
-  }
-
-  function removeTag(index) {
-    onChange(tags.filter((_, i) => i !== index))
-  }
-
-  return (
-    <div className="flex min-h-[28px] flex-wrap items-center gap-[4px] rounded-[2px] bg-[var(--background-primary-subtle)] px-[8px] py-[4px]">
-      {tags.map((tag, i) => (
-        <span
-          key={`${tag}-${i}`}
-          className="inline-flex items-center gap-[4px] rounded-[2px] bg-[#ede9fe] px-[6px] py-[2px] text-[#6e56cf]"
-          style={{ ...valueStyle, fontSize: "12px" }}
-        >
-          {tag}
-          <button
-            type="button"
-            onClick={() => removeTag(i)}
-            className="inline-flex size-[14px] items-center justify-center rounded-full appearance-none border-0 bg-transparent p-0 text-[#6e56cf] hover:text-[#5b45b0]"
-          >
-            ×
-          </button>
-        </span>
-      ))}
-      <input
-        value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={tags.length === 0 ? placeholder : ""}
-        className="min-w-[80px] flex-1 border-0 bg-transparent py-[2px] text-[var(--foreground-primary)] outline-none placeholder:text-[#939393]"
-        style={valueStyle}
-      />
-    </div>
-  )
-}
-
-function SourceSubSection({ title, children }) {
-  return (
-    <div className="flex flex-col gap-[12px]">
-      <span className="text-[var(--foreground-primary)]" style={subHeaderStyle}>{title}</span>
-      {children}
-    </div>
-  )
-}
 
 function MeetingsSourceConfig({ config, onChange }) {
   const { connected, scopeType, folderId, keywords, matchParticipants, timeWindow, behavior } = config
@@ -356,7 +132,7 @@ function MeetingsSourceConfig({ config, onChange }) {
   )
 }
 
-function GithubSourceConfig({ config, onChange }) {
+function GithubSourceConfig() {
   return (
     <div className="flex flex-col gap-[12px]">
       <div className="flex items-center justify-between">
@@ -370,7 +146,7 @@ function GithubSourceConfig({ config, onChange }) {
   )
 }
 
-function DocumentsSourceConfig({ config, onChange }) {
+function DocumentsSourceConfig() {
   return (
     <div className="flex flex-col gap-[12px]">
       <div className="flex items-center justify-between">
@@ -380,68 +156,6 @@ function DocumentsSourceConfig({ config, onChange }) {
       <span className="text-[#939393]" style={sectionDescStyle}>
         Connect a document source to link specs, RFCs, and design docs to this project.
       </span>
-    </div>
-  )
-}
-
-const FREQUENCY_OPTIONS = [
-  { id: "daily", label: "Every day" },
-  { id: "weekly", label: "Every week" },
-  { id: "biweekly", label: "Every 2 weeks" },
-]
-
-const DAY_OPTIONS = [
-  { id: "monday", label: "Monday" },
-  { id: "tuesday", label: "Tuesday" },
-  { id: "wednesday", label: "Wednesday" },
-  { id: "thursday", label: "Thursday" },
-  { id: "friday", label: "Friday" },
-]
-
-const TIME_SLOT_OPTIONS = [
-  { id: "09:00-10:00", label: "09:00 – 10:00" },
-  { id: "10:00-11:00", label: "10:00 – 11:00" },
-  { id: "11:00-12:00", label: "11:00 – 12:00" },
-  { id: "13:00-14:00", label: "13:00 – 14:00" },
-  { id: "14:00-15:00", label: "14:00 – 15:00" },
-  { id: "15:00-16:00", label: "15:00 – 16:00" },
-  { id: "16:00-17:00", label: "16:00 – 17:00" },
-]
-
-function CadenceRow({ label, description, config, onChange }) {
-  function patch(updates) {
-    onChange({ ...config, ...updates })
-  }
-
-  return (
-    <div className="flex flex-col gap-[8px]">
-      <div className="flex flex-col gap-[2px]">
-        <span className="text-[var(--foreground-primary)]" style={labelStyle}>{label}</span>
-        {description && <span className="text-[#939393]" style={sectionDescStyle}>{description}</span>}
-      </div>
-      <div className="flex flex-wrap items-center gap-[8px]">
-        <SelectDropdown
-          value={config.frequency}
-          options={FREQUENCY_OPTIONS}
-          onChange={(v) => patch({ frequency: v })}
-        />
-        {config.frequency !== "daily" && (
-          <>
-            <span className="text-[#939393]" style={sectionDescStyle}>on</span>
-            <SelectDropdown
-              value={config.day}
-              options={DAY_OPTIONS}
-              onChange={(v) => patch({ day: v })}
-            />
-          </>
-        )}
-        <span className="text-[#939393]" style={sectionDescStyle}>between</span>
-        <SelectDropdown
-          value={config.time}
-          options={TIME_SLOT_OPTIONS}
-          onChange={(v) => patch({ time: v })}
-        />
-      </div>
     </div>
   )
 }
@@ -817,6 +531,8 @@ export function ProjectSettingsTab({ project, patchProject }) {
     time: "09:00-10:00",
   })
   const [showPersonalisation, setShowPersonalisation] = useState(false)
+  /** Team-level policies this project inherits (CHE-39) — read-only here, edited in team settings. */
+  const teamSummary = useMemo(() => summarizeTeamAgentSettings(loadTeamAgentSettings()), [])
 
   if (showPersonalisation) {
     return <AgentPersonalisationPage onBack={() => setShowPersonalisation(false)} />
@@ -825,27 +541,55 @@ export function ProjectSettingsTab({ project, patchProject }) {
   return (
     <div className="w-full shrink-0 px-[44px] pb-[40px] pt-[24px]">
       <div className="mx-auto flex w-full max-w-[640px] flex-col gap-[16px]">
+        <div className="flex w-full flex-col gap-[10px] rounded-[4px] border border-[#f2f2f3] bg-[#fafafa] px-[16px] py-[14px]">
+          <div className="flex items-start justify-between gap-[8px]">
+            <div className="flex flex-col gap-[2px]">
+              <span className="text-[var(--foreground-primary)]" style={sectionTitleStyle}>Inherited from the team</span>
+              <span className="text-[#939393]" style={sectionDescStyle}>Team-wide agent policies. This project follows them unless it tightens them below.</span>
+            </div>
+            <Link
+              to="/settings"
+              className="shrink-0 text-[var(--foreground-primary)] no-underline hover:underline"
+              style={labelStyle}
+            >
+              Team settings
+            </Link>
+          </div>
+          <div className="flex flex-col gap-[6px]">
+            {[
+              { label: "Automatic meeting linking", value: teamSummary.meetingLinking },
+              { label: "Weekly status updates", value: teamSummary.weeklyStatus },
+              { label: "Project memory", value: teamSummary.projectMemory },
+            ].map((row) => (
+              <div key={row.label} className="flex flex-wrap items-baseline justify-between gap-[8px]">
+                <span className="text-[var(--control-content-secondary)]" style={labelStyle}>{row.label}</span>
+                <span className="text-[#737072]" style={valueStyle}>{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <SettingsSection
           title="Sources"
           description="External systems the agent watches for this project"
           defaultOpen
         >
           <div className="flex flex-col gap-[24px]">
-            <SourceSubSection title="Meetings">
+            <SubSection title="Meetings">
               <MeetingsSourceConfig config={meetingsConfig} onChange={setMeetingsConfig} />
-            </SourceSubSection>
+            </SubSection>
 
             <div className="h-px w-full bg-[#e0dfe0]" />
 
-            <SourceSubSection title="GitHub">
-              <GithubSourceConfig config={{}} onChange={() => {}} />
-            </SourceSubSection>
+            <SubSection title="GitHub">
+              <GithubSourceConfig />
+            </SubSection>
 
             <div className="h-px w-full bg-[#e0dfe0]" />
 
-            <SourceSubSection title="Documents">
-              <DocumentsSourceConfig config={{}} onChange={() => {}} />
-            </SourceSubSection>
+            <SubSection title="Documents">
+              <DocumentsSourceConfig />
+            </SubSection>
           </div>
         </SettingsSection>
 
