@@ -13,9 +13,9 @@ import { TeamAgentWorkspace } from "./components/TeamAgentWorkspace"
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/workspace" replace />} />
       <Route path="/workspace" element={<TeamAgentWorkspace />} />
-      <Route path="/" element={<AppWorkspaceLayout />}>
-        <Route index element={<Navigate to="/workspace" replace />} />
+      <Route element={<AppWorkspaceLayout />}>
         <Route path="sprints" element={<SprintsPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="team-members" element={<TeamMembersPage />} />
