@@ -1,0 +1,24 @@
+.tw-board-view { min-width: 940px; padding: 38px 32px 60px; background: #f8f7f8; min-height: calc(100vh - 65px); }
+.tw-board-head { display: flex; align-items: flex-start; justify-content: space-between; margin: 0 0 31px; }
+.tw-back { border: 0; background: none; color: #6841ce; padding: 0; font: 600 12px inherit; cursor: pointer; }
+.tw-board-head h1 { margin: 9px 0 6px; font: 650 27px "Chip Display Variable"; letter-spacing: -.75px; }
+.tw-board-head p { margin: 0; color: #77717a; font-size: 13px; }
+.tw-board-role { margin-top: 10px; padding: 6px 9px; border-radius: 5px; background: #eee9fb; color: #6243b8; font-size: 11px; font-weight: 620; }
+.tw-swimlane-label { display: flex; gap: 10px; align-items: center; border-top: 1px solid #e4e1e5; border-bottom: 1px solid #e4e1e5; padding: 10px 0; color: #817b84; font-size: 11px; }
+.tw-swimlane-label span { font-size: 9px; letter-spacing: .08em; font-weight: 700; color: #a09aa2; }
+.tw-board-columns { display: grid; grid-template-columns: repeat(4, minmax(225px, 1fr)); gap: 12px; margin-top: 18px; }
+.tw-board-column { min-width: 0; }
+.tw-board-column > header { padding: 0 7px 13px; }
+.tw-board-column h2 { margin: 0; font: 630 14px "Chip Display Variable"; }
+.tw-board-column header p { font-size: 10px; color: #8e888f; margin: 4px 0 0; }
+.tw-lane { border-top: 1px solid #e4e1e5; min-height: 169px; padding: 10px 0 14px; }
+.tw-lane-name { display: block; padding: 0 7px 8px; color: #77717a; font-size: 10px; font-weight: 600; }
+.tw-lane-cards { display: flex; flex-direction: column; gap: 7px; }
+.tw-board-card { width: 100%; text-align: left; border: 1px solid #e2ddea; background: #fff; padding: 11px; border-radius: 8px; box-shadow: 0 1px 2px #49404d08; cursor: pointer; }
+.tw-board-card:hover { border-color: #9c85e4; box-shadow: 0 5px 16px #6048a313; }
+.tw-board-card h3 { font: 600 12px/1.35 "Chip Text Variable"; margin: 6px 0; }
+.tw-board-card p { font-size: 10px; line-height: 1.4; color: #7d7780; margin: 0; }
+.tw-board-card > div { display: flex; justify-content: space-between; gap: 4px; align-items: center; margin-top: 10px; }
+.tw-board-card .tw-agent-dot { font-size: 10px; }
+.tw-board-card .tw-due { font-size: 10px; }
+@media (max-width: 960px) { .tw-board-view { min-width: 790px; } }

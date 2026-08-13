@@ -8,12 +8,14 @@ import { SprintsPage } from "./components/SprintsPage"
 import { AboutPage } from "./components/AboutPage"
 import { TeamMembersPage } from "./components/TeamMembersPage"
 import { TeamSettingsPage } from "./components/TeamSettingsPage"
+import { TeamAgentWorkspace } from "./components/TeamAgentWorkspace"
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/workspace" element={<TeamAgentWorkspace />} />
       <Route path="/" element={<AppWorkspaceLayout />}>
-        <Route index element={<Navigate to="/issues" replace />} />
+        <Route index element={<Navigate to="/workspace" replace />} />
         <Route path="sprints" element={<SprintsPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="team-members" element={<TeamMembersPage />} />
