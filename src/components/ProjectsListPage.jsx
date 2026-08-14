@@ -1,12 +1,22 @@
-import { useState } from "react"
+import { useMemo } from "react"
+import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
+import { useIssues } from "../context/IssuesContext"
+import { filterProjectsByTeam } from "../lib/teams"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Control } from "./Control"
-import { ProjectCreateModal } from "./ProjectCreateModal"
 import { ProjectsTable } from "./ProjectsTable"
 import { TabPageTitle } from "./TabPageTitle"
 
 export function ProjectsListPage() {
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const { projects } = useIssues()
+  const outletContext = useWorkspaceOutletContext()
+  const { teamId, scope } = outletContext.workspaceScope ?? {}
+
+  const filteredProjects = useMemo(() => {
+    const rows = Array.isArray(projects) ? projects : []
+    if (scope === "team") return filterProjectsByTeam(rows, teamId)
+    return rows
+  }, [projects, scope, teamId])
 
   return (
     <section className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[2px] bg-white" aria-label="Projects">
@@ -17,7 +27,6 @@ export function ProjectsListPage() {
               <Breadcrumbs root="Projects" item={null} />
             </div>
             <div className="flex shrink-0 items-center gap-[4px]">
-              <Control type="leading" leadingIcon="plus-small" label="New" onClick={() => setShowCreateModal(true)} />
               <Control type="iconOnly" leadingIcon="more" label="" />
             </div>
           </div>
@@ -31,11 +40,9 @@ export function ProjectsListPage() {
           </div>
         </div>
         <div className="mt-[24px] w-full min-w-0">
-          <ProjectsTable />
+          <ProjectsTable projects={filteredProjects} />
         </div>
       </div>
-
-      <ProjectCreateModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
     </section>
   )
 }

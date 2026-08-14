@@ -80,8 +80,9 @@ function normalizeProjectDisplayFields(row) {
     `Project brief for ${row.id} outlining milestones, execution approach, stakeholder alignment, timeline assumptions, risk mitigation, and expected delivery outcomes.`,
     600
   )
+  const name = typeof row.name === "string" && row.name.trim().length > 0 ? row.name.trim() : undefined
 
-  return { title, description, ownerId, dueDateId }
+  return { name, title, description, ownerId, dueDateId }
 }
 
 function readIssuesFromLocalStorage() {
@@ -101,6 +102,7 @@ function readIssuesFromLocalStorage() {
       out.push({
         id: row.id,
         team: row.team,
+        name: typeof row.name === "string" ? row.name.trim() : undefined,
         title: typeof row.title === "string" ? row.title : "",
         description: typeof row.description === "string" ? row.description : "",
         ownerId:
@@ -147,6 +149,7 @@ function readProjectsFromLocalStorage() {
       out.push({
         id: row.id,
         team: row.team,
+        name: typeof row.name === "string" ? row.name.trim() : undefined,
         title: typeof row.title === "string" ? row.title : "",
         description: typeof row.description === "string" ? row.description : "",
         ownerId:
@@ -417,32 +420,6 @@ export function IssuesProvider({ children }) {
     })
   }, [])
 
-  const addProject = useCallback((projectData) => {
-    let newId = null
-    setProjects((prev) => {
-      if (!prev) return prev
-      const maxNum = prev.reduce((max, p) => {
-        const m = /^Project-(\d+)$/i.exec(p.id)
-        return m ? Math.max(max, Number.parseInt(m[1], 10)) : max
-      }, 0)
-      newId = `Project-${String(maxNum + 1).padStart(4, "0")}`
-      const newProject = {
-        id: newId,
-        team: projectData.team || "Core",
-        title: projectData.title || "",
-        description: projectData.description || "",
-        ownerId: projectData.ownerId || null,
-        dueDateId: projectData.dueDateId || null,
-        sprint: "Sprint 1",
-        stage: "No stage",
-        healthId: sanitizeProjectHealthId("on-track"),
-        milestones: [],
-      }
-      return [...prev, newProject]
-    })
-    return newId
-  }, [])
-
   /** @type {(sprintId: string, patch: Partial<Sprint>) => void} */
   const patchSprint = useCallback((sprintId, patch) => {
     setSprints((prev) => {
@@ -468,13 +445,12 @@ export function IssuesProvider({ children }) {
       loading: issues === null || projects === null || sprints === null,
       patchIssue,
       patchProject,
-      addProject,
       patchSprint,
       setIssues,
       setProjects,
       setSprints,
     }),
-    [issues, projects, sprints, patchIssue, patchProject, addProject, patchSprint]
+    [issues, projects, sprints, patchIssue, patchProject, patchSprint]
   )
 
   return <IssuesContext.Provider value={value}>{children}</IssuesContext.Provider>
@@ -500,7 +476,6 @@ export function useProjects() {
     projects: ctx.projects,
     loading: ctx.projects === null,
     patchProject: ctx.patchProject,
-    addProject: ctx.addProject,
     setProjects: ctx.setProjects,
   }
 }

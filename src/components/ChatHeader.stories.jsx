@@ -1,4 +1,5 @@
 import { ChatHeader } from "./ChatHeader"
+import { CHAT_CANVAS_LABEL } from "../lib/chatRelatedLinks"
 
 const meta = {
   title: "Components/ChatHeader",
@@ -8,12 +9,12 @@ const meta = {
   },
   args: {
     title: "Build team chat",
-    iconName: "chat",
+    memberCount: 12,
+    canvasLabel: CHAT_CANVAS_LABEL,
     relatedLinks: [
-      { title: "Issues", href: "/issues" },
-      { title: "Sprints", href: "/sprints" },
-      { title: "Projects", href: "/projects" },
-      { title: "About", href: "/about" },
+      { key: "Doc-0001", title: "Q2 planning brief" },
+      { key: "Doc-0002", title: "Core flow spec" },
+      { key: "Doc-0003", title: "Nav interaction notes" },
     ],
   },
 }
@@ -48,11 +49,35 @@ export const PersonChat = {
   render: Default.render,
 }
 
-/** Project chat lane — Figma project icon (`6044:7714`). */
-export const ProjectChat = {
+/** Narrow layout — leading icon opens the workspace nav menu (Figma `6199:11474`). */
+export const NarrowNavMenu = {
+  args: {
+    title: "Build Team Chat",
+    memberCount: 12,
+    navMenuEnabled: true,
+    teamId: "Team-0001",
+    projectId: "Project-0001",
+    showProjectSection: true,
+    onNavigate: () => {},
+  },
+  render: Default.render,
+}
+
+/** Group chat — member-count avatar (same as nav). */
+export const TeamGroupChat = {
+  args: {
+    title: "Build team chat",
+    memberCount: 12,
+    avatarInitial: null,
+  },
+  render: Default.render,
+}
+
+/** Project group chat — member-count avatar (same as nav). */
+export const ProjectGroupChat = {
   args: {
     title: "Project chat",
-    iconName: "project",
+    memberCount: 23,
     avatarInitial: null,
   },
   render: Default.render,

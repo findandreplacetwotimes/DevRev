@@ -52,7 +52,9 @@ export function Control({
     ? resolvedType === "iconOnly"
       ? "size-[40px] justify-center"
       : "h-[40px]"
-    : ""
+    : resolvedType === "iconOnly"
+      ? "h-[28px] shrink-0 justify-center"
+      : ""
   const transitionClass = isInlineState ? "" : "transition-colors duration-150"
 
   return (

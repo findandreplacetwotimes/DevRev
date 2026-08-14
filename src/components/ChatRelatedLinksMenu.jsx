@@ -1,10 +1,8 @@
 import { createPortal } from "react-dom"
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { useLocation } from "react-router-dom"
 import { Icon } from "./Icon"
 import { MenuItemLabel } from "./MenuItem"
 import { NavItem } from "./NavItem"
-import { RightPanelNavMenu } from "./RightPanelNavMenu"
 
 const modalShadow =
   "0px 6px 13px rgba(0,0,0,0.10), 0px 23px 23px rgba(0,0,0,0.09), 0px 52px 31px rgba(0,0,0,0.05), 0px 92px 37px rgba(0,0,0,0.01), 0px 144px 40px rgba(0,0,0,0)"
@@ -40,16 +38,6 @@ function linkKey(link) {
   return link.href ? `${link.title}-${link.href}` : link.title
 }
 
-function selectedHrefFromLocation(location) {
-  const path = location.pathname
-  if (path.startsWith("/projects/")) {
-    const params = new URLSearchParams(location.search)
-    const tab = params.get("tab")
-    return tab ? `${path}?tab=${tab}` : path
-  }
-  return path
-}
-
 function ChatRelatedLinkStaticRow({ link, className = "" }) {
   return (
     <div
@@ -77,13 +65,13 @@ function ChatRelatedLinkStaticRow({ link, className = "" }) {
   )
 }
 
-function ChatRelatedLinksList({ links = [], onSelect, pagesLabel = "PAGES", itemPadding = "px-[10px]" }) {
+function ChatRelatedLinksList({ links = [], onSelect, canvasLabel = "CANVAS", itemPadding = "px-[10px]" }) {
   return (
     <>
       <div className={`inline-flex w-full items-center rounded-[2px] bg-white ${itemPadding}`}>
         <div className="inline-flex items-center py-[10.5px]">
           <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[#939393]" style={labelStyle}>
-            {pagesLabel}
+            {canvasLabel}
           </span>
         </div>
       </div>
@@ -123,7 +111,7 @@ export function ChatRelatedLinksMenu({
   anchorRef,
   menuRef,
   links = [],
-  pagesLabel = "PAGES",
+  canvasLabel = "CANVAS",
   onClose,
   onSelect,
 }) {
@@ -182,11 +170,11 @@ export function ChatRelatedLinksMenu({
     <div
       ref={menuRef}
       role="menu"
-      aria-label={pagesLabel}
+      aria-label={canvasLabel}
       className="fixed z-[2147483646] inline-flex w-[202px] flex-col items-start gap-[4px] rounded-[2px] bg-white p-[6px]"
       style={{ boxShadow: modalShadow, top: `${style.top}px`, left: `${style.left}px` }}
     >
-      <ChatRelatedLinksList links={links} onSelect={handleSelect} pagesLabel={pagesLabel} />
+      <ChatRelatedLinksList links={links} onSelect={handleSelect} canvasLabel={canvasLabel} />
     </div>,
     document.body
   )
@@ -194,44 +182,20 @@ export function ChatRelatedLinksMenu({
 
 export function ChatRelatedLinksPanel({
   links = [],
-  pagesLabel = "PAGES",
+  canvasLabel = "CANVAS",
   onSelect,
-  projectId,
-  onNavigate,
 }) {
-  const location = useLocation()
-  const [menuOpen, setMenuOpen] = useState(false)
-  const moreTriggerRef = useRef(null)
-  const menuRef = useRef(null)
-  const selectedHref = selectedHrefFromLocation(location)
-
-  useEffect(() => {
-    if (!menuOpen) return undefined
-    const onPointerDown = (event) => {
-      const target = event.target
-      if (moreTriggerRef.current?.contains(target) || menuRef.current?.contains(target)) return
-      setMenuOpen(false)
-    }
-    document.addEventListener("pointerdown", onPointerDown)
-    return () => document.removeEventListener("pointerdown", onPointerDown)
-  }, [menuOpen])
-
-  const handleNavigate = (href) => {
-    onNavigate?.(href)
-    setMenuOpen(false)
-  }
-
   return (
     <aside
-      className="flex h-full w-[274px] shrink-0 flex-col items-start border-r border-[#ececec] bg-white px-[12px] pb-[14px]"
-      aria-label={pagesLabel}
+      className="flex h-full w-[274px] shrink-0 flex-col items-start border-l border-[#ececec] bg-white px-[12px] pb-[14px]"
+      aria-label={canvasLabel}
     >
       <div className="h-[14px] w-full shrink-0 bg-white" />
       <div className="flex w-full min-w-0 flex-col items-stretch gap-[4px]" role="menu">
         <div className="inline-flex w-full items-center rounded-[2px] bg-white px-[6px]">
           <div className="inline-flex items-center py-[10.5px]">
             <span className="overflow-hidden text-ellipsis whitespace-nowrap text-[#939393]" style={labelStyle}>
-              {pagesLabel}
+              {canvasLabel}
             </span>
           </div>
         </div>
@@ -246,28 +210,8 @@ export function ChatRelatedLinksPanel({
             onClick={link.href ? () => onSelect?.(link) : undefined}
           />
         ))}
-        <NavItem
-          ref={moreTriggerRef}
-          label="More"
-          hideIcon
-          mutedLabel
-          className="w-full"
-          aria-haspopup="menu"
-          aria-expanded={menuOpen}
-          aria-label={`More ${pagesLabel.toLowerCase()}`}
-          onClick={() => setMenuOpen((value) => !value)}
-        />
       </div>
       <div className="h-[20px] w-full shrink-0 bg-white" />
-      <RightPanelNavMenu
-        open={menuOpen}
-        anchorRef={moreTriggerRef}
-        menuRef={menuRef}
-        projectId={projectId}
-        selectedHref={selectedHref}
-        onClose={() => setMenuOpen(false)}
-        onNavigate={handleNavigate}
-      />
     </aside>
   )
 }

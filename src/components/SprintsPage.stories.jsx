@@ -15,10 +15,10 @@ export default meta
 export const Default = {
   render: () => (
     <div className="h-screen w-full bg-white">
-      <MemoryRouter initialEntries={["/sprints"]}>
+      <MemoryRouter initialEntries={["/team/team-0001/sprints"]}>
         <IssuesProvider>
           <Routes>
-            <Route path="/sprints" element={<SprintsPage />} />
+            <Route path="/team/:teamId/sprints" element={<SprintsPage />} />
           </Routes>
         </IssuesProvider>
       </MemoryRouter>

@@ -1,8 +1,8 @@
-/** SVG glyphs from Figma (App — Arcade v0.3 SOR). Arrow.right `6003:7021`: `Icons/Arrow.up` rotated 90° in 28×28. */
+/** SVG glyphs from Figma (App — Arcade v0.3 SOR, `5662:256702`). Arrow.right `6003:7021`: `Icons/Arrow.up` rotated 90° in 28×28. */
 const ICON_MAP = {
-  /** Nav / project chip — Figma `6044:7714` Icons/Project, 28×28. */
-  project: "/icons/project-nav.png",
-  team: "/icons/team-bolt.svg",
+  teamBolt: "/icons/team-bolt.svg",
+  teamBoltChat: "/icons/team-bolt-chat.svg",
+  projectGrid: "/icons/project-grid.svg",
   calendar: "/icons/calendar.svg",
   search: "/icons/search.svg",
   check: "/icons/check.svg",
@@ -33,6 +33,38 @@ const ICON_MAP = {
   reply: "/icons/reply.svg",
 }
 
+const BOLT_PICTOGRAM_INSET = {
+  top: "23.75%",
+  bottom: "23.75%",
+  left: "27.5%",
+  right: "27.5%",
+}
+
+const GRID_PICTOGRAM_INSET = {
+  top: "27.5%",
+  bottom: "27.5%",
+  left: "27.5%",
+  right: "27.5%",
+}
+
+function PictogramTile({ wrap, rounded, bgClass, glyphSrc, glyphInset = BOLT_PICTOGRAM_INSET, glyphClassName = "" }) {
+  const radiusClass = rounded === "circle" ? "rounded-[20px]" : "rounded-[2px]"
+  return (
+    <span className={wrap}>
+      <span className={`absolute left-[5px] top-[5px] size-[18px] ${radiusClass} ${bgClass}`}>
+        <span className="absolute block" style={glyphInset}>
+          <img
+            src={glyphSrc}
+            alt=""
+            className={`absolute inset-0 block size-full max-h-none max-w-none select-none ${glyphClassName}`}
+            draggable={false}
+          />
+        </span>
+      </span>
+    </span>
+  )
+}
+
 export function Icon({ name = "team", className = "", size = "default" }) {
   const isLarge = size === "large"
   const isMicro = size === "micro"
@@ -41,15 +73,46 @@ export function Icon({ name = "team", className = "", size = "default" }) {
   /** Centered glyph: 16×16 in micro (18 rail — Figma `6070:7937`), 20×20 in large, 16×16 default. */
   const centeredGlyph = isLarge ? "size-[20px]" : "size-[16px]"
 
+  /** Figma `5662:256701` — Team: red square + white bolt (`#F5F5F5`). */
+  if (name === "team") {
+    return PictogramTile({
+      wrap,
+      rounded: "square",
+      bgClass: "bg-[var(--dragonfruit-200)]",
+      glyphSrc: ICON_MAP.teamBoltChat,
+    })
+  }
+
+  /** Figma `5906:39049` — Chat: red circle + white bolt (`#F5F5F5`). */
+  if (name === "chat") {
+    return PictogramTile({
+      wrap,
+      rounded: "circle",
+      bgClass: "bg-[var(--dragonfruit-200)]",
+      glyphSrc: ICON_MAP.teamBoltChat,
+    })
+  }
+
+  /** Figma `6044:7714` — Project: jabuticaba square + 2×2 grid. */
   if (name === "project") {
-    const imgCls = isMicro
-      ? "pointer-events-none absolute left-1/2 top-1/2 size-[18px] max-w-none -translate-x-1/2 -translate-y-1/2 select-none object-contain"
-      : "pointer-events-none absolute left-0 top-0 size-[28px] max-w-none select-none object-contain"
-    return (
-      <span className={wrap}>
-        <img src={ICON_MAP.project} alt="" className={imgCls} draggable={false} />
-      </span>
-    )
+    return PictogramTile({
+      wrap,
+      rounded: "square",
+      bgClass: "bg-[var(--jabuticaba-200)]",
+      glyphSrc: ICON_MAP.projectGrid,
+      glyphInset: GRID_PICTOGRAM_INSET,
+    })
+  }
+
+  /** Figma `6152:15072` — Project chat: jabuticaba circle + 2×2 grid. */
+  if (name === "projectChat") {
+    return PictogramTile({
+      wrap,
+      rounded: "circle",
+      bgClass: "bg-[var(--jabuticaba-200)]",
+      glyphSrc: ICON_MAP.projectGrid,
+      glyphInset: GRID_PICTOGRAM_INSET,
+    })
   }
 
   if (name === "reply") {
@@ -62,58 +125,6 @@ export function Icon({ name = "team", className = "", size = "default" }) {
             className="absolute inset-0 block size-full max-w-none select-none"
             draggable={false}
           />
-        </span>
-      </span>
-    )
-  }
-
-  if (name === "team") {
-    return (
-      <span className={wrap}>
-        {/* Figma components set: team tile 18×18 @ (5,5), Dragonfruit/200, regular corners (2px). */}
-        <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[2px] bg-[var(--dragonfruit-200)]">
-          {/* Figma `5662:256813`: inset 23.75% vertical, 27.5% horizontal inside 18×18 */}
-          <span
-            className="absolute block"
-            style={{
-              top: "23.75%",
-              bottom: "23.75%",
-              left: "27.5%",
-              right: "27.5%",
-            }}
-          >
-            <img
-              src={ICON_MAP.team}
-              alt=""
-              className="absolute inset-0 block size-full max-h-none max-w-none select-none"
-              draggable={false}
-            />
-          </span>
-        </span>
-      </span>
-    )
-  }
-
-  if (name === "chat") {
-    return (
-      <span className={wrap}>
-        <span className="absolute left-[5px] top-[5px] size-[18px] rounded-[20px] bg-[var(--dragonfruit-200)]">
-          <span
-            className="absolute block"
-            style={{
-              top: "23.75%",
-              bottom: "23.75%",
-              left: "27.5%",
-              right: "27.5%",
-            }}
-          >
-            <img
-              src={ICON_MAP.team}
-              alt=""
-              className="absolute inset-0 block size-full max-h-none max-w-none select-none"
-              draggable={false}
-            />
-          </span>
         </span>
       </span>
     )
@@ -274,7 +285,7 @@ export function Icon({ name = "team", className = "", size = "default" }) {
     )
   }
 
-  const src = ICON_MAP[name] ?? ICON_MAP.team
+  const src = ICON_MAP[name] ?? ICON_MAP.teamBolt
 
   return (
     <span className={wrap}>

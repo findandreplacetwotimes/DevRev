@@ -36,6 +36,7 @@ const meta = {
         "reply",
         "page",
         "project",
+        "projectChat",
         "agent",
         "inbox",
         "discover",
@@ -54,6 +55,13 @@ const meta = {
 export default meta
 
 export const Team = {}
+
+/** Figma `5906:39049` — Chat (red circle + white bolt). */
+export const Chat = {
+  args: {
+    name: "chat",
+  },
+}
 
 /** Figma `5517:35117` — Icons/Chat.bubbles. */
 export const ChatBubbles = {
@@ -163,10 +171,17 @@ export const Page = {
   },
 }
 
-/** Figma `6044:7714` — Icons/Project (nav), 28×28. */
+/** Figma `6044:7714` — Icons/Project (square tile + grid). */
 export const Project = {
   args: {
     name: "project",
+  },
+}
+
+/** Figma `6152:15072` — Icons/Project chat (circle tile + grid). */
+export const ProjectChat = {
+  args: {
+    name: "projectChat",
   },
 }
 

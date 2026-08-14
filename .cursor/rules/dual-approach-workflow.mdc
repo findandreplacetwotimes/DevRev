@@ -1,0 +1,42 @@
+---
+description: Dual-track conv-nav and tab-nav workflow
+alwaysApply: true
+---
+
+# Dual-Approach Workflow (conv-nav / tab-nav)
+
+This repo runs two parallel navigation experiments alongside `main`.
+
+## Branches and worktrees
+
+| Track | Branch | Worktree | Vercel URL |
+|-------|--------|----------|------------|
+| conv-nav | `conv-nav` | `/Users/timcherny/DevRev-conv-nav` | https://dev-rev-conv-nav.vercel.app |
+| tab-nav | `tab-nav` | `/Users/timcherny/DevRev-tab-nav` | https://dev-rev-tab-nav.vercel.app |
+| production | `main` | `/Users/timcherny/DevRev` | https://dev-rev-app.vercel.app |
+
+`tab-nav` was seeded from `nav-tab`. `conv-nav` was seeded from `main`.
+
+## Deploy commands
+
+- `npm run deploy` — main app only (`dev-rev-app`). After a successful deploy, follow the deploy-push-main rule and push `main`.
+- `npm run deploy:conv-nav` — conv-nav project only. Push **only** `conv-nav`; never merge or push to `main`.
+- `npm run deploy:tab-nav` — tab-nav project only. Push **only** `tab-nav`; never merge or push to `main`.
+
+## Local dev
+
+- conv-nav worktree: `npm run dev:conv-nav` (port 5173)
+- tab-nav worktree: `npm run dev:tab-nav` (port 5174)
+
+## Cross-track fixes
+
+When a fix on `main` should land in both experiments, merge or cherry-pick into each worktree:
+
+```bash
+git fetch origin
+git merge origin/main
+```
+
+## Merging a winner
+
+Merge the chosen branch into `main` in the main worktree, then `npm run deploy` for production. Cherry-pick from the other branch if needed before retiring it.

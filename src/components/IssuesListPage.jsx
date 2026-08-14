@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
+import { useWorkspaceOutletContext } from "../context/WorkspaceOutletContext"
 import { useIssues } from "../context/IssuesContext"
+import { filterIssuesByProject, filterIssuesByTeam } from "../lib/teams"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Control } from "./Control"
 import { Page } from "./Page"
@@ -22,6 +24,10 @@ function loadInitialIssuesSection() {
 /** Issues backlog table (Figma issues hub). */
 export function IssuesListPage() {
   const { issues } = useIssues()
+  const outletContext = useWorkspaceOutletContext()
+  const workspaceScope = outletContext.workspaceScope ?? {}
+  const syncSessionTabTitle = outletContext.syncSessionTabTitle
+  const { teamId, projectId, scope } = workspaceScope
   const [activePageId, setActivePageId] = useState(loadInitialIssuesSection)
 
   useEffect(() => {
@@ -30,14 +36,22 @@ export function IssuesListPage() {
     } catch {
       /* quota / private mode */
     }
-  }, [activePageId])
-  const filteredRows = useMemo(() => {
+    syncSessionTabTitle?.()
+  }, [activePageId, syncSessionTabTitle])
+
+  const scopedIssues = useMemo(() => {
     const rows = Array.isArray(issues) ? issues : []
+    if (scope === "project" && projectId) return filterIssuesByProject(rows, projectId)
+    if (scope === "team") return filterIssuesByTeam(rows, teamId)
+    return rows
+  }, [issues, projectId, scope, teamId])
+
+  const filteredRows = useMemo(() => {
     if (activePageId === "backlog") {
-      return rows.filter((row) => !row.sprint || row.sprint === "Backlog")
+      return scopedIssues.filter((row) => !row.sprint || row.sprint === "Backlog")
     }
-    return rows.filter((row) => row.sprint && row.sprint !== "Backlog")
-  }, [issues, activePageId])
+    return scopedIssues.filter((row) => row.sprint && row.sprint !== "Backlog")
+  }, [scopedIssues, activePageId])
 
   return (
     <section className="flex h-full min-h-0 w-full min-w-0 flex-col rounded-[2px] bg-white" aria-label="Issues">

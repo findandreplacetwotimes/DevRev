@@ -1,30 +1,24 @@
 import { createPortal } from "react-dom"
 import { useEffect, useLayoutEffect, useState } from "react"
-import { COMPUTER_PAGE_LINKS } from "../lib/chatRelatedLinks"
+import {
+  CHAT_PEOPLE_ITEMS,
+  projectPageDestinations,
+  projectChatDestination,
+  teamChatDestination,
+  teamPageDestinations,
+} from "../lib/navDestinations"
+import { projectGroupLabel } from "../lib/projectsApi"
+import { teamChatNavLabel, teamGroupLabel, projectChatNavLabel } from "../lib/workspaceLabels"
 import { NavGroup } from "./NavGroup"
 import { NavItem } from "./NavItem"
+import { ChatAvatar } from "./ChatAvatar"
 
 const modalShadow =
   "0px 6px 13px rgba(0,0,0,0.10), 0px 23px 23px rgba(0,0,0,0.09), 0px 52px 31px rgba(0,0,0,0.05), 0px 92px 37px rgba(0,0,0,0.01), 0px 144px 40px rgba(0,0,0,0)"
 
 const MENU_WIDTH_PX = 202
 const EDGE_GUTTER_PX = 8
-const DEFAULT_PROJECT_ID = "Project-0001"
-
-const BUILD_TEAM_DESTINATIONS = [
-  { id: "issues", label: "Issues", iconName: "page", href: "/issues" },
-  { id: "sprints", label: "Sprints", iconName: "page", href: "/sprints" },
-  { id: "projects", label: "Projects", iconName: "page", href: "/projects" },
-  { id: "about", label: "About", iconName: "page", href: "/about" },
-]
-
-function projectDestinations(projectId) {
-  const encoded = encodeURIComponent(projectId || DEFAULT_PROJECT_ID)
-  return [
-    { id: "project-overview", label: "Overview", iconName: "page", href: `/projects/${encoded}` },
-    { id: "project-scope", label: "Scope", iconName: "page", href: `/projects/${encoded}?tab=Scope` },
-  ]
-}
+const COMPUTER_HREF = "/computer"
 
 export function RightPanelNavMenu({
   open,
@@ -32,9 +26,12 @@ export function RightPanelNavMenu({
   menuRef,
   onClose,
   onNavigate,
-  onClosePanel,
   projectId,
+  project,
+  activeTeam,
+  teamId,
   selectedHref,
+  showProjectSection = true,
 }) {
   const [style, setStyle] = useState({ top: 0, left: 0 })
 
@@ -44,7 +41,7 @@ export function RightPanelNavMenu({
     const positionMenu = () => {
       const triggerRect = anchorRef.current?.getBoundingClientRect()
       if (!triggerRect) return
-      const menuHeight = menuRef.current?.offsetHeight ?? 280
+      const menuHeight = menuRef.current?.offsetHeight ?? 420
       const viewportW = window.innerWidth
       const viewportH = window.innerHeight
 
@@ -82,13 +79,15 @@ export function RightPanelNavMenu({
 
   if (!open || typeof document === "undefined") return null
 
-  const projectItems = projectDestinations(projectId)
+  const teamPages = teamPageDestinations(teamId)
+  const teamChat = teamChatDestination(teamId)
+  const projectPages = projectPageDestinations(projectId)
+  const projectChat = projectChatDestination(projectId)
+  const teamLabel = activeTeam ? teamGroupLabel(activeTeam) : teamGroupLabel({ id: teamId })
+  const projectGroupTitle = project ? projectGroupLabel(project) : "Project"
+
   const handleSelect = (href) => {
     onNavigate?.(href)
-    onClose?.()
-  }
-  const handleClosePanel = () => {
-    onClosePanel?.()
     onClose?.()
   }
 
@@ -96,38 +95,29 @@ export function RightPanelNavMenu({
     <div
       ref={menuRef}
       role="menu"
-      aria-label="Right panel navigation"
-      className="fixed z-[2147483646] inline-flex w-[202px] flex-col items-start gap-[10px] rounded-[2px] bg-white p-[6px]"
+      aria-label="Workspace navigation"
+      className="fixed z-[2147483646] inline-flex w-[202px] flex-col items-start rounded-[2px] bg-white p-[6px]"
       style={{ boxShadow: modalShadow, top: `${style.top}px`, left: `${style.left}px` }}
     >
-      <div className="flex w-full flex-col gap-[4px]">
-        {COMPUTER_PAGE_LINKS.map((item) => (
-          <NavItem
-            key={item.id}
-            label={item.title}
-            iconName="page"
-            className="w-full"
-            inactive={!item.href}
-            onClick={item.href ? () => handleSelect(item.href) : undefined}
-          />
-        ))}
-      </div>
+      <button
+        type="button"
+        className="flex h-[29px] w-full items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+        onClick={() => handleSelect(COMPUTER_HREF)}
+      >
+        <img src="/icons/computer-wordmark.svg" alt="computer" className="h-[14px] w-[80px]" draggable={false} />
+      </button>
 
-      <NavGroup label="Build team" iconName="team">
-        {BUILD_TEAM_DESTINATIONS.map((item) => (
-          <NavItem
-            key={item.id}
-            label={item.label}
-            iconName={item.iconName}
-            selected={selectedHref === item.href}
-            className="w-full"
-            onClick={() => handleSelect(item.href)}
-          />
-        ))}
-      </NavGroup>
+      <div className="h-[20px] w-full shrink-0 bg-white" />
 
-      <NavGroup label="Project" iconName="project">
-        {projectItems.map((item) => (
+      <NavGroup label={teamLabel} variant="section" defaultExpanded>
+        <NavItem
+          label={teamChatNavLabel()}
+          leading={<ChatAvatar memberCount={teamChat.memberCount} />}
+          selected={selectedHref === teamChat.href}
+          className="w-full"
+          onClick={() => handleSelect(teamChat.href)}
+        />
+        {teamPages.map((item) => (
           <NavItem
             key={item.id}
             label={item.label}
@@ -139,9 +129,50 @@ export function RightPanelNavMenu({
         ))}
       </NavGroup>
 
-      {typeof onClosePanel === "function" ? (
-        <NavItem label="Close" iconName="close" className="w-full" onClick={handleClosePanel} />
+      {showProjectSection ? (
+        <>
+          <div className="h-[20px] w-full shrink-0 bg-white" />
+          <NavGroup label={projectGroupTitle} variant="section" defaultExpanded>
+            <NavItem
+              label={projectChatNavLabel()}
+              leading={<ChatAvatar memberCount={projectChat.memberCount} />}
+              selected={selectedHref === projectChat.href}
+              className="w-full"
+              onClick={() => handleSelect(projectChat.href)}
+            />
+            {projectPages.map((item) => (
+              <NavItem
+                key={item.id}
+                label={item.label}
+                iconName={item.iconName}
+                selected={selectedHref === item.href}
+                className="w-full"
+                onClick={() => handleSelect(item.href)}
+              />
+            ))}
+          </NavGroup>
+        </>
       ) : null}
+
+      <div className="h-[20px] w-full shrink-0 bg-white" />
+
+      <NavGroup label="Chat" variant="section" defaultExpanded>
+        {CHAT_PEOPLE_ITEMS.map((person) => {
+          const href = `/${String(person.label).trim().toLowerCase()}`
+          return (
+            <NavItem
+              key={person.id}
+              label={person.label}
+              leading={<ChatAvatar initial={person.initial} />}
+              selected={selectedHref === href}
+              className="w-full"
+              onClick={() => handleSelect(href)}
+            />
+          )
+        })}
+      </NavGroup>
+
+      <div className="h-[10px] w-full shrink-0 bg-white" />
     </div>,
     document.body
   )

@@ -250,6 +250,7 @@ export function createInitialProjects() {
     {
       ...base,
       id: "Project-0001",
+      name: "Core",
       healthId: "on-track",
       milestones: [
         { id: "Project-0001:m1", title: "Milestone 1", dueDateId: "endOfWeek", healthId: "on-track" },

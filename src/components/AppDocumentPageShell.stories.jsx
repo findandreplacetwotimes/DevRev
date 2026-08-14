@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { MemoryRouter } from "react-router-dom"
 import { OWNERS } from "../lib/owners"
+import { DEFAULT_TEAM_ID, teamIssuesHref, teamProjectsHref } from "../lib/teams"
 import { Breadcrumbs } from "./Breadcrumbs"
 import { Control } from "./Control"
 import { DueDateSelector } from "./DueDateSelector"
@@ -43,7 +44,7 @@ export const IssueTopbar = {
     return (
       <div className="h-screen w-full bg-white">
         <AppDocumentPageShell
-          breadcrumbs={<Breadcrumbs root="Issues" item="Issue" itemSuffix="-0001" rootHref="/issues" />}
+          breadcrumbs={<Breadcrumbs root="Issues" item="Issue" itemSuffix="-0001" rootHref={teamIssuesHref(DEFAULT_TEAM_ID)} />}
           pagePills={
             <div className="flex items-center gap-[4px]" role="tablist" aria-label="Issue sections">
               {tabs.map((label) => (
@@ -77,7 +78,7 @@ export const ProjectTopbar = {
     return (
       <div className="h-screen w-full bg-white">
         <AppDocumentPageShell
-          breadcrumbs={<Breadcrumbs root="Projects" item="Project" itemSuffix="-0001" rootHref="/projects" />}
+          breadcrumbs={<Breadcrumbs root="Projects" item="Project" itemSuffix="-0001" rootHref={teamProjectsHref(DEFAULT_TEAM_ID)} iconName="project" />}
           pagePills={
             <div className="flex items-center gap-[4px]" role="tablist" aria-label="Project sections">
               {tabs.map((label) => (
@@ -85,7 +86,7 @@ export const ProjectTopbar = {
               ))}
             </div>
           }
-          headerAfterPagePills={<Control type="leading" label="Discuss" />}
+          headerTrailing={<Control type="iconOnly" leadingIcon="more" label="" />}
           metaSlot={
             <div className="flex w-full items-center gap-[4px]">
               <OwnerSelector owners={OWNERS} selectedOwnerId={ownerId} onChange={setOwnerId} />
