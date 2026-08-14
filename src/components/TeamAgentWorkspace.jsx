@@ -237,6 +237,37 @@ const standaloneSeed = [
   },
 ]
 
+// Empty-state prompts for a fresh Computer session, tailored to who's viewing.
+const personaPrompts = {
+  Developer: {
+    heading: "What should we build?",
+    prompts: [
+      { icon: "search", title: "Explore and understand code", text: "Explore this codebase and explain how it's structured." },
+      { icon: "hammer", title: "Build a new feature, app, or tool", text: "Help me build a new feature." },
+      { icon: "check", title: "Review code and suggest changes", text: "Review my recent changes and suggest improvements." },
+      { icon: "bug", title: "Fix issues and failures", text: "Help me find and fix a failing test or a bug." },
+    ],
+  },
+  "Engineering lead": {
+    heading: "What should we plan?",
+    prompts: [
+      { icon: "layers", title: "Plan a project or milestone", text: "Help me plan a new project and break it into milestones." },
+      { icon: "grid", title: "Review delivery risks", text: "Summarise the delivery risks across my active projects." },
+      { icon: "record", title: "Draft a technical decision", text: "Help me write up a technical decision and its tradeoffs." },
+      { icon: "bug", title: "Investigate an incident", text: "Help me investigate a production incident." },
+    ],
+  },
+  "Product manager": {
+    heading: "What should we figure out?",
+    prompts: [
+      { icon: "record", title: "Draft a product spec", text: "Help me draft a product spec for a new capability." },
+      { icon: "grid", title: "Analyze customer feedback", text: "Analyze recent customer feedback and pull out the themes." },
+      { icon: "layers", title: "Plan a roadmap", text: "Help me plan the roadmap for next quarter." },
+      { icon: "sparkle", title: "Write a stakeholder update", text: "Draft a stakeholder update from the current delivery signals." },
+    ],
+  },
+}
+
 function Icon({ name, size = 18 }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }
   const paths = {
@@ -270,7 +301,11 @@ function Icon({ name, size = 18 }) {
     terminal: <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></>,
     git: <><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 3-4 2.5-4 5.5"/></>,
     chevronRight: <path d="m9 6 6 6-6 6"/>,
+    chevronDown: <path d="m6 9 6 6 6-6"/>,
     folderOpen: <><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2H4V6Z"/><path d="M3.4 10h17.2l-2 8a1 1 0 0 1-1 .8H6.4a1 1 0 0 1-1-.8L3.4 10Z"/></>,
+    bug: <><path d="M8 9a4 4 0 0 1 8 0v4a4 4 0 0 1-8 0V9Z"/><path d="M9 5.5 8 4M15 5.5 16 4M8 11H4M20 11h-4M8 15l-3 2M16 15l3 2M12 5V3"/></>,
+    hammer: <><path d="m14 6 4 4-8 8-4-4 8-8Z"/><path d="m13 7 4 4M3 21l3-3"/></>,
+    folderUp: <><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4V6Z"/><path d="M12 17v-5M9.5 14l2.5-2.5L14.5 14"/></>,
   }
   return <svg {...common}>{paths[name]}</svg>
 }
@@ -321,7 +356,7 @@ function SessionMessages({ session, onChoice, onOpenChange, compact }) {
   </div>
 }
 
-function SessionComposer({ session, onSend }) {
+function SessionComposer({ session, onSend, placeholder }) {
   const [draft, setDraft] = useState("")
   const submit = (event) => {
     event.preventDefault()
@@ -331,9 +366,47 @@ function SessionComposer({ session, onSend }) {
     setDraft("")
   }
   return <form className="tw-composer" onSubmit={submit}>
-    <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={`Reply to ${session.agent}, add a constraint, or direct the next step…`} />
+    <input value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={placeholder ?? `Reply to ${session.agent}, add a constraint, or direct the next step…`} />
     <button type="submit" className="tw-composer-send" disabled={!draft.trim()} aria-label="Send"><Icon name="send" size={16}/></button>
   </form>
+}
+
+// Persona-tailored empty state for a brand-new Computer session.
+function NewSessionEmptyState({ role, onPick }) {
+  const p = personaPrompts[role] ?? personaPrompts.Developer
+  return <div className="tw-newsession">
+    <div className="tw-newsession-glyph"><Icon name="terminal" size={30}/></div>
+    <h1>{p.heading}</h1>
+    <div className="tw-newsession-cards">
+      {p.prompts.map((pr) => <button key={pr.title} className="tw-newsession-card" onClick={() => onPick(pr.text)}>
+        <span className="tw-newsession-card-icon"><Icon name={pr.icon} size={18}/></span>
+        <span className="tw-newsession-card-title">{pr.title}</span>
+      </button>)}
+    </div>
+  </div>
+}
+
+// "Choose project" control shown above the composer for Computer sessions.
+function SessionProjectBar({ session, projects, onAttach, onNewProject }) {
+  const [open, setOpen] = useState(false)
+  const current = session.project && session.project !== "Standalone" ? session.project : null
+  return <div className="tw-projbar">
+    <button type="button" className={`tw-projbar-btn ${current ? "attached" : ""}`} onClick={() => setOpen((o) => !o)}>
+      <Icon name="folder" size={15}/><span>{current ?? "Choose project"}</span><Icon name="chevronDown" size={14}/>
+    </button>
+    {open ? <>
+      <div className="tw-projmenu-scrim" onClick={() => setOpen(false)} />
+      <div className="tw-projmenu">
+        <div className="tw-projmenu-label">Attach a project</div>
+        <div className="tw-projmenu-list">
+          {projects.map((p) => <button key={p.id} className="tw-projmenu-item" onClick={() => { onAttach(p); setOpen(false) }}>
+            <span className="tw-projmenu-emoji">{p.emoji}</span><span className="tw-projmenu-name">{p.name}</span>{session.project === p.name ? <Icon name="check" size={14}/> : null}
+          </button>)}
+        </div>
+        <button className="tw-projmenu-new" onClick={() => { setOpen(false); onNewProject() }}><span className="tw-projmenu-new-i"><Icon name="folderUp" size={15}/></span><span><b>New project</b><small>Create one and upload local folders</small></span></button>
+      </div>
+    </> : null}
+  </div>
 }
 
 function fileIcon(path) {
@@ -501,6 +574,7 @@ export function TeamAgentWorkspace() {
   const [navShowMore, setNavShowMore] = useState([])
   const [createdProjects, setCreatedProjects] = useState([])
   const [newProjectOpen, setNewProjectOpen] = useState(false)
+  const [newProjectForSession, setNewProjectForSession] = useState(null)
 
   const allProjects = [...createdProjects, ...workspaceProjects]
   const findProject = (id) => allProjects.find((p) => p.id === id) ?? workspaceProjects[0]
@@ -554,8 +628,9 @@ export function TeamAgentWorkspace() {
     status: source.status ?? "Agent paused for your input",
     run: source.run ?? `Run #${180 + (nextId.current % 40)}`,
     standalone: source.project === "Standalone",
+    blank: !!source.blank,
     context: source.context ?? sharedContext,
-    messages: [
+    messages: source.blank ? [] : [
       { role: "agent", name: source.agent, time: "9 min ago", text: source.description, choices: source.choices, diff: source.diff },
     ],
   })
@@ -585,12 +660,14 @@ export function TeamAgentWorkspace() {
     setSessions((prev) => {
       const session = prev[id]
       if (!session) return prev
+      const wasBlank = session.blank
       const messages = [
         ...session.messages,
         { role: "you", name: "You", time: "Now", text },
-        { role: "agent", name: session.agent, time: "Just now", text: "Got it — I'll take that into account and continue. I'll surface the next decision here when I need you.", },
+        { role: "agent", name: session.agent, time: "Just now", text: wasBlank ? "On it — I'll pull in the project context and get started. I'll surface anything that needs your decision right here." : "Got it — I'll take that into account and continue. I'll surface the next decision here when I need you." },
       ]
-      return { ...prev, [id]: { ...session, messages, status: "Agent working on your guidance" } }
+      const title = wasBlank ? text.slice(0, 48) + (text.length > 48 ? "…" : "") : session.title
+      return { ...prev, [id]: { ...session, messages, blank: false, title, status: "Agent working on your request" } }
     })
   }
 
@@ -617,25 +694,44 @@ export function TeamAgentWorkspace() {
     const id = `std-new-${nextId.current++}`
     const source = {
       id,
-      title: "New session with Computer",
+      title: "New session",
       agent: "Computer",
       project: "Standalone",
-      description: "What would you like to work on? I can pull context from any project, issue, or customer signal to get started.",
       status: "Waiting for your first prompt",
+      blank: true,
       context: {
         issue: null,
         files: [],
         records: [],
         project: { name: "Standalone session", meta: "Started by you · now" },
         impact: "No linked work yet",
+        folders: [],
       },
     }
     setSessions((prev) => ({ ...prev, [id]: buildSession(source) }))
     setStandalone((prev) => [id, ...prev])
     setOpenSessionId(id)
     setCanvasSelected(null)
+    setCanvasTab("files")
     setView("session")
     setCanvasOpen(false)
+  }
+
+  // Attach a project (existing or freshly created) to a session — pulls its folders in for the terminal/context.
+  const attachProjectToSession = (id, project) => {
+    setSessions((prev) => {
+      const session = prev[id]
+      if (!session) return prev
+      const folders = project.folders ?? []
+      return { ...prev, [id]: { ...session, project: project.name, context: { ...session.context, project: { name: project.name, meta: project.detail ?? "" }, folders } } }
+    })
+  }
+  const createProjectForSession = (id, data) => {
+    const pid = `new-${nextId.current++}`
+    const project = buildNewProject({ id: pid, ...data })
+    setCreatedProjects((prev) => [project, ...prev])
+    setProjectCaps((prev) => ({ ...prev, [pid]: { caps: { ...project.caps }, objs: { ...project.objs } } }))
+    attachProjectToSession(id, project)
   }
 
   const changeRole = (nextRole) => {
@@ -727,6 +823,10 @@ export function TeamAgentWorkspace() {
       {view === "session" && openSession ? (
         <SessionView
           session={openSession}
+          role={role}
+          projects={allProjects}
+          onAttachProject={(p) => attachProjectToSession(openSession.id, p)}
+          onNewProject={() => setNewProjectForSession(openSession.id)}
           canvasOpen={canvasOpen}
           onToggleCanvas={() => setCanvasOpen((v) => !v)}
           canvasSelected={canvasSelected}
@@ -784,21 +884,23 @@ export function TeamAgentWorkspace() {
         <div className="tw-run-status"><span className="tw-pulse"/> {openSession.status} <span>{openSession.run}</span></div>
         <SessionMessages session={openSession} compact onChoice={(choice) => chooseOption(openSession.id, choice)} onOpenChange={openChange} />
         <div className="tw-detail-footer">
-          <div className="tw-detail-actions">
+          {!openSession.standalone ? <div className="tw-detail-actions">
             <button className="tw-primary" onClick={() => resolveSession(openSession.id, "Approved the recommended approach. The agent has resumed.")}><Icon name="check" size={15}/> Approve & resume</button>
             <button className="tw-secondary" onClick={() => { setView("session"); setCanvasOpen(true) }}><Icon name="panel" size={14}/> Open canvas</button>
-          </div>
+          </div> : null}
           <SessionComposer session={openSession} onSend={(text) => sendMessage(openSession.id, text)} />
         </div>
       </aside>
     )}
 
     {newProjectOpen ? <NewProjectModal onCreate={createProject} onClose={() => setNewProjectOpen(false)} /> : null}
+    {newProjectForSession ? <NewProjectModal onCreate={(data) => { createProjectForSession(newProjectForSession, data); setNewProjectForSession(null) }} onClose={() => setNewProjectForSession(null)} /> : null}
   </main>
 }
 
 // Full-page session: wide chat + attached canvas surface (collapsed by default).
-function SessionView({ session, canvasOpen, onToggleCanvas, canvasSelected, onSelectCanvas, canvasTab, onCanvasTab, onOpenChange, onSend, onChoice, onResolve, onBack }) {
+function SessionView({ session, role, projects, onAttachProject, onNewProject, canvasOpen, onToggleCanvas, canvasSelected, onSelectCanvas, canvasTab, onCanvasTab, onOpenChange, onSend, onChoice, onResolve, onBack }) {
+  const isBlank = session.blank
   return <div className={`tw-session-view ${canvasOpen ? "canvas-open" : ""}`}>
     <div className="tw-session-main">
       <div className="tw-session-head">
@@ -808,22 +910,25 @@ function SessionView({ session, canvasOpen, onToggleCanvas, canvasSelected, onSe
           <h1>{session.title}</h1>
         </div>
         <div className="tw-session-head-right">
-          <div className="tw-run-status inline"><span className="tw-pulse"/> {session.status} <span>{session.run}</span></div>
-          {!canvasOpen ? <button className="tw-secondary" onClick={onToggleCanvas}><Icon name="panel" size={15}/> Show canvas</button> : null}
+          {!isBlank ? <div className="tw-run-status inline"><span className="tw-pulse"/> {session.status} <span>{session.run}</span></div> : null}
+          {!canvasOpen && !isBlank ? <button className="tw-secondary" onClick={onToggleCanvas}><Icon name="panel" size={15}/> Show canvas</button> : null}
         </div>
       </div>
       <div className="tw-session-body">
         <div className="tw-session-chat">
-          <SessionMessages session={session} onChoice={onChoice} onOpenChange={onOpenChange} />
+          {isBlank
+            ? <NewSessionEmptyState role={role} onPick={onSend} />
+            : <SessionMessages session={session} onChoice={onChoice} onOpenChange={onOpenChange} />}
           <div className="tw-session-footer">
-            <div className="tw-session-actions">
+            {!session.standalone ? <div className="tw-session-actions">
               <button className="tw-primary" onClick={() => onResolve("Approved the recommended approach. The agent has resumed.")}><Icon name="check" size={15}/> Approve & resume</button>
               <button className="tw-secondary" onClick={() => onChoice("Take over the session")}>Take over</button>
-            </div>
-            <SessionComposer session={session} onSend={onSend} />
+            </div> : null}
+            {session.standalone ? <SessionProjectBar session={session} projects={projects} onAttach={onAttachProject} onNewProject={onNewProject} /> : null}
+            <SessionComposer session={session} onSend={onSend} placeholder={isBlank ? "Describe a task, or pick a starting point above…" : undefined} />
           </div>
         </div>
-        <SessionCanvas session={session} open={canvasOpen} onToggle={onToggleCanvas} selected={canvasSelected} onSelect={onSelectCanvas} tab={canvasTab} onTab={onCanvasTab} />
+        {!isBlank ? <SessionCanvas session={session} open={canvasOpen} onToggle={onToggleCanvas} selected={canvasSelected} onSelect={onSelectCanvas} tab={canvasTab} onTab={onCanvasTab} /> : null}
       </div>
     </div>
   </div>

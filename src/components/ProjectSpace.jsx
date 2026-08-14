@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 function Icon({ name, size = 18 }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }
@@ -37,6 +37,7 @@ const analytics = {
   team: "Growth", access: ["PP", "RS", "AK", "G"],
   caps: { attributes: true, plan: true, work: true },
   objs: { issues: true, enhancements: true, tickets: true, tasks: true },
+  folders: [{ name: "session-analytics", path: "~/code/session-analytics" }],
   description: "Session Analytics gives every team a clear view of how Computer is used and where the experience breaks down. It ships in three phases through Q3.",
   brief: [
     "We're figuring out why teams stop using Computer after their first session. Assume the reader knows our product but not our data model.",
@@ -101,6 +102,7 @@ function makeProject(base) {
     visibility: "Invited people only", team: "—", access: base.owners, progress: 0,
     caps: base.caps ?? { attributes: false, plan: false, work: false },
     objs: base.objs ?? { issues: false, enhancements: false, tickets: false, tasks: false },
+    folders: base.folders ?? [],
     description: base.desc,
     brief: [base.desc, "Every session started here begins with this brief plus the project's files and linked work."],
     members: base.owners.map((i, idx) => ({ i, n: i, role: idx === 0 ? "Owner" : "Can edit", note: idx === 0 ? "you" : undefined })),
@@ -122,6 +124,7 @@ const rawProjects = [
   analytics,
   makeProject({ id: "billing", name: "Billing revamp", emoji: "🧾", desc: "Move invoicing to the new metering service. Contracts and pricing docs live here.", stage: "Active", tags: ["platform"], health: "On track", tone: "good", sessions: 31, files: 22, due: "Sep 12", owners: ["AK", "PP", "MN"], progress: 45,
     caps: { attributes: true, plan: true, work: true }, objs: { issues: false, enhancements: false, tickets: true, tasks: false },
+    folders: [{ name: "billing-service", path: "~/code/billing-service" }, { name: "invoicing-web", path: "~/code/invoicing-web" }],
     work: { Issues: [], Enhancements: [], Tickets: [
       { id: "TKT-410", title: "Invoice totals differ from the metering export", meta: "Acme Corp", status: "In progress", tone: "info" },
       { id: "TKT-388", title: "Proration wrong on mid-cycle plan change", meta: "Northwind", status: "Awaiting eng", tone: "warn" },
@@ -421,21 +424,28 @@ function CustomizeDialog({ project, cap, objs, onToggleCap, onToggleObj, onClose
 }
 
 // ---- New project ----
-export function buildNewProject({ id, name, brief, emoji, vis }) {
+export function buildNewProject({ id, name, brief, emoji, vis, folders = [], fileNames = [] }) {
+  const fileCount = fileNames.length + folders.reduce((n, f) => n + (f.fileCount || 0), 0)
   return {
     id, name, emoji: emoji || "📁",
     desc: brief || "A fresh space to work with the agent.",
     stage: "Planning", tags: [], health: "On track", tone: "good",
-    sessions: 0, files: 0, due: "No due date", owners: ["PP"], progress: 0,
+    sessions: 0, files: fileCount, due: "No due date", owners: ["PP"], progress: 0,
     vis, visibility: visLabel(vis), team: "—", access: ["PP"],
     description: brief || "",
     brief: [brief || "What is this project about? The agent reads this on every session you start here."],
     members: [{ i: "PP", n: "Priyanka Pal", role: "Owner", note: "you" }],
-    sessionList: [], fileList: [], milestones: [],
+    sessionList: [],
+    fileList: [
+      ...folders.map((f) => ({ name: `${f.name}/`, meta: `${f.fileCount} files · synced`, size: "folder" })),
+      ...fileNames.map((n) => ({ name: n, meta: "uploaded", size: "—" })),
+    ],
+    milestones: [],
     work: { Issues: [], Enhancements: [], Tickets: [], Tasks: [] },
     caps: { attributes: false, plan: false, work: false },
     objs: { issues: false, enhancements: false, tickets: false, tasks: false },
-    detail: "0 people · 0 files · No due date",
+    folders: folders.map((f) => ({ name: f.name, path: f.path })),
+    detail: `0 people · ${fileCount} files · No due date`,
   }
 }
 
@@ -451,7 +461,26 @@ export function NewProjectModal({ onCreate, onClose }) {
   const [brief, setBrief] = useState("")
   const [emoji, setEmoji] = useState("📁")
   const [vis, setVis] = useState("personal")
-  const submit = () => { if (name.trim()) onCreate({ name: name.trim(), brief: brief.trim(), emoji, vis }) }
+  const [folders, setFolders] = useState([])
+  const [fileNames, setFileNames] = useState([])
+  const folderRef = useRef(null)
+  const filesRef = useRef(null)
+  useEffect(() => { if (folderRef.current) { folderRef.current.setAttribute("webkitdirectory", ""); folderRef.current.setAttribute("directory", "") } }, [])
+  const onFolderChange = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length) {
+      const top = (files[0].webkitRelativePath || files[0].name).split("/")[0]
+      setFolders((prev) => (prev.some((f) => f.name === top) ? prev : [...prev, { name: top, path: `~/${top}`, fileCount: files.length }]))
+    }
+    e.target.value = ""
+  }
+  const onFilesChange = (e) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length) setFileNames((prev) => [...prev, ...files.map((f) => f.name)])
+    e.target.value = ""
+  }
+  const removeFolder = (p) => setFolders((prev) => prev.filter((f) => f.path !== p))
+  const submit = () => { if (name.trim()) onCreate({ name: name.trim(), brief: brief.trim(), emoji, vis, folders, fileNames }) }
 
   return <div className="pj-overlay" onClick={onClose}>
     <div className="pj-dialog pj-newproj" onClick={(e) => e.stopPropagation()}>
@@ -485,10 +514,19 @@ export function NewProjectModal({ onCreate, onClose }) {
           <label>Source folders <em>— optional</em></label>
           <div className="pj-dropzone">
             <span className="pj-dropzone-i"><Icon name="folderPlus" size={20}/></span>
-            <strong>Add files the agent can read</strong>
-            <span>Everything you add shows up in the project's Files tab.</span>
-            <div className="pj-dropzone-actions"><button><Icon name="folder" size={14}/> Add folder</button><button><Icon name="file" size={14}/> Add files</button></div>
+            <strong>Add folders &amp; files the agent can read</strong>
+            <span>Everything you add shows up in the project's Files tab and can be opened in a terminal.</span>
+            <div className="pj-dropzone-actions">
+              <button type="button" onClick={() => folderRef.current?.click()}><Icon name="folder" size={14}/> Add folder</button>
+              <button type="button" onClick={() => filesRef.current?.click()}><Icon name="file" size={14}/> Add files</button>
+            </div>
+            <input ref={folderRef} type="file" multiple hidden onChange={onFolderChange} />
+            <input ref={filesRef} type="file" multiple hidden onChange={onFilesChange} />
           </div>
+          {(folders.length || fileNames.length) ? <div className="pj-srclist">
+            {folders.map((f) => <div key={f.path} className="pj-srcitem"><Icon name="folder" size={14}/><span className="pj-srcitem-main"><b>{f.name}</b><small>{f.path} · {f.fileCount} files</small></span><button type="button" className="pj-srcitem-x" onClick={() => removeFolder(f.path)}><Icon name="x" size={13}/></button></div>)}
+            {fileNames.length ? <div className="pj-srcitem"><Icon name="file" size={14}/><span className="pj-srcitem-main"><b>{fileNames.length} file{fileNames.length === 1 ? "" : "s"}</b><small>uploaded</small></span><button type="button" className="pj-srcitem-x" onClick={() => setFileNames([])}><Icon name="x" size={13}/></button></div> : null}
+          </div> : null}
         </div>
       </div>
       <div className="pj-dialog-actions pj-newproj-actions">
