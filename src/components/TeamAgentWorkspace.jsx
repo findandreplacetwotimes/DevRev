@@ -416,7 +416,6 @@ function SessionCanvas({ session, open, onToggle, selected, onSelect, tab, onTab
     <div className="tw-canvas-topbar">
       <span className="tw-canvas-title">Canvas</span>
       <div className="tw-canvas-top-actions">
-        <button className="tw-canvas-term-btn" title="Open a terminal on your machine" onClick={() => { onSelect(null); onTab("terminal") }}><Icon name="terminal" size={15}/> Terminal</button>
         <button title="Collapse canvas" onClick={onToggle}><Icon name="panel" size={15}/></button>
       </div>
     </div>
@@ -424,9 +423,10 @@ function SessionCanvas({ session, open, onToggle, selected, onSelect, tab, onTab
     <div className="tw-canvas-tabs">
       <button className={activeTab === "files" ? "on" : ""} onClick={() => { onSelect(null); onTab("files") }}>Files</button>
       {changes.length ? <button className={activeTab === "changes" ? "on" : ""} onClick={() => { onSelect(null); onTab("changes") }}>Changes <b>{changes.length}</b></button> : null}
-      <button className={activeTab === "terminal" ? "on" : ""} onClick={() => { onSelect(null); onTab("terminal") }}>Terminal</button>
+      <button className={activeTab === "terminal" ? "on" : ""} onClick={() => { onSelect(null); onTab("terminal") }}><Icon name="terminal" size={14}/> Terminal</button>
     </div>
 
+    <div className={`tw-canvas-content ${!selected && tab === "terminal" ? "term" : ""}`}>
     {selected
       ? <div className="tw-canvas-detail">
           {selected.kind === "diff" && detailChange
@@ -448,7 +448,7 @@ function SessionCanvas({ session, open, onToggle, selected, onSelect, tab, onTab
               </>}
         </div>
       : tab === "terminal"
-        ? <div className="tw-canvas-body"><SessionTerminal folders={folders} /></div>
+        ? <SessionTerminal folders={folders} />
         : tab === "changes" && changes.length
           ? <div className="tw-canvas-body">
               <div className="tw-changes-head"><span>{changes.length} changed files in {repo.name}</span><span className="tw-diffcard-stat"><b className="add">+{changes.reduce((n, c) => n + c.additions, 0)}</b> <b className="del">−{changes.reduce((n, c) => n + c.deletions, 0)}</b></span></div>
@@ -482,6 +482,7 @@ function SessionCanvas({ session, open, onToggle, selected, onSelect, tab, onTab
                 <div className="tw-canvas-impact"><span>Impact</span>{ctx.impact}</div>
               </section>
             </div>}
+    </div>
   </aside>
 }
 
