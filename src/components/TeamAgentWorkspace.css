@@ -319,3 +319,90 @@
 .tw-session-actions{display:flex;gap:8px;padding:0;border-top:0;margin-bottom:12px}
 .tw-session-footer{flex:0 0 auto;border-top:1px solid var(--line);padding:14px 0 18px}
 .tw-session-footer .tw-composer{margin-bottom:0}
+
+/* ================= Code changes: inline diff card, terminal, repo tree, diff ================= */
+/* Inline "Edited N files" delta card in the chat */
+.tw-diffcard{margin-top:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.tw-diffcard-head{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line);background:#fbfaff}
+.tw-diffcard-icon{width:26px;height:26px;flex:0 0 26px;border-radius:7px;background:#eee7ff;color:#6d3be7;display:grid;place-items:center}
+.tw-diffcard-title{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.tw-diffcard-title strong{font:600 12.5px "Chip Text Variable";color:#3f3a45}
+.tw-diffcard-stat{font:600 11px "Chip Mono",monospace}
+.add{color:#2f8f46}.del{color:#c43d4b}
+.tw-diffcard-review{border:1px solid #d9d5dd;background:#fff;border-radius:7px;padding:5px 9px;font:600 11.5px inherit;color:#5631c8;display:flex;align-items:center;gap:4px;cursor:pointer;flex:0 0 auto}
+.tw-diffcard-review:hover{border-color:#b9a6ec;background:#faf8ff}
+.tw-diffcard-files{display:flex;flex-direction:column}
+.tw-diffcard-file{display:flex;align-items:center;gap:9px;padding:8px 12px;border:0;border-top:1px solid #f1eff3;background:none;text-align:left;cursor:pointer;color:#4a444f}
+.tw-diffcard-file:first-child{border-top:0}
+.tw-diffcard-file:hover{background:#f6f4fb}
+.tw-diffcard-file>svg{color:#8a7bb4;flex:0 0 auto}
+.tw-diffcard-path{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.tw-diffcard-path b{font:560 12px "Chip Text Variable";color:#3f3a45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tw-diffcard-path small{font-size:10px;color:#948e9a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tw-diffcard-nums{font:600 10.5px "Chip Mono",monospace;flex:0 0 auto}
+.tw-diffcard-tag{font-size:9px;font-weight:700;letter-spacing:.03em;padding:2px 5px;border-radius:4px;text-transform:uppercase;flex:0 0 auto}
+.tw-diffcard-tag.added{background:#e6f4ea;color:#2f8f46}
+
+/* Canvas tab strip */
+.tw-canvas-tabs{display:flex;gap:2px;padding:6px 10px;border-bottom:1px solid var(--line);position:sticky;top:52px;background:#fcfbfc;z-index:1}
+.tw-canvas-tabs button{border:0;background:none;font:600 12px inherit;color:#7a747f;padding:6px 10px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.tw-canvas-tabs button:hover{background:#f0eff1;color:#4a444f}
+.tw-canvas-tabs button.on{background:#eee9fb;color:#5631c8}
+.tw-canvas-tabs button b{background:#ded7f8;color:#5934c9;border-radius:8px;padding:0 5px;font-size:10px}
+.tw-canvas-term-btn{display:flex;align-items:center;gap:6px;border:1px solid #d9d5dd;background:#fff;border-radius:7px;padding:4px 9px;font:600 11.5px inherit;color:#3f3a45;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.tw-canvas-term-btn svg{flex:0 0 auto}
+.tw-canvas-term-btn:hover{border-color:#b9a6ec;color:#5631c8}
+.tw-canvas-top-actions{display:flex;align-items:center;gap:6px}
+
+/* Terminal */
+.tw-term{margin:12px;border-radius:10px;overflow:hidden;border:1px solid #2b2733;background:#1e1b26;box-shadow:0 6px 18px rgba(20,16,30,.14)}
+.tw-term-bar{display:flex;align-items:center;gap:7px;padding:8px 11px;background:#2a2633;border-bottom:1px solid #35303f}
+.tw-term-bar i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.tw-term-bar i.r{background:#ff5f57}.tw-term-bar i.y{background:#febc2e}.tw-term-bar i.g{background:#28c840}
+.tw-term-bar span{color:#b5aec2;font:600 11px "Chip Text Variable";margin-left:4px}
+.tw-term-switch{margin-left:auto;border:1px solid #423b52;background:#332e40;color:#c8c1d6;font:600 10.5px inherit;border-radius:6px;padding:3px 8px;cursor:pointer}
+.tw-term-switch:hover{background:#3c3550}
+.tw-term-body{padding:14px 13px;min-height:220px;font:12.5px/1.7 "Chip Mono",ui-monospace,monospace}
+.tw-term-line{margin:0 0 4px;color:#e6e2ef;white-space:pre-wrap;word-break:break-all}
+.tw-term-line.muted{color:#8a8398}
+.tw-term-prompt{color:#7fe0a3}
+.tw-term-cursor{display:inline-block;width:8px;height:15px;background:#e6e2ef;vertical-align:text-bottom;animation:tw-blink 1.1s steps(1) infinite}
+@keyframes tw-blink{50%{opacity:0}}
+.tw-term-choices{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.tw-term-choice{display:flex;align-items:center;gap:10px;border:1px solid #3a3448;background:#282433;border-radius:9px;padding:10px 12px;color:#e6e2ef;cursor:pointer;text-align:left;font:inherit}
+.tw-term-choice:hover{border-color:#6d5bb0;background:#302a40}
+.tw-term-choice svg{color:#b09be8;flex:0 0 auto}
+.tw-term-choice span{display:flex;flex-direction:column;min-width:0}
+.tw-term-choice b{font:600 12.5px "Chip Text Variable"}
+.tw-term-choice small{font:11px "Chip Mono",monospace;color:#8a8398}
+
+/* Repo tree */
+.tw-repo{border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff}
+.tw-repo-head{display:flex;align-items:center;gap:7px;padding:9px 11px;border-bottom:1px solid var(--line);background:#fbfafc;font-size:12px}
+.tw-repo-head svg{color:#8a7bb4}
+.tw-repo-head b{font:600 12px "Chip Text Variable";color:#3f3a45}
+.tw-repo-head small{margin-left:auto;font:10.5px "Chip Mono",monospace;color:#948e9a}
+.tw-tree-row{display:flex;align-items:center;gap:6px;width:100%;border:0;background:none;padding:5px 10px 5px 8px;font:inherit;color:#4a444f;cursor:pointer;text-align:left}
+.tw-tree-row:hover{background:#f4f1fb}
+.tw-tree-row>svg{color:#8a7bb4;flex:0 0 auto}
+.tw-tree-row.file>svg{color:#9a94a2}
+.tw-tree-row.changed .tw-tree-name{color:#5631c8;font-weight:600}
+.tw-tree-chev{width:14px;height:14px;display:grid;place-items:center;color:#b4aebc;flex:0 0 auto}
+.tw-tree-chev svg{transition:transform .12s}
+.tw-tree-chev.open svg{transform:rotate(90deg)}
+.tw-tree-name{flex:1;min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tw-tree-nums{font:600 10.5px "Chip Mono",monospace;flex:0 0 auto}
+
+/* Changes list + diff */
+.tw-changes-head{display:flex;align-items:center;justify-content:space-between;padding:12px 12px 8px;font-size:11.5px;color:#847e8a}
+.tw-diff-fhead{display:flex;align-items:center;gap:8px;padding:2px 0 2px}
+.tw-diff-fhead strong{font:600 12.5px "Chip Mono",monospace;color:#3f3a45;word-break:break-all}
+.tw-diff-fhead svg{color:#8a7bb4;flex:0 0 auto}
+.tw-diff-fhead .tw-tree-nums{margin-left:auto}
+.tw-diff{margin-top:12px;border:1px solid #eceaf0;border-radius:8px;overflow:hidden;font:11.5px/1.7 "Chip Mono",ui-monospace,monospace;background:#fff}
+.tw-diff-line{display:flex;gap:0;white-space:pre-wrap;word-break:break-word}
+.tw-diff-gutter{flex:0 0 22px;text-align:center;color:#b4aebc;user-select:none;border-right:1px solid #f0eef3}
+.tw-diff-text{flex:1;padding:0 10px;color:#4f4a56}
+.tw-diff-line.add{background:#eafaef}.tw-diff-line.add .tw-diff-gutter{color:#2f8f46}.tw-diff-line.add .tw-diff-text{color:#1f6b34}
+.tw-diff-line.del{background:#fdeef0}.tw-diff-line.del .tw-diff-gutter{color:#c43d4b}.tw-diff-line.del .tw-diff-text{color:#9a2b38}
+.tw-diff-line.hunk{background:#f3f1f8}.tw-diff-line.hunk .tw-diff-text{color:#6d3be7;font-weight:600}

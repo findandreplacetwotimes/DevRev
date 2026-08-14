@@ -17,6 +17,114 @@ const sharedContext = {
   ],
   project: { name: "Payments API v3", meta: "12 people · 3 agents · Jun 28" },
   impact: "Mobile launch · 2 customer commitments",
+  folders: [{ name: "payments-api", path: "~/code/payments-api" }],
+}
+
+// A realistic local checkout the agent worked in, with a source tree and the delta it wrote.
+const paymentsChanges = [
+  {
+    path: "src/payment/retry-guard.ts", status: "modified", additions: 12, deletions: 1,
+    hunks: [
+      { type: "hunk", text: "@@ -14,7 +14,18 @@ export function shouldRetry(req: PaymentRequest) {" },
+      { type: "ctx", text: "   const attempts = req.meta.attempts ?? 0" },
+      { type: "del", text: "   return attempts < MAX_ATTEMPTS" },
+      { type: "add", text: "   if (attempts >= MAX_ATTEMPTS) return false" },
+      { type: "add", text: "   // Only retry idempotent operations — a duplicate capture double-charges." },
+      { type: "add", text: "   if (!req.idempotencyKey) return false" },
+      { type: "add", text: "   return isIdempotent(req.method)" },
+      { type: "ctx", text: " }" },
+    ],
+  },
+  {
+    path: "src/auth/middleware.ts", status: "modified", additions: 41, deletions: 3,
+    hunks: [
+      { type: "hunk", text: "@@ -8,9 +8,12 @@ export async function withOAuthFallback(req, next) {" },
+      { type: "ctx", text: "   const token = await resolveToken(req)" },
+      { type: "del", text: "   if (!token.valid) return reject(req)" },
+      { type: "add", text: "   if (!token.valid) {" },
+      { type: "add", text: "     const refreshed = await refreshToken(req)" },
+      { type: "add", text: "     if (!refreshed) return reject(req)" },
+      { type: "add", text: "     req.token = refreshed" },
+      { type: "add", text: "   }" },
+      { type: "ctx", text: "   return next(req, token)" },
+      { type: "ctx", text: " }" },
+    ],
+  },
+  {
+    path: "src/auth/refresh-token.ts", status: "added", additions: 58, deletions: 0,
+    hunks: [
+      { type: "hunk", text: "@@ -0,0 +1,58 @@" },
+      { type: "add", text: "import { getSession } from \"./session-store\"" },
+      { type: "add", text: "" },
+      { type: "add", text: "export async function refreshToken(req: Request) {" },
+      { type: "add", text: "  const session = await getSession(req.sessionId)" },
+      { type: "add", text: "  if (!session?.refreshToken) return null" },
+      { type: "add", text: "  return rotate(session.refreshToken)" },
+      { type: "add", text: "}" },
+    ],
+  },
+  {
+    path: "src/__tests__/auth.fallback.test.ts", status: "added", additions: 51, deletions: 0,
+    hunks: [
+      { type: "hunk", text: "@@ -0,0 +1,51 @@" },
+      { type: "add", text: "import { withOAuthFallback } from \"../auth/middleware\"" },
+      { type: "add", text: "" },
+      { type: "add", text: "test(\"refreshes an expired token before rejecting\", async () => {" },
+      { type: "add", text: "  const next = jest.fn()" },
+      { type: "add", text: "  await withOAuthFallback(expiredReq, next)" },
+      { type: "add", text: "  expect(next).toHaveBeenCalled()" },
+      { type: "add", text: "})" },
+    ],
+  },
+]
+
+const paymentsRepo = {
+  name: "payments-api",
+  root: "~/code/payments-api",
+  changes: paymentsChanges,
+  tree: [
+    { type: "dir", name: "src", children: [
+      { type: "dir", name: "auth", children: [
+        { type: "file", name: "middleware.ts", path: "src/auth/middleware.ts" },
+        { type: "file", name: "refresh-token.ts", path: "src/auth/refresh-token.ts" },
+        { type: "file", name: "session-store.ts", path: "src/auth/session-store.ts" },
+      ] },
+      { type: "dir", name: "payment", children: [
+        { type: "file", name: "router.ts", path: "src/payment/router.ts" },
+        { type: "file", name: "retry-guard.ts", path: "src/payment/retry-guard.ts" },
+      ] },
+      { type: "file", name: "index.ts", path: "src/index.ts" },
+    ] },
+    { type: "dir", name: "__tests__", children: [
+      { type: "file", name: "auth.fallback.test.ts", path: "src/__tests__/auth.fallback.test.ts" },
+    ] },
+    { type: "file", name: "package.json", path: "package.json" },
+    { type: "file", name: "tsconfig.json", path: "tsconfig.json" },
+    { type: "file", name: "README.md", path: "README.md" },
+    { type: "file", name: ".gitignore", path: ".gitignore" },
+  ],
+}
+
+const paymentsDiffSummary = {
+  additions: paymentsChanges.reduce((n, c) => n + c.additions, 0),
+  deletions: paymentsChanges.reduce((n, c) => n + c.deletions, 0),
+  files: paymentsChanges.map((c) => ({ path: c.path, status: c.status, additions: c.additions, deletions: c.deletions })),
+}
+
+const codeChangeContext = {
+  issue: { id: "ISS-402", label: "Checkout retries are not idempotent", meta: "Bug · In progress" },
+  files: paymentsChanges.map((c) => ({ path: c.path, note: c.status })),
+  records: [
+    { type: "PR", label: "PR #4830 — idempotent retry guard", meta: "draft · 4 files" },
+    { type: "CI", label: "unit + integration", meta: "Green · 3m 02s" },
+  ],
+  project: { name: "Payments API v3", meta: "12 people · 3 agents · Jun 28" },
+  impact: "14 enterprise accounts hit by checkout timeouts",
+  folders: [
+    { name: "payments-api", path: "~/code/payments-api" },
+    { name: "payments-web", path: "~/code/payments-web" },
+  ],
+  repo: paymentsRepo,
 }
 
 const roleQueues = {
@@ -75,6 +183,7 @@ const roleQueues = {
     headline: "Your agent work is ready for the next move.",
     subtitle: "Review the implementation evidence, unblock agents, and keep your active work moving.",
     items: [
+      { id: "dev-diff", type: "Code changes ready", severity: "Now", title: "Review the idempotent retry guard on your machine", description: "I implemented the checkout retry guard in your local checkout of payments-api and ran the suite — all green. Here's the delta; open any file for the diff, or open a terminal in the repo.", project: "Payments API v3", agent: "Backend agent", status: "Changes on your machine · ready to review", people: ["AK"], diff: paymentsDiffSummary, context: codeChangeContext },
       { id: "dev-review", type: "Review ready", severity: "Now", title: "Review your agent PR #4821 — OAuth fallback", description: "427 lines changed · 18 tests passed · the agent highlighted two tradeoffs in the auth middleware.", project: "Payments API v3", agent: "Backend agent", status: "Your review unblocks the integration run", people: ["AK"], choices: ["Merge behind the existing feature flag", "Request a smaller auth middleware diff"] },
       { id: "dev-input", type: "Agent needs input", severity: "Today", title: "Clarify the retry behavior for checkout timeouts", description: "The investigation agent found a likely root cause but needs an implementation constraint before it patches payment-router.", project: "Payments API v3", agent: "Triage agent", status: "Waiting for your technical guidance", people: ["AK", "JR"], choices: ["Retry only idempotent requests", "Add a circuit breaker before retrying"] },
       { id: "dev-ci", type: "CI failed", severity: "Today", title: "Integration tests are failing on the mobile auth contract", description: "The agent isolated the failure to a stale mock. A one-line fixture update is proposed.", project: "Mobile onboarding", agent: "QA agent", status: "Ready for a quick fix or approval", people: ["AK" ] },
@@ -158,12 +267,39 @@ function Icon({ name, size = 18 }) {
     sheet: <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></>,
     eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/></>,
     filter: <><path d="M3 5h18l-7 8v6l-4-2v-4L3 5Z"/></>,
+    terminal: <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></>,
+    git: <><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M18 11.5c0 3-4 2.5-4 5.5"/></>,
+    chevronRight: <path d="m9 6 6 6-6 6"/>,
+    folderOpen: <><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2H4V6Z"/><path d="M3.4 10h17.2l-2 8a1 1 0 0 1-1 .8H6.4a1 1 0 0 1-1-.8L3.4 10Z"/></>,
   }
   return <svg {...common}>{paths[name]}</svg>
 }
 
+function fileName(path) {
+  return path.split("/").pop()
+}
+
+// An inline "Edited N files +X −Y" delta card (see Image #10). Files open the diff in the canvas.
+function DiffSummaryCard({ diff, onOpenChange }) {
+  return <div className="tw-diffcard">
+    <div className="tw-diffcard-head">
+      <span className="tw-diffcard-icon"><Icon name="git" size={15}/></span>
+      <div className="tw-diffcard-title"><strong>Edited {diff.files.length} file{diff.files.length === 1 ? "" : "s"}</strong><span className="tw-diffcard-stat"><b className="add">+{diff.additions}</b> <b className="del">−{diff.deletions}</b></span></div>
+      <button className="tw-diffcard-review" onClick={() => onOpenChange?.(null)}>Review <Icon name="arrow" size={13}/></button>
+    </div>
+    <div className="tw-diffcard-files">
+      {diff.files.map((f) => <button key={f.path} className="tw-diffcard-file" onClick={() => onOpenChange?.(f.path)}>
+        <Icon name={fileIcon(f.path)} size={14}/>
+        <span className="tw-diffcard-path"><b>{fileName(f.path)}</b><small>{f.path.replace("/" + fileName(f.path), "")}</small></span>
+        {f.status === "added" ? <span className="tw-diffcard-tag added">new</span> : null}
+        <span className="tw-diffcard-nums"><b className="add">+{f.additions}</b> <b className="del">−{f.deletions}</b></span>
+      </button>)}
+    </div>
+  </div>
+}
+
 // The scrolling chat transcript (no composer). The composer is rendered separately so it can be pinned to the bottom.
-function SessionMessages({ session, onChoice, compact }) {
+function SessionMessages({ session, onChoice, onOpenChange, compact }) {
   return <div className={`tw-thread ${compact ? "compact" : ""}`}>
     {session.messages.map((message, index) => message.role === "agent"
       ? <div className="tw-message agent" key={index}>
@@ -171,6 +307,7 @@ function SessionMessages({ session, onChoice, compact }) {
           <div>
             <div className="tw-message-head"><strong>{message.name}</strong><span>{message.time}</span></div>
             <p>{message.text}</p>
+            {message.diff ? <DiffSummaryCard diff={message.diff} onOpenChange={onOpenChange} /> : null}
             {message.choices ? <div className="tw-options">{message.choices.map((choice, i) => <button type="button" key={choice} onClick={() => onChoice(choice)}><b>{String.fromCharCode(65 + i)}</b>{choice}</button>)}</div> : null}
           </div>
         </div>
@@ -208,55 +345,143 @@ function fileIcon(path) {
   return "file"
 }
 
-// The attached canvas surface: collapsed = hidden (chat is full-width, toggle lives in the header);
-// expanded = a "Working files"–style panel of the session's files and linked records.
-function SessionCanvas({ session, open, onToggle, selected, onSelect }) {
+// A local terminal opened in an attached folder. One folder → open there; many → let the user pick.
+function SessionTerminal({ folders }) {
+  const [dir, setDir] = useState(folders.length === 1 ? folders[0] : null)
+  if (!folders.length) {
+    return <div className="tw-term"><div className="tw-term-bar"><i className="r"/><i className="y"/><i className="g"/><span>Terminal</span></div>
+      <div className="tw-term-body"><p className="tw-term-line muted">No local folder is attached to this session. Attach a folder to open a terminal here.</p></div>
+    </div>
+  }
+  if (!dir) {
+    return <div className="tw-term"><div className="tw-term-bar"><i className="r"/><i className="y"/><i className="g"/><span>Terminal</span></div>
+      <div className="tw-term-body">
+        <p className="tw-term-line muted">This session has {folders.length} local folders. Choose where to open the terminal:</p>
+        <div className="tw-term-choices">
+          {folders.map((f) => <button key={f.path} className="tw-term-choice" onClick={() => setDir(f)}><Icon name="folder" size={15}/><span><b>{f.name}</b><small>{f.path}</small></span></button>)}
+        </div>
+      </div>
+    </div>
+  }
+  return <div className="tw-term"><div className="tw-term-bar"><i className="r"/><i className="y"/><i className="g"/><span>{dir.name} — zsh</span>{folders.length > 1 ? <button className="tw-term-switch" onClick={() => setDir(null)}>Switch folder</button> : null}</div>
+    <div className="tw-term-body">
+      <p className="tw-term-line muted"># opened in {dir.path}</p>
+      <p className="tw-term-line"><span className="tw-term-prompt">priyankapal@Mac {dir.name} %</span> <span className="tw-term-cursor"/></p>
+    </div>
+  </div>
+}
+
+function TreeNodes({ nodes, depth, changeByPath, onOpenPath }) {
+  return nodes.map((n) => n.type === "dir"
+    ? <DirNode key={n.name} node={n} depth={depth} changeByPath={changeByPath} onOpenPath={onOpenPath} />
+    : <FileNode key={n.path} node={n} depth={depth} change={changeByPath[n.path]} onOpenPath={onOpenPath} />)
+}
+function DirNode({ node, depth, changeByPath, onOpenPath }) {
+  const [open, setOpen] = useState(depth < 1)
+  return <>
+    <button className="tw-tree-row" style={{ paddingLeft: 8 + depth * 14 }} onClick={() => setOpen((o) => !o)}>
+      <span className={`tw-tree-chev ${open ? "open" : ""}`}><Icon name="chevronRight" size={12}/></span>
+      <Icon name={open ? "folderOpen" : "folder"} size={14}/><span className="tw-tree-name">{node.name}</span>
+    </button>
+    {open ? <TreeNodes nodes={node.children} depth={depth + 1} changeByPath={changeByPath} onOpenPath={onOpenPath} /> : null}
+  </>
+}
+function FileNode({ node, depth, change, onOpenPath }) {
+  return <button className={`tw-tree-row file ${change ? "changed" : ""}`} style={{ paddingLeft: 8 + depth * 14 }} onClick={() => onOpenPath(node.path, !!change)}>
+    <span className="tw-tree-chev" /><Icon name={fileIcon(node.name)} size={14}/><span className="tw-tree-name">{node.name}</span>
+    {change ? <span className="tw-tree-nums"><b className="add">+{change.additions}</b> <b className="del">−{change.deletions}</b></span> : null}
+  </button>
+}
+
+function DiffLines({ hunks }) {
+  return <div className="tw-diff">{hunks.map((h, i) => <div key={i} className={`tw-diff-line ${h.type}`}>
+    <span className="tw-diff-gutter">{h.type === "add" ? "+" : h.type === "del" ? "−" : ""}</span>
+    <span className="tw-diff-text">{h.text || " "}</span>
+  </div>)}</div>
+}
+
+// The attached canvas surface: Files (a real repo tree or working files), Changes (agent's diff), and a local Terminal.
+function SessionCanvas({ session, open, onToggle, selected, onSelect, tab, onTab }) {
   const ctx = session.context
   if (!open) return null
+  const repo = ctx.repo
+  const folders = ctx.folders ?? []
+  const changes = repo?.changes ?? []
+  const changeByPath = Object.fromEntries(changes.map((c) => [c.path, c]))
+  const openPath = (path, changed) => onSelect(changed ? { kind: "diff", path } : { kind: "file", label: path })
+  const activeTab = selected ? null : tab
+  const detailChange = selected?.kind === "diff" ? changeByPath[selected.path] : null
+
   return <aside className="tw-canvas">
     <div className="tw-canvas-topbar">
       <span className="tw-canvas-title">Canvas</span>
       <div className="tw-canvas-top-actions">
-        <button title="Preview"><Icon name="eye" size={15}/></button>
+        <button className="tw-canvas-term-btn" title="Open a terminal on your machine" onClick={() => { onSelect(null); onTab("terminal") }}><Icon name="terminal" size={15}/> Terminal</button>
         <button title="Collapse canvas" onClick={onToggle}><Icon name="panel" size={15}/></button>
       </div>
     </div>
 
+    <div className="tw-canvas-tabs">
+      <button className={activeTab === "files" ? "on" : ""} onClick={() => { onSelect(null); onTab("files") }}>Files</button>
+      {changes.length ? <button className={activeTab === "changes" ? "on" : ""} onClick={() => { onSelect(null); onTab("changes") }}>Changes <b>{changes.length}</b></button> : null}
+      <button className={activeTab === "terminal" ? "on" : ""} onClick={() => { onSelect(null); onTab("terminal") }}>Terminal</button>
+    </div>
+
     {selected
       ? <div className="tw-canvas-detail">
-          <button className="tw-canvas-back" onClick={() => onSelect(null)}><Icon name="back" size={14}/> Back to files</button>
-          <div className="tw-canvas-detail-head"><Icon name={selected.kind === "file" ? fileIcon(selected.label) : "record"} size={16}/><strong>{selected.label}</strong></div>
-          <p className="tw-canvas-detail-meta">{selected.meta}</p>
-          <div className="tw-canvas-preview">
-            {selected.kind === "file"
-              ? <pre>{`// ${selected.label}\nexport async function withOAuthFallback(req, next) {\n  const token = await resolveToken(req)\n  if (!token.valid) return refreshOrReject(req)\n  return next(req, token)\n}`}</pre>
-              : <div className="tw-canvas-record-body">This record is linked to the session so the agent — and you — stay grounded in the same evidence. Open it in the project to see full history.</div>}
-          </div>
+          {selected.kind === "diff" && detailChange
+            ? <>
+                <button className="tw-canvas-back" onClick={() => onSelect(null)}><Icon name="back" size={14}/> Back to changes</button>
+                <div className="tw-diff-fhead"><Icon name={fileIcon(selected.path)} size={15}/><strong>{selected.path}</strong><span className="tw-tree-nums"><b className="add">+{detailChange.additions}</b> <b className="del">−{detailChange.deletions}</b></span></div>
+                <p className="tw-canvas-detail-meta">{repo.root}/{selected.path}{detailChange.status === "added" ? " · new file" : ""}</p>
+                <DiffLines hunks={detailChange.hunks} />
+              </>
+            : <>
+                <button className="tw-canvas-back" onClick={() => onSelect(null)}><Icon name="back" size={14}/> Back to files</button>
+                <div className="tw-canvas-detail-head"><Icon name={selected.kind === "file" ? fileIcon(selected.label) : "record"} size={16}/><strong>{selected.label}</strong></div>
+                {selected.meta ? <p className="tw-canvas-detail-meta">{selected.meta}</p> : null}
+                <div className="tw-canvas-preview">
+                  {selected.kind === "file"
+                    ? <pre>{`// ${selected.label}\nexport async function withOAuthFallback(req, next) {\n  const token = await resolveToken(req)\n  if (!token.valid) return refreshOrReject(req)\n  return next(req, token)\n}`}</pre>
+                    : <div className="tw-canvas-record-body">This record is linked to the session so the agent — and you — stay grounded in the same evidence. Open it in the project to see full history.</div>}
+                </div>
+              </>}
         </div>
-      : <div className="tw-canvas-body">
-          <section className="tw-canvas-sec">
-            <div className="tw-canvas-sec-head"><h4>Working files</h4><div className="tw-canvas-sec-actions"><button title="Filter"><Icon name="filter" size={14}/></button><button title="Add file"><Icon name="plus" size={15}/></button></div></div>
-            {ctx.files.length ? ctx.files.map((file) => <button key={file.path} className="tw-frow" onClick={() => onSelect({ kind: "file", label: file.path, meta: file.note })}>
-              <Icon name={fileIcon(file.path)} size={16}/><span className="tw-frow-name">{file.path}</span><span className="tw-frow-act"><Icon name="expand" size={12}/></span>
-            </button>) : <p className="tw-canvas-none">No files attached yet</p>}
-          </section>
+      : tab === "terminal"
+        ? <div className="tw-canvas-body"><SessionTerminal folders={folders} /></div>
+        : tab === "changes" && changes.length
+          ? <div className="tw-canvas-body">
+              <div className="tw-changes-head"><span>{changes.length} changed files in {repo.name}</span><span className="tw-diffcard-stat"><b className="add">+{changes.reduce((n, c) => n + c.additions, 0)}</b> <b className="del">−{changes.reduce((n, c) => n + c.deletions, 0)}</b></span></div>
+              {changes.map((c) => <button key={c.path} className="tw-frow" onClick={() => openPath(c.path, true)}>
+                <Icon name={fileIcon(c.path)} size={15}/><span className="tw-frow-name">{c.path}</span>{c.status === "added" ? <span className="tw-diffcard-tag added">new</span> : null}<span className="tw-tree-nums"><b className="add">+{c.additions}</b> <b className="del">−{c.deletions}</b></span>
+              </button>)}
+            </div>
+          : <div className="tw-canvas-body">
+              <section className="tw-canvas-sec">
+                <div className="tw-canvas-sec-head"><h4>{repo ? "Repository" : "Working files"}</h4><div className="tw-canvas-sec-actions"><button title="Filter"><Icon name="filter" size={14}/></button><button title="Add file"><Icon name="plus" size={15}/></button></div></div>
+                {repo
+                  ? <div className="tw-repo"><div className="tw-repo-head"><Icon name="git" size={13}/><b>{repo.name}</b><small>{repo.root}</small></div><TreeNodes nodes={repo.tree} depth={0} changeByPath={changeByPath} onOpenPath={openPath} /></div>
+                  : ctx.files.length ? ctx.files.map((file) => <button key={file.path} className="tw-frow" onClick={() => onSelect({ kind: "file", label: file.path, meta: file.note })}>
+                      <Icon name={fileIcon(file.path)} size={16}/><span className="tw-frow-name">{file.path}</span><span className="tw-frow-act"><Icon name="expand" size={12}/></span>
+                    </button>) : <p className="tw-canvas-none">No files attached yet</p>}
+              </section>
 
-          {(ctx.issue || ctx.records.length) ? <section className="tw-canvas-sec">
-            <div className="tw-canvas-sec-head"><h4>Linked records</h4></div>
-            {ctx.issue ? <button className="tw-frow" onClick={() => onSelect({ kind: "record", label: `${ctx.issue.id} · ${ctx.issue.label}`, meta: ctx.issue.meta })}>
-              <span className="tw-record-tag issue">Issue</span><span className="tw-frow-name">{ctx.issue.id} · {ctx.issue.label}</span><span className="tw-frow-act"><Icon name="expand" size={12}/></span>
-            </button> : null}
-            {ctx.records.map((record) => <button key={record.label} className="tw-frow" onClick={() => onSelect({ kind: "record", label: record.label, meta: record.meta })}>
-              <span className={`tw-record-tag ${record.type.toLowerCase()}`}>{record.type}</span><span className="tw-frow-name">{record.label}</span><span className="tw-frow-act"><Icon name="expand" size={12}/></span>
-            </button>)}
-          </section> : null}
+              {(ctx.issue || ctx.records.length) ? <section className="tw-canvas-sec">
+                <div className="tw-canvas-sec-head"><h4>Linked records</h4></div>
+                {ctx.issue ? <button className="tw-frow" onClick={() => onSelect({ kind: "record", label: `${ctx.issue.id} · ${ctx.issue.label}`, meta: ctx.issue.meta })}>
+                  <span className="tw-record-tag issue">Issue</span><span className="tw-frow-name">{ctx.issue.id} · {ctx.issue.label}</span><span className="tw-frow-act"><Icon name="expand" size={12}/></span>
+                </button> : null}
+                {ctx.records.map((record) => <button key={record.label} className="tw-frow" onClick={() => onSelect({ kind: "record", label: record.label, meta: record.meta })}>
+                  <span className={`tw-record-tag ${record.type.toLowerCase()}`}>{record.type}</span><span className="tw-frow-name">{record.label}</span><span className="tw-frow-act"><Icon name="expand" size={12}/></span>
+                </button>)}
+              </section> : null}
 
-          <section className="tw-canvas-sec">
-            <div className="tw-canvas-sec-head"><h4>Project</h4></div>
-            <button className="tw-frow"><Icon name="layers" size={16}/><span className="tw-frow-name">{ctx.project.name}</span><span className="tw-frow-act"><Icon name="arrow" size={13}/></span></button>
-            <div className="tw-canvas-impact"><span>Impact</span>{ctx.impact}</div>
-          </section>
-        </div>}
+              <section className="tw-canvas-sec">
+                <div className="tw-canvas-sec-head"><h4>Project</h4></div>
+                <button className="tw-frow"><Icon name="layers" size={16}/><span className="tw-frow-name">{ctx.project.name}</span><span className="tw-frow-act"><Icon name="arrow" size={13}/></span></button>
+                <div className="tw-canvas-impact"><span>Impact</span>{ctx.impact}</div>
+              </section>
+            </div>}
   </aside>
 }
 
@@ -312,6 +537,7 @@ export function TeamAgentWorkspace() {
   const [openSessionId, setOpenSessionId] = useState(null)
   const [canvasOpen, setCanvasOpen] = useState(false)
   const [canvasSelected, setCanvasSelected] = useState(null)
+  const [canvasTab, setCanvasTab] = useState("files")
   const nextId = useRef(1)
 
   const persona = roleQueues[role]
@@ -329,7 +555,7 @@ export function TeamAgentWorkspace() {
     standalone: source.project === "Standalone",
     context: source.context ?? sharedContext,
     messages: [
-      { role: "agent", name: source.agent, time: "9 min ago", text: source.description, choices: source.choices },
+      { role: "agent", name: source.agent, time: "9 min ago", text: source.description, choices: source.choices, diff: source.diff },
     ],
   })
 
@@ -342,7 +568,16 @@ export function TeamAgentWorkspace() {
     const id = ensureSession(item)
     setOpenSessionId(id)
     setCanvasSelected(null)
+    setCanvasTab("files")
     if (fullPage) { setView("session"); setCanvasOpen(false) }
+  }
+
+  // Open the canvas to a specific changed file's diff (path), or the Changes list (path = null).
+  const openChange = (path) => {
+    setView("session")
+    setCanvasOpen(true)
+    setCanvasTab("changes")
+    setCanvasSelected(path ? { kind: "diff", path } : null)
   }
 
   const sendMessage = (id, text) => {
@@ -495,6 +730,9 @@ export function TeamAgentWorkspace() {
           onToggleCanvas={() => setCanvasOpen((v) => !v)}
           canvasSelected={canvasSelected}
           onSelectCanvas={setCanvasSelected}
+          canvasTab={canvasTab}
+          onCanvasTab={setCanvasTab}
+          onOpenChange={openChange}
           onSend={(text) => sendMessage(openSession.id, text)}
           onChoice={(choice) => chooseOption(openSession.id, choice)}
           onResolve={(note) => resolveSession(openSession.id, note)}
@@ -543,7 +781,7 @@ export function TeamAgentWorkspace() {
         </div>
         <div className="tw-detail-title"><span className="tw-agent-icon"><Icon name="sparkle" size={17}/></span><div><p>{openSession.agent} · {openSession.project}</p><h2>{openSession.title}</h2></div></div>
         <div className="tw-run-status"><span className="tw-pulse"/> {openSession.status} <span>{openSession.run}</span></div>
-        <SessionMessages session={openSession} compact onChoice={(choice) => chooseOption(openSession.id, choice)} />
+        <SessionMessages session={openSession} compact onChoice={(choice) => chooseOption(openSession.id, choice)} onOpenChange={openChange} />
         <div className="tw-detail-footer">
           <div className="tw-detail-actions">
             <button className="tw-primary" onClick={() => resolveSession(openSession.id, "Approved the recommended approach. The agent has resumed.")}><Icon name="check" size={15}/> Approve & resume</button>
@@ -559,7 +797,7 @@ export function TeamAgentWorkspace() {
 }
 
 // Full-page session: wide chat + attached canvas surface (collapsed by default).
-function SessionView({ session, canvasOpen, onToggleCanvas, canvasSelected, onSelectCanvas, onSend, onChoice, onResolve, onBack }) {
+function SessionView({ session, canvasOpen, onToggleCanvas, canvasSelected, onSelectCanvas, canvasTab, onCanvasTab, onOpenChange, onSend, onChoice, onResolve, onBack }) {
   return <div className={`tw-session-view ${canvasOpen ? "canvas-open" : ""}`}>
     <div className="tw-session-main">
       <div className="tw-session-head">
@@ -575,7 +813,7 @@ function SessionView({ session, canvasOpen, onToggleCanvas, canvasSelected, onSe
       </div>
       <div className="tw-session-body">
         <div className="tw-session-chat">
-          <SessionMessages session={session} onChoice={onChoice} />
+          <SessionMessages session={session} onChoice={onChoice} onOpenChange={onOpenChange} />
           <div className="tw-session-footer">
             <div className="tw-session-actions">
               <button className="tw-primary" onClick={() => onResolve("Approved the recommended approach. The agent has resumed.")}><Icon name="check" size={15}/> Approve & resume</button>
@@ -584,7 +822,7 @@ function SessionView({ session, canvasOpen, onToggleCanvas, canvasSelected, onSe
             <SessionComposer session={session} onSend={onSend} />
           </div>
         </div>
-        <SessionCanvas session={session} open={canvasOpen} onToggle={onToggleCanvas} selected={canvasSelected} onSelect={onSelectCanvas} />
+        <SessionCanvas session={session} open={canvasOpen} onToggle={onToggleCanvas} selected={canvasSelected} onSelect={onSelectCanvas} tab={canvasTab} onTab={onCanvasTab} />
       </div>
     </div>
   </div>
