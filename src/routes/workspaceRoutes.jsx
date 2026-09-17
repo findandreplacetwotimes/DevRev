@@ -20,7 +20,9 @@ import {
 export function renderWorkspaceRoutes(defaultTeam) {
   return (
     <>
-      <Route index element={<Navigate to={`/team/${defaultTeam}/issues`} replace />} />
+      {/* Landing page is the team agent workspace; the DevRev app pages remain reachable at their own paths. */}
+      <Route index element={<Navigate to="/workspace" replace />} />
+      <Route path="home" element={<Navigate to={`/team/${defaultTeam}/issues`} replace />} />
 
       <Route path="computer" element={<ChatPage />} />
       <Route path="arjun" element={<ChatPage />} />
