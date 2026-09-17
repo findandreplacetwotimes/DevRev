@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react"
 import "./TeamAgentWorkspace.css"
 import "./AgentBoard.css"
 import { ProjectSpace, workspaceProjects, makeSessionSource, buildNewProject, NewProjectModal } from "./ProjectSpace"
+import { teams, teamIssues, getIssue, IssuesListView, IssuePanel, RoadmapView, SprintsView } from "./TeamsSpace"
 
 const sharedContext = {
   issue: { id: "ENH-482", label: "OAuth fallback", meta: "Enhancement · In progress" },
@@ -306,6 +307,10 @@ function Icon({ name, size = 18 }) {
     bug: <><path d="M8 9a4 4 0 0 1 8 0v4a4 4 0 0 1-8 0V9Z"/><path d="M9 5.5 8 4M15 5.5 16 4M8 11H4M20 11h-4M8 15l-3 2M16 15l3 2M12 5V3"/></>,
     hammer: <><path d="m14 6 4 4-8 8-4-4 8-8Z"/><path d="m13 7 4 4M3 21l3-3"/></>,
     folderUp: <><path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4V6Z"/><path d="M12 17v-5M9.5 14l2.5-2.5L14.5 14"/></>,
+    stage: <><circle cx="12" cy="12" r="9"/><path d="m10 8 4 4-4 4"/></>,
+    target: <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></>,
+    calendar: <><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M8 3v4M16 3v4M3 10h18"/></>,
+    users: <><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M16 6a3 3 0 0 1 0 6M21 20a6 6 0 0 0-4-5.6"/></>,
   }
   return <svg {...common}>{paths[name]}</svg>
 }
@@ -576,6 +581,57 @@ export function TeamAgentWorkspace() {
   const [newProjectOpen, setNewProjectOpen] = useState(false)
   const [newProjectForSession, setNewProjectForSession] = useState(null)
 
+  // Teams: issues / roadmap / sprints, plus agent sessions & specs linked to each issue.
+  const [activeTeamId, setActiveTeamId] = useState("build")
+  const [activeIssueId, setActiveIssueId] = useState(null)
+  const [issuesTab, setIssuesTab] = useState("In Progress")
+  const [expandedTeams, setExpandedTeams] = useState(["build"])
+  const [issueSessions, setIssueSessions] = useState({})
+  const [issueSpecs, setIssueSpecs] = useState({})
+  const [sessionReturn, setSessionReturn] = useState(null)
+  const teamById = (id) => teams.find((t) => t.id === id) ?? teams[0]
+  const toggleTeam = (id) => setExpandedTeams((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  const openTeamView = (teamId, kind) => { setActiveTeamId(teamId); setOpenSessionId(null); setView(`team-${kind}`) }
+  const openIssue = (issueId) => { setActiveIssueId(issueId); setOpenSessionId(null); setView("team-issue") }
+  const sessionsForIssue = (issue) => issueSessions[issue.id] ?? issue.sessions
+  const makeIssueSource = (issue, team, entry) => ({
+    id: entry.id,
+    title: entry.label || issue.title,
+    agent: entry.agent,
+    project: `${team.name} · ${issue.id}`,
+    status: entry.status === "needs input" ? "Agent paused for your input" : entry.status === "PR ready" ? "PR ready for review" : "Agent working",
+    description: entry.note ? entry.note : `Working on ${issue.id}: ${issue.title}. I'll surface decisions here.`,
+    choices: entry.status === "needs input" ? entry.choices : undefined,
+    context: {
+      issue: { id: issue.id, label: issue.title, meta: `${issue.stage} · ${issue.priority}` },
+      files: [],
+      records: [{ type: "Issue", label: `${issue.id} · ${issue.title}`, meta: issue.stage }],
+      project: { name: team.name, meta: `Team · ${issue.stage}` },
+      impact: issue.tags.join(", ") || issue.priority,
+      folders: team.folders ?? [],
+    },
+  })
+  const openIssueSession = (issue, entry) => {
+    setSessionReturn({ teamId: issue.team, issueId: issue.id })
+    openWork(makeIssueSource(issue, teamById(issue.team), entry), true)
+  }
+  const delegateFromIssue = (issue, { task, agent }) => {
+    const team = teamById(issue.team)
+    const entry = { id: `del-${nextId.current++}`, agent, label: task.slice(0, 44) + (task.length > 44 ? "…" : ""), status: "running", run: `Run #${205 + (nextId.current % 40)}`, note: "Just delegated · starting on your machine.", task }
+    setIssueSessions((prev) => ({ ...prev, [issue.id]: [...(prev[issue.id] ?? issue.sessions), entry] }))
+    setSessionReturn({ teamId: issue.team, issueId: issue.id })
+    openWork({ ...makeIssueSource(issue, team, entry), description: `On it — I'll work on: “${task}”. I'll surface anything that needs your decision right here.` }, true)
+  }
+  const generateSpec = (issue) => setIssueSpecs((prev) => ({ ...prev, [issue.id]: {
+    generatedBy: "Computer", updated: "just now",
+    sections: [
+      { h: "Problem", body: issue.description },
+      { h: "Proposed approach", body: "Computer drafted this from the issue, its linked code and prior decisions. Edit inline, or delegate the implementation to an agent." },
+      { h: "Acceptance criteria", list: ["Behaviour matches the reported expectation", "Covered by an automated test", "No regression in related flows"] },
+      { h: "Open questions", body: "None flagged yet — ask in a session to refine." },
+    ],
+  } }))
+
   const allProjects = [...createdProjects, ...workspaceProjects]
   const findProject = (id) => allProjects.find((p) => p.id === id) ?? workspaceProjects[0]
 
@@ -711,6 +767,7 @@ export function TeamAgentWorkspace() {
     setSessions((prev) => ({ ...prev, [id]: buildSession(source) }))
     setStandalone((prev) => [id, ...prev])
     setOpenSessionId(id)
+    setSessionReturn(null)
     setCanvasSelected(null)
     setCanvasTab("files")
     setView("session")
@@ -741,10 +798,15 @@ export function TeamAgentWorkspace() {
   }
 
   const openProject = (projectId, tab = "Sessions") => { setActiveProjectId(projectId); setProjectTab(tab); setView("project") }
-  const openProjectSession = (project, session) => openWork(makeSessionSource(project, session), true)
+  const openProjectSession = (project, session) => { setSessionReturn(null); openWork(makeSessionSource(project, session), true) }
 
   const navItems = [["Today", "grid", "today"], ["Projects", "layers", "projects"]]
+  const activeTeam = teamById(activeTeamId)
   const breadcrumb = view === "session" && openSession ? openSession.title
+    : view === "team-issue" ? (getIssue(activeIssueId)?.id ?? "Issue")
+    : view === "team-issues" ? `${activeTeam.name} · Issues`
+    : view === "team-roadmap" ? `${activeTeam.name} · Roadmap`
+    : view === "team-sprints" ? `${activeTeam.name} · Sprints`
     : view === "project" ? (findProject(activeProjectId)?.name ?? "Project")
     : view === "projects" ? "Projects" : "Today"
   const showDetail = view !== "session" && !!openSession
@@ -760,6 +822,26 @@ export function TeamAgentWorkspace() {
           </button>
         ))}
       </nav>
+
+      <div className="tw-nav-group">
+        <div className="tw-nav-group-label">TEAMS</div>
+        {teams.map((t) => {
+          const open = expandedTeams.includes(t.id)
+          const attn = teamIssues(t.id).filter((i) => (issueSessions[i.id] ?? i.sessions).some((s) => s.status === "needs input")).length
+          return <div key={t.id} className={`tw-navproj ${open ? "open" : ""}`}>
+            <div className="tw-navproj-head">
+              <button className="tw-navchev" onClick={() => toggleTeam(t.id)}><Icon name="chevron" size={14}/></button>
+              <button className="tw-navproj-name" onClick={() => openTeamView(t.id, "issues")}><span className="tw-navproj-emoji">{t.emoji}</span><span className="tw-navproj-label">{t.name}</span></button>
+            </div>
+            {open ? <div className="tw-navsub">
+              <div className="tw-navsub-label">Views</div>
+              <button className={`tw-navsub-item ${view === "team-issues" && activeTeamId === t.id ? "on" : ""}`} onClick={() => openTeamView(t.id, "issues")}><Icon name="stage" size={13}/><span>Issues</span>{attn ? <b className="attn">{attn}</b> : null}</button>
+              <button className={`tw-navsub-item ${view === "team-roadmap" && activeTeamId === t.id ? "on" : ""}`} onClick={() => openTeamView(t.id, "roadmap")}><Icon name="target" size={13}/><span>Roadmap</span></button>
+              <button className={`tw-navsub-item ${view === "team-sprints" && activeTeamId === t.id ? "on" : ""}`} onClick={() => openTeamView(t.id, "sprints")}><Icon name="calendar" size={13}/><span>Sprints</span></button>
+            </div> : null}
+          </div>
+        })}
+      </div>
 
       <div className="tw-nav-group tw-nav-scroll">
         <div className="tw-nav-group-label">PROJECTS<button className="tw-nav-group-add" title="New project" onClick={() => setNewProjectOpen(true)}><Icon name="plus" size={14}/></button></div>
@@ -837,8 +919,16 @@ export function TeamAgentWorkspace() {
           onSend={(text) => sendMessage(openSession.id, text)}
           onChoice={(choice) => chooseOption(openSession.id, choice)}
           onResolve={(note) => resolveSession(openSession.id, note)}
-          onBack={() => setView(openSession.standalone ? "today" : "today")}
+          onBack={() => { if (sessionReturn) { setActiveTeamId(sessionReturn.teamId); setActiveIssueId(sessionReturn.issueId); setView("team-issue"); setSessionReturn(null) } else setView("today") }}
         />
+      ) : view === "team-issues" ? (
+        <IssuesListView team={activeTeam} tab={issuesTab} onTab={setIssuesTab} onOpenIssue={openIssue} sessionsByIssue={issueSessions} />
+      ) : view === "team-issue" && getIssue(activeIssueId) ? (
+        <IssuePanel issue={getIssue(activeIssueId)} team={teamById(getIssue(activeIssueId).team)} sessions={sessionsForIssue(getIssue(activeIssueId))} spec={issueSpecs[activeIssueId] ?? getIssue(activeIssueId).spec} onBack={() => setView("team-issues")} onOpenSession={openIssueSession} onDelegate={delegateFromIssue} onGenerateSpec={generateSpec} />
+      ) : view === "team-roadmap" ? (
+        <RoadmapView team={activeTeam} />
+      ) : view === "team-sprints" ? (
+        <SprintsView team={activeTeam} />
       ) : view === "projects" ? (
         <ProjectSpace mode="list" projects={allProjects} onOpenProject={openProject} onNewProject={() => setNewProjectOpen(true)} pinned={pinned} onTogglePin={togglePin} />
       ) : view === "project" ? (
