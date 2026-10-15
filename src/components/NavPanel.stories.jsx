@@ -22,29 +22,23 @@ const meta = {
         "computer",
         "team:chat",
         "team:page:issues",
-        "team:page:sprints",
         "team:page:projects",
         "project:chat",
-        "project:page:overview",
-        "project:page:scope",
         "chat-arjun",
         "chat-sneha",
         "chat-rohan",
         "chat-leela",
-        "inbox",
-        "discover",
-        "agent-studio",
         "me",
       ],
     },
   },
   args: {
-    defaultSelectedItemId: "team:chat",
+    defaultSelectedItemId: "computer",
     activeTeam: teamById("Team-0001"),
     activeProject: coreProject,
     projectId: "Project-0001",
     teamId: "Team-0001",
-    scope: "project",
+    scope: "team",
   },
 }
 
@@ -58,18 +52,20 @@ function NavPanelWorkbench(props) {
         {...props}
         selectedItemId={selected}
         onSelectItem={setSelected}
+        onNewSession={() => setSelected("computer")}
       />
     </div>
   )
 }
 
-export const Default = {
+export const TomorrowVision = {
   render: (args) => <NavPanelWorkbench {...args} />,
 }
 
-export const WithProjectPages = {
+export const WithProjectChat = {
   args: {
-    defaultSelectedItemId: "project:page:overview",
+    scope: "project",
+    defaultSelectedItemId: "project:chat",
   },
   render: (args) => <NavPanelWorkbench {...args} />,
 }

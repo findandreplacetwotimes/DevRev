@@ -10,8 +10,10 @@ export function WorkspaceWindow({
   selectedNavItemId,
   paneId,
   isMainPane = false,
+  showNavPanel = isMainPane,
   baseOutletContext,
   defaultTeam,
+  onNewSession,
   className = "",
   style,
 }) {
@@ -63,10 +65,11 @@ export function WorkspaceWindow({
       data-pane-id={paneId}
       data-main-pane={isMainPane || undefined}
     >
-      {!isNarrow ? (
+      {showNavPanel && !isNarrow ? (
         <NavPanel
           selectedItemId={selectedNavItemId}
           onSelectItem={handleNavSelectItem}
+          onNewSession={onNewSession}
           activeTeam={paneOutletContext.activeTeam}
           activeProject={paneOutletContext.activeProject}
           projectId={paneOutletContext.navContext.projectId}

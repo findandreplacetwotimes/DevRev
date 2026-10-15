@@ -22,10 +22,14 @@ export function ChatPage() {
     breadcrumbsMenuEnabled,
     workspaceScope,
     showCanvasSidePanel = true,
+    paneId,
   } = outletContext
 
   const variant = chatVariantForRoute(`${location.pathname}${location.search}`) ?? "ai"
   const messages = sessionMessages?.[activeSessionId] ?? []
+
+  // Inline CANVAS list only for single-session chat (split sessions use the right pane as canvas).
+  const showInlineCanvas = Boolean(showCanvasSidePanel && !paneId)
 
   const canvasLinks = useMemo(
     () =>
@@ -67,12 +71,12 @@ export function ChatPage() {
           }))
         }
         onOpenPageInSession={(href) => navigateInSession?.(href)}
-        hideRelatedLinksControl={showCanvasSidePanel}
+        hideRelatedLinksControl={showInlineCanvas}
         relatedLinks={canvasLinks}
         canvasLabel={canvasLabel}
         onSelectRelatedLink={handleSelectCanvasLink}
       />
-      {showCanvasSidePanel && canvasLinks.length > 0 ? (
+      {showInlineCanvas && canvasLinks.length > 0 ? (
         <ChatRelatedLinksPanel
           links={canvasLinks}
           canvasLabel={canvasLabel}

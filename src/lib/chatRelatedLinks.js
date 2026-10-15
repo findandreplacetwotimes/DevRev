@@ -1,42 +1,50 @@
+import {
+  DEFAULT_TEAM_ID,
+  projectBasePath,
+  teamAboutHref,
+  teamIssuesHref,
+  teamProjectsHref,
+  teamSprintsHref,
+} from "./teams"
+
 export const CHAT_CANVAS_LABEL = "CANVAS"
 
-function projectCanvasDocs() {
+function projectCanvasDocs(projectId) {
+  const base = projectId ? projectBasePath(projectId) : null
   return [
-    { key: "Doc-0001", title: "Project brief" },
-    { key: "Doc-0002", title: "Scope and milestones" },
-    { key: "Doc-0003", title: "Reference links" },
-  ]
+    { key: "project-overview", title: "Project overview", href: base ?? undefined },
+    { key: "Doc-scope", title: "Scope and milestones", href: base ? `${base}/scope` : undefined },
+    { key: "Doc-brief", title: "Project brief", href: base ? `${base}/brief` : undefined },
+    { key: "Doc-links", title: "Reference links", href: base ? `${base}/links` : undefined },
+  ].filter((link) => link.href)
 }
 
-function teamCanvasDocs() {
+function teamCanvasDocs(teamId) {
+  const id = teamId ?? DEFAULT_TEAM_ID
   return [
-    { key: "Doc-0001", title: "Q2 planning brief" },
-    { key: "Doc-0002", title: "Core flow spec" },
-    { key: "Doc-0003", title: "Nav interaction notes" },
-    { key: "Doc-0004", title: "API schema reference" },
+    { key: "team-issues", title: "Issues", href: teamIssuesHref(id) },
+    { key: "team-projects", title: "Projects", href: teamProjectsHref(id) },
+    { key: "team-sprints", title: "Sprints", href: teamSprintsHref(id) },
+    { key: "team-about", title: "About", href: teamAboutHref(id) },
   ]
 }
 
 const PERSON_CHAT_DOCS = {
   "chat-arjun": [
-    { key: "Doc-0001", title: "Core flow spec" },
-    { key: "Doc-0002", title: "Nav interaction notes" },
-    { key: "Doc-0003", title: "Build core flow overview" },
+    { key: "team-issues", title: "Issues" },
+    { key: "team-projects", title: "Projects" },
   ],
   "chat-sneha": [
-    { key: "Doc-0001", title: "AI chat mode matrix" },
-    { key: "Doc-0002", title: "Issue schema reference" },
-    { key: "Doc-0003", title: "Rollout checklist" },
+    { key: "team-issues", title: "Issues" },
+    { key: "team-sprints", title: "Sprints" },
   ],
   "chat-rohan": [
-    { key: "Doc-0001", title: "Table header QA" },
-    { key: "Doc-0002", title: "KV sync hardening" },
-    { key: "Doc-0003", title: "Open design questions" },
+    { key: "team-projects", title: "Projects" },
+    { key: "team-about", title: "About" },
   ],
   "chat-leela": [
-    { key: "Doc-0001", title: "Scope draft" },
-    { key: "Doc-0002", title: "Onboarding flow notes" },
-    { key: "Doc-0003", title: "Support playbook" },
+    { key: "team-issues", title: "Issues" },
+    { key: "team-projects", title: "Projects" },
   ],
 }
 
@@ -44,15 +52,19 @@ export function isPersonDirectChat(variant) {
   return typeof variant === "string" && variant.startsWith("chat-") && variant !== "chat-project"
 }
 
-function personChatCanvasDocs(variant) {
-  return PERSON_CHAT_DOCS[variant] ?? []
+function personChatCanvasDocs(variant, teamId) {
+  const stubs = PERSON_CHAT_DOCS[variant] ?? []
+  const teamDocs = teamCanvasDocs(teamId)
+  return stubs
+    .map((stub) => teamDocs.find((doc) => doc.key === stub.key) ?? null)
+    .filter(Boolean)
 }
 
 export function getChatRelatedLinks({ variant, linkedProjectChat, teamId } = {}) {
   if (variant === "ai") return teamCanvasDocs(teamId)
   if (variant === "build-team") return teamCanvasDocs(teamId)
   if (variant === "chat-project") return projectCanvasDocs(linkedProjectChat?.projectId)
-  if (isPersonDirectChat(variant)) return personChatCanvasDocs(variant)
+  if (isPersonDirectChat(variant)) return personChatCanvasDocs(variant, teamId)
   return []
 }
 

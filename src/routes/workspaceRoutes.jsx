@@ -16,11 +16,11 @@ import {
   LegacySprintsRedirect,
 } from "../components/LegacyRouteRedirects"
 
-/** Child routes — must be invoked as `{renderWorkspaceRoutes(team)}`, not a custom Route child component. */
-export function renderWorkspaceRoutes(defaultTeam) {
+/** Child routes — must be invoked as `{renderWorkspaceRoutes()}`, not a custom Route child component. */
+export function renderWorkspaceRoutes() {
   return (
     <>
-      <Route index element={<Navigate to={`/team/${defaultTeam}/issues`} replace />} />
+      <Route index element={<Navigate to="/computer" replace />} />
 
       <Route path="computer" element={<ChatPage />} />
       <Route path="arjun" element={<ChatPage />} />

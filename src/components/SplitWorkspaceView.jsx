@@ -15,10 +15,12 @@ export function SplitWorkspaceView({
   rightRoute,
   leftNavItemId,
   rightNavItemId,
+  navSelectedItemId,
   splitLeftWidthPx,
   onSplitLeftWidthChange,
   outletContext,
   defaultTeam,
+  onNewSession,
 }) {
   const layoutRef = useRef(null)
   const dragStateRef = useRef(null)
@@ -69,23 +71,25 @@ export function SplitWorkspaceView({
     <div ref={layoutRef} className="flex h-full min-h-0 w-full items-stretch">
       <WorkspaceWindow
         route={leftRoute}
-        selectedNavItemId={leftNavItemId}
+        selectedNavItemId={navSelectedItemId ?? leftNavItemId}
         paneId="left"
         isMainPane
+        showNavPanel
         baseOutletContext={outletContext}
         defaultTeam={defaultTeam}
+        onNewSession={onNewSession}
         className="shrink-0"
         style={{ width: splitLeftWidthPx }}
       />
       <div
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize split panes"
+        aria-label="Resize canvas"
         className="relative h-full w-px shrink-0 bg-[#ececec]"
       >
         <button
           type="button"
-          aria-label="Resize split panes"
+          aria-label="Resize canvas"
           onPointerDown={startResize}
           className="absolute left-1/2 top-0 h-full w-[12px] -translate-x-1/2 cursor-col-resize bg-transparent"
         />
@@ -94,6 +98,7 @@ export function SplitWorkspaceView({
         route={rightRoute}
         selectedNavItemId={rightNavItemId}
         paneId="right"
+        showNavPanel={false}
         baseOutletContext={outletContext}
         defaultTeam={defaultTeam}
         className="min-w-0 flex-1"

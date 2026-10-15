@@ -17,7 +17,6 @@ export function SessionTabBar({
   onSelectSession,
   onCloseSession,
   onAddSession,
-  onAddSplitSession,
   className = "",
 }) {
   return (
@@ -48,7 +47,7 @@ export function SessionTabBar({
           )
         })}
       </div>
-      <SessionTabAddControl onAddSession={onAddSession} onAddSplitSession={onAddSplitSession} />
+      <SessionTabAddControl onAddSession={onAddSession} />
     </div>
   )
 }

@@ -21,11 +21,14 @@ import { teamById } from "../lib/workspaceLabels"
 import {
   activeNavItemIdForSession,
   createDefaultSession,
-  createDefaultSplitSession,
+  INITIAL_SPLIT_LEFT_WIDTH_PX,
+  isChatNavItemId,
+  isChatRoute,
   isSplitSession,
   loadWorkspaceSessionState,
   mainPaneRoute,
   persistWorkspaceSessionState,
+  withCanvasPage,
 } from "../lib/workspaceSessions"
 import { shouldShowCanvasSidePanel } from "../lib/workspacePaneContext"
 import { NavPanel } from "./NavPanel"
@@ -155,38 +158,53 @@ export function AppWorkspaceChrome() {
   )
 
   const navigateInSession = useCallback(
-    (href, navItemId, paneId) => {
-      if (!href) return
-      ownedNavigationRef.current = href
+    (href, navItemId) => {
+      if (!href || !activeSession) return
 
       const pathname = href.split("?")[0]
       const search = href.includes("?") ? href.slice(href.indexOf("?")) : ""
       const resolvedNavItemId = navItemId ?? navItemIdForLocation(pathname, search, navContext)
+      const openingChat = isChatNavItemId(resolvedNavItemId) || isChatRoute(href)
 
-      if (isSplitSession(activeSession)) {
-        const targetPane = paneId ?? "left"
-        const patch =
-          targetPane === "left"
-            ? { leftRoute: href, leftNavItemId: resolvedNavItemId }
-            : { rightRoute: href, rightNavItemId: resolvedNavItemId }
-
-        patchActiveSession(patch)
-
-        if (targetPane === "left") {
-          navigate(href)
+      // Chat destinations own the session (left / single). Pages always open in canvas (right).
+      if (openingChat) {
+        ownedNavigationRef.current = href
+        if (isSplitSession(activeSession)) {
+          patchActiveSession({ leftRoute: href, leftNavItemId: resolvedNavItemId })
+        } else {
+          patchActiveSession({
+            route: href,
+            selectedNavItemId: resolvedNavItemId,
+            tabTitle: tabTitleForRoute(href, titleContext),
+          })
         }
+        navigate(href)
         return
       }
 
-      patchActiveSession({
-        route: href,
-        selectedNavItemId: resolvedNavItemId,
-        tabTitle: tabTitleForRoute(href, titleContext),
-      })
+      const nextSession = withCanvasPage(activeSession, href, resolvedNavItemId)
+      ownedNavigationRef.current = mainPaneRoute(nextSession)
 
-      navigate(href)
+      updateSessions(
+        (prev) => prev.map((session) => (session.id === activeSessionId ? nextSession : session)),
+        activeSessionId
+      )
+
+      const chatHref = mainPaneRoute(nextSession)
+      if (chatHref && chatHref !== currentRoute) {
+        navigate(chatHref)
+      }
     },
-    [activeSession, navContext, navigate, patchActiveSession, titleContext]
+    [
+      activeSession,
+      activeSessionId,
+      currentRoute,
+      navContext,
+      navigate,
+      patchActiveSession,
+      titleContext,
+      updateSessions,
+    ]
   )
 
   const syncSessionTabTitle = useCallback(() => {
@@ -255,20 +273,6 @@ export function AppWorkspaceChrome() {
     }
   }, [ensureSessionMessages, sessions, updateSessions, navigate])
 
-  const handleAddSplitSession = useCallback(() => {
-    const nextSession = createDefaultSplitSession()
-    const nextSessions = [...sessions, nextSession]
-    updateSessions(nextSessions, nextSession.id)
-    setActiveSessionId(nextSession.id)
-    const href = mainPaneRoute(nextSession)
-    if (href) {
-      ownedNavigationRef.current = href
-      navigate(href)
-      ensureChatMessagesForRoute(nextSession.id, nextSession.leftRoute, ensureSessionMessages)
-      ensureChatMessagesForRoute(nextSession.id, nextSession.rightRoute, ensureSessionMessages)
-    }
-  }, [ensureSessionMessages, sessions, updateSessions, navigate])
-
   const handleCloseSession = useCallback(
     (sessionId) => {
       if (sessions.length <= 1) return
@@ -331,7 +335,7 @@ export function AppWorkspaceChrome() {
     ]
   )
 
-  // In-app navigation updates the active session route(s).
+  // Keep the browser URL on the session chat; promote deep-linked pages into canvas.
   useEffect(() => {
     if (!activeSession) return
 
@@ -345,8 +349,26 @@ export function AppWorkspaceChrome() {
 
     if (switchingRef.current) return
 
-    const nextTitle = tabTitleForRoute(currentRoute, titleContext)
     const nextNavItemId = navItemIdForLocation(location.pathname, location.search, navContext)
+    const urlIsChat = isChatRoute(currentRoute)
+
+    if (!urlIsChat) {
+      const nextSession = withCanvasPage(activeSession, currentRoute, nextNavItemId)
+      const chatHref = mainPaneRoute(nextSession)
+      ownedNavigationRef.current = chatHref
+      window.requestAnimationFrame(() => {
+        updateSessions(
+          (prev) => prev.map((session) => (session.id === activeSessionId ? nextSession : session)),
+          activeSessionId
+        )
+        if (chatHref && chatHref !== currentRoute) {
+          navigate(chatHref, { replace: true })
+        }
+      })
+      return
+    }
+
+    const nextTitle = tabTitleForRoute(currentRoute, titleContext)
 
     if (isSplitSession(activeSession)) {
       if (currentRoute !== activeSession.leftRoute) {
@@ -380,6 +402,7 @@ export function AppWorkspaceChrome() {
     }
   }, [
     activeSession,
+    activeSessionId,
     activeSession?.route,
     activeSession?.tabTitle,
     activeSession?.leftRoute,
@@ -387,8 +410,10 @@ export function AppWorkspaceChrome() {
     location.pathname,
     location.search,
     navContext,
+    navigate,
     patchActiveSession,
     titleContext,
+    updateSessions,
   ])
 
   useEffect(() => {
@@ -437,13 +462,13 @@ export function AppWorkspaceChrome() {
         onSelectSession={handleSelectSession}
         onCloseSession={handleCloseSession}
         onAddSession={handleAddSession}
-        onAddSplitSession={handleAddSplitSession}
       />
       <div ref={chromeRowRef} className="flex min-h-0 flex-1 items-stretch">
         {!isNarrow && !isSplit ? (
           <NavPanel
             selectedItemId={navSelectedItemId}
             onSelectItem={handleNavSelectItem}
+            onNewSession={handleAddSession}
             activeTeam={activeTeam}
             activeProject={activeProject}
             projectId={activeProjectId}
@@ -458,10 +483,12 @@ export function AppWorkspaceChrome() {
               rightRoute={activeSession.rightRoute}
               leftNavItemId={activeSession.leftNavItemId}
               rightNavItemId={activeSession.rightNavItemId}
-              splitLeftWidthPx={activeSession.splitLeftWidthPx}
+              navSelectedItemId={navSelectedItemId}
+              splitLeftWidthPx={activeSession.splitLeftWidthPx ?? INITIAL_SPLIT_LEFT_WIDTH_PX}
               onSplitLeftWidthChange={handleSplitLeftWidthChange}
               outletContext={workspaceOutletContext}
               defaultTeam={defaultTeam}
+              onNewSession={handleAddSession}
             />
           ) : (
             <Outlet context={workspaceOutletContext} />

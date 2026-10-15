@@ -1,16 +1,15 @@
 import { createPortal } from "react-dom"
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useAnchoredPopoverPosition } from "../hooks/useAnchoredPopoverPosition"
 export { COMPUTER_NAV_ITEM_ID } from "../lib/workspaceSessions"
 
 import {
   CHAT_PEOPLE_ITEMS,
-  projectPageDestinations,
   projectChatDestination,
   teamChatDestination,
-  teamPageDestinations,
 } from "../lib/navDestinations"
-import { projectGroupLabel, projectPathId } from "../lib/projectsApi"
+import { loadTomorrowLayout, TOMORROW_PAGE_ITEMS } from "../lib/navTomorrow"
+import { projectPathId } from "../lib/projectsApi"
 import {
   teamChatNavLabel,
   teamGroupLabel,
@@ -18,6 +17,7 @@ import {
 } from "../lib/workspaceLabels"
 import { COMPUTER_NAV_ITEM_ID } from "../lib/workspaceSessions"
 import { ChatAvatar } from "./ChatAvatar"
+import { Icon } from "./Icon"
 import { NavGroup } from "./NavGroup"
 import { NavItem } from "./NavItem"
 
@@ -46,18 +46,46 @@ function MeAvatar({ selected = false }) {
   )
 }
 
-const SECONDARY_ITEMS = [
-  { id: "inbox", label: "Inbox", iconName: "inbox" },
-  { id: "discover", label: "Discover", iconName: "discover" },
-  { id: "agent-studio", label: "Agent studio", iconName: "agent" },
-  { id: "me", label: "Me", leading: <MeAvatar /> },
-]
+const PERSON_BY_ID = Object.fromEntries(CHAT_PEOPLE_ITEMS.map((item) => [item.id, item]))
 
+function sessionNavLabel(sessionId, { teamChat, projectChat }) {
+  if (sessionId === COMPUTER_NAV_ITEM_ID) return "Computer"
+  if (sessionId === "team:chat" || sessionId === "build-team") return teamChat?.label ?? teamChatNavLabel()
+  if (sessionId === "project:chat" || sessionId === "chat-project") {
+    return projectChat?.label ?? projectChatNavLabel()
+  }
+  return PERSON_BY_ID[sessionId]?.label ?? sessionId
+}
+
+function sessionNavLeading(sessionId, { teamChat, projectChat }) {
+  if (sessionId === COMPUTER_NAV_ITEM_ID) return undefined
+  if (sessionId === "team:chat" || sessionId === "build-team") {
+    return <ChatAvatar memberCount={teamChat?.memberCount ?? 12} />
+  }
+  if (sessionId === "project:chat" || sessionId === "chat-project") {
+    return <ChatAvatar memberCount={projectChat?.memberCount ?? 23} />
+  }
+  const person = PERSON_BY_ID[sessionId]
+  if (person) return <ChatAvatar initial={person.initial} />
+  return undefined
+}
+
+function sessionIconName(sessionId) {
+  if (sessionId === COMPUTER_NAV_ITEM_ID) return "computer"
+  if (sessionId === "team:chat" || sessionId === "build-team") return "team"
+  if (sessionId === "project:chat" || sessionId === "chat-project") return "project"
+  return undefined
+}
+
+/**
+ * Tomorrow-vision nav: pages open canvas; TEAMS / buckets hold sessions only.
+ */
 export function NavPanel({
   className = "",
   selectedItemId,
-  defaultSelectedItemId = "team:chat",
+  defaultSelectedItemId = "computer",
   onSelectItem,
+  onNewSession,
   activeTeam,
   activeProject,
   projectId,
@@ -67,6 +95,7 @@ export function NavPanel({
   const [uncontrolledSelectedItemId, setUncontrolledSelectedItemId] = useState(defaultSelectedItemId)
   const isControlledSelection = selectedItemId !== undefined
   const currentSelectedItemId = isControlledSelection ? selectedItemId : uncontrolledSelectedItemId
+  const layout = useMemo(() => loadTomorrowLayout(), [])
 
   const meMenuId = useId()
   const meTriggerRef = useRef(null)
@@ -76,13 +105,12 @@ export function NavPanel({
   const [meMenuStyle, setMeMenuStyle] = useState({ top: 0, left: 0 })
 
   const resolvedProjectId = projectId ?? (activeProject ? projectPathId(activeProject) : null)
-  const teamPages = teamPageDestinations(teamId)
   const teamChat = teamChatDestination(teamId)
   const projectChat = projectChatDestination(resolvedProjectId)
-  const projectPages = projectPageDestinations(resolvedProjectId)
   const teamLabel = activeTeam ? teamGroupLabel(activeTeam) : teamGroupLabel({ id: teamId })
-  const projectGroupTitle = activeProject ? projectGroupLabel(activeProject) : "Project"
-  const showProjectSection = scope === "project" || Boolean(resolvedProjectId)
+  const showProjectChat = scope === "project" || Boolean(resolvedProjectId)
+
+  const chatContext = useMemo(() => ({ teamChat, projectChat }), [teamChat, projectChat])
 
   const handleSelectItem = (itemId) => {
     if (!isControlledSelection) {
@@ -150,83 +178,55 @@ export function NavPanel({
     return () => document.removeEventListener("keydown", onKey)
   }, [meMenuOpen])
 
+  const renderSessionItem = (sessionId) => {
+    const leading = sessionNavLeading(sessionId, chatContext)
+    const iconName = leading ? undefined : sessionIconName(sessionId)
+    return (
+      <NavItem
+        key={sessionId}
+        label={sessionNavLabel(sessionId, chatContext)}
+        leading={leading}
+        iconName={iconName}
+        selected={
+          currentSelectedItemId === sessionId ||
+          (sessionId === "team:chat" && currentSelectedItemId === "build-team") ||
+          (sessionId === "project:chat" && currentSelectedItemId === "chat-project")
+        }
+        className="w-full"
+        onClick={() => handleSelectItem(sessionId)}
+      />
+    )
+  }
+
   return (
     <aside
+      data-variant="variant3"
       className={`flex h-full min-h-0 w-[220px] shrink-0 flex-col items-start overflow-hidden border-r border-[#ececec] bg-white px-[12px] py-[14px] ${className}`}
     >
-      <div className="flex w-full items-center">
+      <div className="flex w-full items-center gap-[6px]">
         <button
           type="button"
           onClick={() => handleSelectItem(COMPUTER_NAV_ITEM_ID)}
-          className="flex h-[29px] w-full items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+          className="flex h-[29px] min-w-0 flex-1 items-center justify-center rounded-[999px] bg-[var(--background-primary-subtle)] pb-[3px] pt-[5px] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
         >
           <img src="/icons/computer-wordmark.svg" alt="computer" className="h-[14px] w-[80px]" draggable={false} />
         </button>
-      </div>
-
-      <div className="h-[20px] w-[192px] shrink-0 bg-white" />
-
-      <div className="flex w-[194px] flex-col gap-[10px]">
-        <NavGroup label={teamLabel} variant="section">
-          <NavItem
-            label={teamChatNavLabel()}
-            leading={<ChatAvatar memberCount={teamChat.memberCount} />}
-            selected={currentSelectedItemId === "team:chat" || currentSelectedItemId === "build-team"}
-            className="w-full"
-            onClick={() => handleSelectItem("team:chat")}
-          />
-          {teamPages.map((item) => (
-            <NavItem
-              key={item.id}
-              label={item.label}
-              iconName={item.iconName}
-              selected={currentSelectedItemId === item.id}
-              className="w-full"
-              onClick={() => handleSelectItem(item.id)}
-            />
-          ))}
-        </NavGroup>
-
-        {showProjectSection ? (
-          <NavGroup label={projectGroupTitle} variant="section">
-            <NavItem
-              label={projectChatNavLabel()}
-              leading={<ChatAvatar memberCount={projectChat.memberCount} />}
-              selected={currentSelectedItemId === "project:chat" || currentSelectedItemId === "chat-project"}
-              className="w-full"
-              onClick={() => handleSelectItem("project:chat")}
-            />
-            {projectPages.map((item) => (
-              <NavItem
-                key={item.id}
-                label={item.label}
-                iconName={item.iconName}
-                selected={currentSelectedItemId === item.id}
-                className="w-full"
-                onClick={() => handleSelectItem(item.id)}
-              />
-            ))}
-          </NavGroup>
+        {onNewSession ? (
+          <button
+            type="button"
+            aria-label="New session"
+            onClick={() => onNewSession()}
+            className="inline-flex size-[28px] shrink-0 items-center justify-center rounded-[999px] text-[var(--foreground-primary)] transition-colors duration-150 hover:bg-[var(--control-bg-hover)]"
+          >
+            <Icon name="plus" />
+          </button>
         ) : null}
-
-        <NavGroup label="Chat" variant="section">
-          {CHAT_PEOPLE_ITEMS.map((item) => (
-            <NavItem
-              key={item.id}
-              label={item.label}
-              leading={<ChatAvatar initial={item.initial} />}
-              selected={currentSelectedItemId === item.id}
-              className="w-full"
-              onClick={() => handleSelectItem(item.id)}
-            />
-          ))}
-        </NavGroup>
       </div>
 
-      <div className="min-h-0 w-[192px] flex-1 bg-white" />
+      <div className="h-[16px] w-[192px] shrink-0 bg-white" />
 
-      <div className="flex w-full flex-col gap-[4px]">
-        {SECONDARY_ITEMS.slice(0, 3).map((item) => (
+      <div className="flex w-[194px] flex-col gap-[4px]">
+        {TOMORROW_PAGE_ITEMS.map((item) => (
           <NavItem
             key={item.id}
             label={item.label}
@@ -236,20 +236,50 @@ export function NavPanel({
             onClick={() => handleSelectItem(item.id)}
           />
         ))}
-        <div className="h-[12px] w-full shrink-0 bg-white" />
-        <NavItem
-          ref={meTriggerRef}
-          label="Me"
-          className="w-full"
-          id={`${meMenuId}-trigger`}
-          leading={<MeAvatar selected={currentSelectedItemId === "me" || meMenuOpen} />}
-          selected={currentSelectedItemId === "me" || meMenuOpen}
-          onClick={handleMeClick}
-          aria-haspopup="menu"
-          aria-expanded={meMenuOpen}
-          aria-controls={meMenuOpen ? `${meMenuId}-menu` : undefined}
-        />
       </div>
+
+      <div className="h-[16px] w-[192px] shrink-0 bg-white" />
+
+      <div className="flex w-[194px] min-h-0 flex-1 flex-col gap-[10px] overflow-y-auto">
+        <NavGroup label={teamLabel} variant="section">
+          {(layout.teamsSessionIds?.length ? layout.teamsSessionIds : ["team:chat"]).map(renderSessionItem)}
+          {showProjectChat ? (
+            <NavItem
+              label={projectChatNavLabel()}
+              leading={<ChatAvatar memberCount={projectChat.memberCount} />}
+              selected={currentSelectedItemId === "project:chat" || currentSelectedItemId === "chat-project"}
+              className="w-full"
+              onClick={() => handleSelectItem("project:chat")}
+            />
+          ) : null}
+        </NavGroup>
+
+        {layout.sectionOrder.map((sectionId) => {
+          const section = layout.sections?.[sectionId]
+          if (!section) return null
+          const ids = Array.isArray(section.sessionIds) ? section.sessionIds : []
+          if (ids.length === 0) return null
+          return (
+            <NavGroup key={sectionId} label={section.title} variant="section">
+              {ids.map(renderSessionItem)}
+            </NavGroup>
+          )
+        })}
+      </div>
+
+      <div className="h-[12px] w-full shrink-0 bg-white" />
+      <NavItem
+        ref={meTriggerRef}
+        label="Me"
+        className="w-full"
+        id={`${meMenuId}-trigger`}
+        leading={<MeAvatar selected={currentSelectedItemId === "me" || meMenuOpen} />}
+        selected={currentSelectedItemId === "me" || meMenuOpen}
+        onClick={handleMeClick}
+        aria-haspopup="menu"
+        aria-expanded={meMenuOpen}
+        aria-controls={meMenuOpen ? `${meMenuId}-menu` : undefined}
+      />
 
       {meMenuOpen && typeof document !== "undefined"
         ? createPortal(

@@ -1,14 +1,11 @@
 import { Route, Routes } from "react-router-dom"
 import { AppWorkspaceLayout } from "./components/AppWorkspaceLayout"
-import { DEFAULT_TEAM_ID, teamUrlSegment } from "./lib/teams"
 import { renderWorkspaceRoutes } from "./routes/workspaceRoutes"
 
 export default function App() {
-  const defaultTeam = encodeURIComponent(teamUrlSegment(DEFAULT_TEAM_ID))
-
   return (
     <Routes>
-      <Route element={<AppWorkspaceLayout />}>{renderWorkspaceRoutes(defaultTeam)}</Route>
+      <Route element={<AppWorkspaceLayout />}>{renderWorkspaceRoutes()}</Route>
     </Routes>
   )
 }

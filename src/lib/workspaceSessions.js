@@ -1,5 +1,13 @@
-import { migrateLegacyRoute, navItemIdForLocation, navIconForNavItemId, parseWorkspaceRoute, routeForNavItemId, tabTitleForRoute } from "./navDestinations"
-import { DEFAULT_TEAM_ID, teamIssuesHref } from "./teams"
+import {
+  chatVariantForRoute,
+  migrateLegacyRoute,
+  navItemIdForLocation,
+  navIconForNavItemId,
+  parseWorkspaceRoute,
+  routeForNavItemId,
+  tabTitleForRoute,
+} from "./navDestinations"
+import { DEFAULT_TEAM_ID, teamChatHref, teamIssuesHref } from "./teams"
 
 export const LS_SESSIONS = "devrev.workspace.sessions.v2"
 export const LS_SESSIONS_LEGACY = "devrev.workspace.sessions.v1"
@@ -130,6 +138,71 @@ export function isChatNavItemId(navItemId) {
   return CHAT_NAV_ITEM_IDS.has(navItemId)
 }
 
+/** True when the route is a chat session surface (not a product page). */
+export function isChatRoute(route) {
+  return Boolean(chatVariantForRoute(route))
+}
+
+/** Prefer the nearest chat for a page route when promoting into canvas. */
+export function chatRouteForPageContext(pageRoute, teamId = DEFAULT_TEAM_ID) {
+  const pathname = pageRoute?.split("?")[0] ?? ""
+  const parsed = parseWorkspaceRoute(pathname)
+  if (parsed.scope === "project" && parsed.projectId) {
+    return routeForNavItemId("project:chat", { teamId, projectId: parsed.projectId }) ?? "/computer"
+  }
+  if (parsed.scope === "team" && parsed.teamId) {
+    return teamChatHref(parsed.teamId)
+  }
+  return "/computer"
+}
+
+export function chatNavItemIdForRoute(route) {
+  if (!isChatRoute(route)) return COMPUTER_NAV_ITEM_ID
+  const pathname = route.split("?")[0]
+  const search = route.includes("?") ? route.slice(route.indexOf("?")) : ""
+  return (
+    navItemIdForLocation(pathname, search, titleContextFromRoute(route)) ?? COMPUTER_NAV_ITEM_ID
+  )
+}
+
+/**
+ * Promote a chat-only session into chat + canvas (right pane = page).
+ * If already split, only updates the canvas (right) route.
+ */
+export function withCanvasPage(session, pageRoute, pageNavItemId) {
+  if (!session || !pageRoute) return session
+  const rightNavItemId =
+    pageNavItemId ??
+    navItemIdForLocation(
+      pageRoute.split("?")[0],
+      pageRoute.includes("?") ? pageRoute.slice(pageRoute.indexOf("?")) : "",
+      titleContextFromRoute(pageRoute)
+    )
+
+  if (isSplitSession(session)) {
+    return {
+      ...session,
+      rightRoute: pageRoute,
+      rightNavItemId,
+    }
+  }
+
+  const leftRoute = isChatRoute(session.route) ? session.route : chatRouteForPageContext(pageRoute)
+  const leftNavItemId = isChatNavItemId(session.selectedNavItemId)
+    ? session.selectedNavItemId
+    : chatNavItemIdForRoute(leftRoute)
+
+  return {
+    id: session.id,
+    kind: "split",
+    leftRoute,
+    leftNavItemId,
+    rightRoute: pageRoute,
+    rightNavItemId,
+    splitLeftWidthPx: INITIAL_SPLIT_LEFT_WIDTH_PX,
+  }
+}
+
 export function chatVariantForNavItem(navItemId) {
   return CHAT_VARIANT_BY_NAV[navItemId] ?? "ai"
 }
@@ -164,8 +237,24 @@ function legacySessionTabLabel(session) {
 }
 
 function normalizeSplitSession(session) {
-  const left = resolveRouteAndNavItemId(session.leftRoute, session.leftNavItemId)
-  const right = resolveRouteAndNavItemId(session.rightRoute, session.rightNavItemId)
+  let left = resolveRouteAndNavItemId(session.leftRoute, session.leftNavItemId)
+  let right = resolveRouteAndNavItemId(session.rightRoute, session.rightNavItemId)
+
+  // Sessions own chat on the left; pages only live in canvas (right).
+  if (!isChatRoute(left.route) && isChatRoute(right.route)) {
+    const swapped = left
+    left = right
+    right = swapped
+  } else if (!isChatRoute(left.route)) {
+    const pageRoute = left.route
+    const pageNav = left.selectedNavItemId
+    const chatRoute = chatRouteForPageContext(pageRoute)
+    left = resolveRouteAndNavItemId(chatRoute, chatNavItemIdForRoute(chatRoute))
+    if (!right.route || isChatRoute(right.route)) {
+      right = { route: pageRoute, selectedNavItemId: pageNav }
+    }
+  }
+
   const splitLeftWidthPx =
     typeof session.splitLeftWidthPx === "number" && Number.isFinite(session.splitLeftWidthPx)
       ? session.splitLeftWidthPx
@@ -206,6 +295,19 @@ export function normalizeSession(session) {
 
   const resolved = resolveRouteAndNavItemId(route, selectedNavItemId)
 
+  // Legacy page-as-session → chat session with that page in canvas.
+  if (!isChatRoute(resolved.route) && !isChatNavItemId(resolved.selectedNavItemId)) {
+    return normalizeSplitSession({
+      id: session.id,
+      kind: "split",
+      leftRoute: chatRouteForPageContext(resolved.route),
+      leftNavItemId: null,
+      rightRoute: resolved.route,
+      rightNavItemId: resolved.selectedNavItemId,
+      splitLeftWidthPx: INITIAL_SPLIT_LEFT_WIDTH_PX,
+    })
+  }
+
   return {
     id: session.id,
     kind: "single",
@@ -244,6 +346,13 @@ export function focusedPaneRoute(session) {
 
 export function activeNavItemIdForSession(session) {
   if (!session) return COMPUTER_NAV_ITEM_ID
+  if (isSplitSession(session)) {
+    // Highlight the open canvas page when present; otherwise the chat.
+    if (session.rightNavItemId && !isChatNavItemId(session.rightNavItemId)) {
+      return session.rightNavItemId
+    }
+    return session.leftNavItemId ?? COMPUTER_NAV_ITEM_ID
+  }
   return session.selectedNavItemId ?? COMPUTER_NAV_ITEM_ID
 }
 
